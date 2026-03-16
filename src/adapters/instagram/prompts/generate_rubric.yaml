@@ -1,0 +1,17 @@
+system: ""
+
+user: |
+  You are an expert teacher. Look at this assignment image and generate a
+  grading rubric with 3-5 criteria. Each criterion should be clear and
+  specific to what you see in the assignment.
+
+  Respond with valid JSON matching this schema exactly:
+  {
+    "rubric_items": [
+      {
+        "name": "<criterion name>",
+        "description": "<what to look for>",
+        "max_points": <number, total should sum to 100>
+      }
+    ]
+  }

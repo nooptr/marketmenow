@@ -1,0 +1,89 @@
+id: can_ai_grade_this
+name: "Can Our AI Grade This"
+aspect_ratio: "9:16"
+fps: 30
+
+variables:
+  - assignment_image
+  - reaction_text
+  - rubric_items
+  - grading_result
+  - rubric_narration
+  - grading_narration
+  - result_comment
+
+beats:
+  - id: hook
+    scene: HookScene
+    audio:
+      type: tts
+      text: "Can you grade my assignment bro"
+    duration: from_audio
+    visual:
+      text_overlay: "Can you grade my assignment bro"
+      animation: fade_in_scale
+
+  - id: reveal
+    scene: RevealScene
+    audio:
+      type: sfx
+      file: assets/sfx/bruh.mp3
+    duration: from_audio
+    visual:
+      image: "{{ assignment_image }}"
+      animation: spring_slide_in
+
+  - id: reaction
+    scene: ReactionScene
+    audio:
+      type: tts
+      text: "{{ reaction_text }}"
+    duration: from_audio
+    visual:
+      image: "{{ assignment_image }}"
+      text_overlay: "{{ reaction_text }}"
+      animation: text_pop
+
+  - id: transition
+    scene: TransitionScene
+    audio:
+      type: sfx
+      file: assets/sfx/whoosh.mp3
+    duration: from_audio
+    pad_seconds: 0.5
+    visual:
+      image: "{{ assignment_image }}"
+      animation: slide_to_platform
+
+  - id: rubric_creation
+    scene: RubricScene
+    audio:
+      type: tts
+      text: "{{ rubric_narration }}"
+    duration: from_audio
+    visual:
+      rubric_items: "{{ rubric_items }}"
+      animation: stagger_appear
+
+  - id: grading
+    scene: GradingScene
+    audio:
+      type: tts
+      text: "{{ grading_narration }}"
+    duration: from_audio
+    visual:
+      rubric_items: "{{ rubric_items }}"
+      grading_result: "{{ grading_result }}"
+      animation: progress_checkmarks
+
+  - id: result
+    scene: ResultScene
+    audio:
+      type: tts
+      text: "{{ result_comment }}"
+    duration: from_audio
+    pad_seconds: 1.0
+    visual:
+      grade: "{{ grading_result.points_awarded }}/{{ grading_result.max_points }}"
+      feedback: "{{ grading_result.feedback }}"
+      animation: scale_bounce

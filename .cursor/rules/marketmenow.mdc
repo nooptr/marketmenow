@@ -1,0 +1,41 @@
+---
+description: MarketMeNow architecture and coding conventions
+alwaysApply: true
+---
+
+# MarketMeNow Architecture Rules
+
+## Ports and Adapters
+
+- All platform-specific logic MUST live in adapter packages outside `src/marketmenow/`.
+  The `core/`, `models/`, `ports/`, `normaliser.py`, and `registry.py` are
+  platform-agnostic and MUST NOT import any platform SDK or contain any
+  platform-specific branching.
+- Adapters implement `typing.Protocol` interfaces from `ports/`. Never subclass
+  an ABC — use structural subtyping.
+- Register adapters by constructing a `PlatformBundle` and calling
+  `AdapterRegistry.register(bundle)`.
+
+## Adding a New Platform
+
+1. Create a new package (e.g. `adapters/twitter/`).
+2. Implement `PlatformAdapter`, `ContentRenderer`, `Uploader` protocols.
+3. Optionally implement `AnalyticsCollector`.
+4. Bundle into `PlatformBundle` and register with `AdapterRegistry`.
+5. No changes needed in `core/`, `models/`, or `ports/`.
+
+## Adding a New Content Modality
+
+1. Add a new variant to `ContentModality` enum in `models/content.py`.
+2. Create the Pydantic model in `models/content.py` inheriting `BaseContent`.
+3. Add a `case` arm in `ContentNormaliser.normalise()`.
+4. Existing adapters gain support by updating their `supported_modalities()`.
+
+## Python Style
+
+- Python >= 3.12. Use `from __future__ import annotations` in every file.
+- All data models: Pydantic `BaseModel` with `frozen=True`.
+- All adapter interfaces: `typing.Protocol` with `@runtime_checkable`.
+- Full type annotations everywhere. Never use `Any`.
+- Async-first: adapter methods are `async def`.
+- Immutable data flow: never mutate models, use `model_copy(update=...)`.
