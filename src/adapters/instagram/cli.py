@@ -52,11 +52,19 @@ def carousel_export(
     publish: Annotated[
         bool, typer.Option("--publish", help="Publish to Instagram after export")
     ] = False,
+    distribute: Annotated[
+        bool, typer.Option("--distribute", help="Distribute to all mapped platforms")
+    ] = False,
+    only: Annotated[
+        Optional[str],
+        typer.Option("--only", help="Comma-separated platform filter for --distribute"),
+    ] = None,
 ) -> None:
     """Export Figma frames as an Instagram carousel."""
     asyncio.run(
         _carousel_export_async(
-            file_key, frame_ids, caption, hashtags, output_dir, publish
+            file_key, frame_ids, caption, hashtags, output_dir, publish,
+            distribute, only,
         )
     )
 
@@ -68,6 +76,8 @@ async def _carousel_export_async(
     hashtags: str | None,
     output_dir: Path | None,
     publish: bool,
+    distribute: bool,
+    only: str | None,
 ) -> None:
     settings = _get_settings()
     out = output_dir or settings.output_dir
@@ -96,7 +106,11 @@ async def _carousel_export_async(
     for i, slide in enumerate(carousel.slides):
         console.print(f"  Slide {i + 1}: {slide.media.uri}")
 
-    if publish:
+    if distribute:
+        from marketmenow.core.distribute_cli import distribute_content
+
+        await distribute_content(carousel, console, only=only)
+    elif publish:
         from . import create_instagram_bundle
         from marketmenow.core.pipeline import ContentPipeline
         from marketmenow.registry import AdapterRegistry
@@ -120,14 +134,23 @@ def carousel_generate(
     publish: Annotated[
         bool, typer.Option("--publish", help="Publish to Instagram after generation")
     ] = False,
+    distribute: Annotated[
+        bool, typer.Option("--distribute", help="Distribute to all mapped platforms")
+    ] = False,
+    only: Annotated[
+        Optional[str],
+        typer.Option("--only", help="Comma-separated platform filter for --distribute"),
+    ] = None,
 ) -> None:
     """Generate a fresh Top-5 carousel using AI (Gemini + Imagen)."""
-    asyncio.run(_carousel_generate_async(output_dir, publish))
+    asyncio.run(_carousel_generate_async(output_dir, publish, distribute, only))
 
 
 async def _carousel_generate_async(
     output_dir: Path | None,
     publish: bool,
+    distribute: bool,
+    only: str | None,
 ) -> None:
     settings = _get_settings()
     if output_dir:
@@ -147,7 +170,11 @@ async def _carousel_generate_async(
         console.print(f"  Slide {i + 1}: {slide.media.uri}")
     console.print(f"\n[bold]Caption:[/bold] {carousel.caption}")
 
-    if publish:
+    if distribute:
+        from marketmenow.core.distribute_cli import distribute_content
+
+        await distribute_content(carousel, console, only=only)
+    elif publish:
         from . import create_instagram_bundle
         from marketmenow.core.pipeline import ContentPipeline
         from marketmenow.registry import AdapterRegistry
@@ -213,13 +240,20 @@ def reel_create(
     publish: Annotated[
         bool, typer.Option("--publish", help="Publish to Instagram after render")
     ] = False,
+    distribute: Annotated[
+        bool, typer.Option("--distribute", help="Distribute to all mapped platforms")
+    ] = False,
+    only: Annotated[
+        Optional[str],
+        typer.Option("--only", help="Comma-separated platform filter for --distribute"),
+    ] = None,
 ) -> None:
     """Generate a reel from a YAML template and assignment image."""
     asyncio.run(
         _reel_create_async(
             assignment, template, rubric, caption, hashtags, output_dir, tts,
             reaction_image, comment_username, comment_avatar, comment_text,
-            student_name, publish,
+            student_name, publish, distribute, only,
         )
     )
 
@@ -238,6 +272,8 @@ async def _reel_create_async(
     comment_text: str,
     student_name: str,
     publish: bool,
+    distribute: bool,
+    only: str | None,
 ) -> None:
     settings = _get_settings()
     updates: dict[str, object] = {}
@@ -296,7 +332,11 @@ async def _reel_create_async(
     caption_path.write_text(full_caption)
     console.print(f"[dim]Caption saved to {caption_path}[/dim]")
 
-    if publish:
+    if distribute:
+        from marketmenow.core.distribute_cli import distribute_content
+
+        await distribute_content(reel, console, only=only)
+    elif publish:
         from . import create_instagram_bundle
         from marketmenow.core.pipeline import ContentPipeline
         from marketmenow.registry import AdapterRegistry

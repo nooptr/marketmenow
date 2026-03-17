@@ -20,17 +20,20 @@ from typing import TYPE_CHECKING
 from langchain_core.tools import tool
 
 from marketmenow.models.content import (
+    Article,
     BaseContent,
-    Carousel,
-    CarouselSlide,
     ContentModality,
     DirectMessage,
+    Document,
+    ImagePost,
     MediaAsset,
+    Poll,
     Recipient,
-    Reel,
     Reply,
+    TextPost,
     Thread,
     ThreadEntry,
+    VideoPost,
 )
 from marketmenow.models.campaign import Campaign, CampaignTarget
 
@@ -61,16 +64,24 @@ def init(registry: AdapterRegistry) -> None:
 def _build_content(modality: str, payload: dict[str, object]) -> BaseContent:
     """Deserialise a JSON payload into the appropriate content model."""
     match modality:
-        case "reel":
-            return Reel(**payload)
-        case "carousel":
-            return Carousel(**payload)
+        case "video":
+            return VideoPost(**payload)
+        case "image":
+            return ImagePost(**payload)
         case "thread":
             return Thread(**payload)
         case "direct_message":
             return DirectMessage(**payload)
         case "reply":
             return Reply(**payload)
+        case "text_post":
+            return TextPost(**payload)
+        case "document":
+            return Document(**payload)
+        case "article":
+            return Article(**payload)
+        case "poll":
+            return Poll(**payload)
         case _:
             raise ValueError(f"Unknown modality: {modality}")
 
@@ -96,11 +107,12 @@ def mmn_publish(platform: str, modality: str, content_json: str) -> str:
 
     Args:
         platform: Target platform name (e.g. "instagram", "twitter").
-        modality: Content type — one of "reel", "carousel", "thread",
-                  "direct_message", or "reply".
-        content_json: JSON string with the content fields. For a reel this
+        modality: Content type — one of "video", "image", "thread",
+                  "direct_message", "reply", "text_post", "document",
+                  or "article".
+        content_json: JSON string with the content fields. For a video this
                       includes "video" (with "uri" and "mime_type"),
-                      "caption", and "hashtags". For a carousel: "slides",
+                      "caption", and "hashtags". For an image: "images",
                       "caption", "hashtags". See the MarketMeNow docs for
                       the full schema per modality.
 

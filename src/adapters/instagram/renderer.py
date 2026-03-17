@@ -4,11 +4,11 @@ from marketmenow.models.content import ContentModality
 from marketmenow.normaliser import NormalisedContent
 
 _IG_MAX_CAPTION = 2200
-_IG_CAROUSEL_MAX_SLIDES = 10
+_IG_MAX_IMAGES = 10
 
 _ASPECT_RATIOS: dict[ContentModality, dict[str, float]] = {
-    ContentModality.REEL: {"width": 1080, "height": 1920},
-    ContentModality.CAROUSEL: {"width": 1080, "height": 1080},
+    ContentModality.VIDEO: {"width": 1080, "height": 1920},
+    ContentModality.IMAGE: {"width": 1080, "height": 1080},
 }
 
 
@@ -36,8 +36,8 @@ class InstagramRenderer:
             extra["ig_aspect"] = _ASPECT_RATIOS[content.modality]
 
         media_assets = content.media_assets
-        if content.modality == ContentModality.CAROUSEL:
-            media_assets = media_assets[:_IG_CAROUSEL_MAX_SLIDES]
+        if content.modality == ContentModality.IMAGE:
+            media_assets = media_assets[:_IG_MAX_IMAGES]
 
         return content.model_copy(
             update={

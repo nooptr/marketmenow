@@ -28,7 +28,7 @@ class InstagramAdapter:
         return "instagram"
 
     def supported_modalities(self) -> frozenset[ContentModality]:
-        return frozenset({ContentModality.REEL, ContentModality.CAROUSEL})
+        return frozenset({ContentModality.VIDEO, ContentModality.IMAGE})
 
     async def authenticate(self, credentials: dict[str, str]) -> None:
         resp = await self._client.get(f"/{self._account_id}", params={"fields": "id,username"})
@@ -37,9 +37,9 @@ class InstagramAdapter:
     async def publish(self, content: NormalisedContent) -> PublishResult:
         media_refs: list[dict[str, str]] = content.extra.get("_media_refs", [])  # type: ignore[assignment]
 
-        if content.modality == ContentModality.CAROUSEL:
+        if content.modality == ContentModality.IMAGE:
             return await self._publish_carousel(content, media_refs)
-        if content.modality == ContentModality.REEL:
+        if content.modality == ContentModality.VIDEO:
             return await self._publish_reel(content, media_refs)
 
         return PublishResult(

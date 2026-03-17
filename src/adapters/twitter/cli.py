@@ -26,6 +26,7 @@ from .orchestrator import (
 )
 from .reply_generator import ReplyGenerator
 from .settings import TwitterSettings
+from .thread_generator import ThreadGenerator
 
 app = typer.Typer(
     name="mmn-x",
@@ -597,6 +598,136 @@ def test_reply(
             typer.echo(f"  {reply}")
 
     asyncio.run(_run())
+
+
+@app.command()
+def thread(
+    topic: str = typer.Option(
+        "", "--topic", "-t",
+        help="Topic hint for the thread (leave empty for random)",
+    ),
+    post: bool = typer.Option(
+        False, "--post", help="Actually post the thread (default: generate only)",
+    ),
+    headless: bool = typer.Option(
+        False, "--headless", help="Run the browser in headless mode",
+    ),
+    distribute: bool = typer.Option(
+        False, "--distribute", help="Distribute to all mapped platforms",
+    ),
+    only: str = typer.Option(
+        "", "--only", help="Comma-separated platform filter for --distribute",
+    ),
+) -> None:
+    """Generate (and optionally post) a viral Twitter/X thread.
+
+    By default, generates the thread and prints it for review.
+    Add --post to publish it to X.
+    """
+    settings = _apply_overrides(_settings(), headless=headless)
+
+    async def _run() -> None:
+        from .adapter import TwitterAdapter
+        from .renderer import TwitterRenderer
+
+        _ensure_vertex_credentials(settings)
+
+        generator = ThreadGenerator(
+            gemini_model=settings.gemini_model,
+            vertex_project=settings.vertex_ai_project,
+            vertex_location=settings.vertex_ai_location,
+        )
+
+        with console.status("[bold cyan]Generating thread...[/bold cyan]"):
+            generated = await generator.generate_thread(topic_hint=topic)
+
+        console.print()
+        console.print(
+            Panel(
+                f"[bold]{generated.topic}[/bold]",
+                title="Thread Topic",
+                border_style="cyan",
+            )
+        )
+        console.print()
+
+        for tweet in generated.tweets:
+            label = ""
+            if tweet.is_hook:
+                label = " [bold yellow](HOOK)[/bold yellow]"
+            elif tweet.is_cta:
+                label = " [bold green](CTA)[/bold green]"
+
+            char_count = len(tweet.text)
+            char_style = "green" if char_count <= 280 else "red"
+
+            console.print(
+                Panel(
+                    tweet.text,
+                    title=f"Tweet {tweet.position}{label}",
+                    subtitle=f"[{char_style}]{char_count}/280[/{char_style}]",
+                    border_style="blue" if not tweet.is_cta else "green",
+                )
+            )
+
+        if distribute:
+            from marketmenow.models.content import Thread, ThreadEntry
+            from marketmenow.core.distribute_cli import distribute_content
+
+            thread_content = Thread(
+                entries=[ThreadEntry(text=t.text) for t in generated.tweets],
+            )
+            await distribute_content(thread_content, console, only=only or None)
+            return
+
+        if not post:
+            console.print()
+            console.print(
+                "[dim]Thread generated (dry run). "
+                "Add --post to publish it to X or --distribute for all platforms.[/dim]"
+            )
+            return
+
+        browser = StealthBrowser(
+            session_path=settings.twitter_session_path,
+            user_data_dir=settings.twitter_user_data_dir,
+            headless=settings.headless,
+            slow_mo_ms=settings.slow_mo_ms,
+            proxy_url=settings.proxy_url,
+            viewport_width=settings.viewport_width,
+            viewport_height=settings.viewport_height,
+        )
+
+        async with browser:
+            if not await browser.is_logged_in():
+                console.print(
+                    "[red]Not logged in. Run `mmn-x login` first.[/red]"
+                )
+                return
+
+            tweet_texts = [t.text for t in generated.tweets]
+
+            console.print()
+            with console.status("[bold cyan]Posting thread...[/bold cyan]"):
+                success = await browser.post_thread(tweet_texts)
+
+            if success:
+                console.print(
+                    "[bold green]Thread posted successfully![/bold green]"
+                )
+            else:
+                console.print("[bold red]Failed to post thread.[/bold red]")
+
+    asyncio.run(_run())
+
+
+def _ensure_vertex_credentials(settings: TwitterSettings) -> None:
+    """Export GOOGLE_APPLICATION_CREDENTIALS so the genai SDK picks it up."""
+    import os
+
+    creds = settings.google_application_credentials
+    if creds and creds.exists():
+        os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve()))
 
 
 if __name__ == "__main__":

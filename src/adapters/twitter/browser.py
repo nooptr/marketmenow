@@ -297,6 +297,83 @@ class StealthBrowser:
         return True
 
     # ------------------------------------------------------------------
+    # Thread posting
+    # ------------------------------------------------------------------
+
+    async def post_thread(self, tweets: list[str]) -> bool:
+        """Compose and post a thread from the home timeline. Returns True on success."""
+        if not tweets:
+            return False
+
+        await self.navigate(_TWITTER_HOME)
+        await self._random_delay(1.5, 3.0)
+
+        compose_btn = self.page.locator('a[data-testid="SideNav_NewTweet_Button"]')
+        try:
+            await compose_btn.wait_for(state="visible", timeout=10_000)
+            await compose_btn.click()
+        except Exception:
+            compose_btn = self.page.locator('a[href="/compose/post"]')
+            await compose_btn.click()
+        await self._random_delay(1.0, 2.0)
+
+        tweet_box = self.page.locator('div[data-testid="tweetTextarea_0"]')
+        await tweet_box.wait_for(state="visible", timeout=10_000)
+        await tweet_box.click()
+        await self._random_delay(0.3, 0.8)
+
+        for char in tweets[0]:
+            await self.page.keyboard.type(char, delay=random.randint(30, 120))
+            if random.random() < 0.02:
+                await self._random_delay(0.2, 0.6)
+
+        await self._random_delay(0.5, 1.0)
+
+        for idx, tweet_text in enumerate(tweets[1:], start=1):
+            add_btn = self.page.locator(
+                'button[data-testid="addButton"], '
+                'div[role="button"][data-testid="addButton"]'
+            )
+            try:
+                await add_btn.wait_for(state="visible", timeout=5_000)
+                await add_btn.click()
+            except Exception:
+                logger.warning("Add-tweet button not found, trying keyboard shortcut")
+                await self.page.keyboard.press("Control+Enter")
+            await self._random_delay(0.8, 1.5)
+
+            next_box = self.page.locator(f'div[data-testid="tweetTextarea_{idx}"]')
+            try:
+                await next_box.wait_for(state="visible", timeout=8_000)
+            except Exception:
+                all_boxes = self.page.locator('div[data-testid^="tweetTextarea_"]')
+                count = await all_boxes.count()
+                if count > idx:
+                    next_box = all_boxes.nth(idx)
+                else:
+                    next_box = all_boxes.last
+
+            await next_box.click()
+            await self._random_delay(0.3, 0.8)
+
+            for char in tweet_text:
+                await self.page.keyboard.type(char, delay=random.randint(30, 120))
+                if random.random() < 0.02:
+                    await self._random_delay(0.2, 0.6)
+
+            await self._random_delay(0.5, 1.2)
+
+        await self._random_delay(1.0, 2.0)
+
+        post_all_btn = self.page.locator('button[data-testid="tweetButton"]')
+        await post_all_btn.wait_for(state="visible", timeout=10_000)
+        await post_all_btn.click()
+        await self._random_delay(3.0, 5.0)
+
+        logger.info("Thread posted (%d tweets)", len(tweets))
+        return True
+
+    # ------------------------------------------------------------------
     # Screenshot for debugging
     # ------------------------------------------------------------------
 

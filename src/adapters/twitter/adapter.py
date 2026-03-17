@@ -40,6 +40,8 @@ class TwitterAdapter:
     async def publish(self, content: NormalisedContent) -> PublishResult:
         if content.modality == ContentModality.REPLY:
             return await self._publish_reply(content)
+        if content.modality == ContentModality.THREAD:
+            return await self._publish_thread(content)
 
         return PublishResult(
             platform="twitter",
@@ -68,6 +70,30 @@ class TwitterAdapter:
             )
         except Exception as exc:
             logger.exception("Failed to post reply to %s", post_url)
+            return PublishResult(
+                platform="twitter",
+                success=False,
+                error_message=str(exc),
+            )
+
+    async def _publish_thread(self, content: NormalisedContent) -> PublishResult:
+        tweets = list(content.text_segments)
+        if not tweets:
+            return PublishResult(
+                platform="twitter",
+                success=False,
+                error_message="Thread has no tweets",
+            )
+
+        try:
+            success = await self._browser.post_thread(tweets)
+            return PublishResult(
+                platform="twitter",
+                success=success,
+                published_at=datetime.now(timezone.utc),
+            )
+        except Exception as exc:
+            logger.exception("Failed to post thread")
             return PublishResult(
                 platform="twitter",
                 success=False,
