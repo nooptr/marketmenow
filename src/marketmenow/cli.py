@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -8,7 +9,9 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from adapters.email.cli import app as email_app
 from adapters.instagram.cli import app as instagram_app, reel_app, carousel_app
+from adapters.linkedin.cli import app as linkedin_app
 from adapters.twitter.cli import app as twitter_app
 
 VERSION = importlib.metadata.version("marketmenow")
@@ -33,6 +36,18 @@ app.add_typer(
     twitter_app,
     name="twitter",
     help="Twitter/X engagement and reply automation.",
+    rich_help_panel="Platforms",
+)
+app.add_typer(
+    linkedin_app,
+    name="linkedin",
+    help="LinkedIn organization page posting.",
+    rich_help_panel="Platforms",
+)
+app.add_typer(
+    email_app,
+    name="email",
+    help="Email outreach via SMTP with CSV + Jinja2 templates.",
     rich_help_panel="Platforms",
 )
 
@@ -97,7 +112,7 @@ def main(
     """Open-source agentic marketing framework.
 
     Automate content creation, publishing, and engagement across
-    Instagram, Twitter/X, and more.
+    Instagram, Twitter/X, LinkedIn, and more.
     """
     if ctx.invoked_subcommand is None:
         console.print(_banner())
@@ -105,6 +120,71 @@ def main(
         console.print(
             "  Run [bold cyan]mmn --help[/] to see available commands.\n"
         )
+
+
+@app.command(rich_help_panel="Distribution")
+def distribute(
+    content_json: Path = typer.Option(
+        ..., "--content-json", "-c",
+        help="Path to a JSON file containing serialised BaseContent",
+        exists=True,
+        readable=True,
+    ),
+    only: str = typer.Option(
+        "", "--only",
+        help="Comma-separated platform filter (overrides default routing)",
+    ),
+) -> None:
+    """Distribute pre-created content to all mapped platforms.
+
+    The JSON file must contain a serialised BaseContent subclass
+    (VideoPost, ImagePost, Thread, etc.) with a valid ``modality`` field.
+    """
+    import asyncio
+    import json
+    from typing import Annotated, Union
+
+    from pydantic import Discriminator, Tag, TypeAdapter
+
+    from marketmenow.models.content import (
+        Article,
+        ContentModality,
+        DirectMessage,
+        Document,
+        ImagePost,
+        Reply,
+        TextPost,
+        Thread,
+        VideoPost,
+    )
+
+    def _discriminator(raw: dict[str, object]) -> str:
+        modality = raw.get("modality", "")
+        return str(modality)
+
+    AnyContent = Annotated[
+        Union[
+            Annotated[VideoPost, Tag(ContentModality.VIDEO.value)],
+            Annotated[ImagePost, Tag(ContentModality.IMAGE.value)],
+            Annotated[Thread, Tag(ContentModality.THREAD.value)],
+            Annotated[DirectMessage, Tag(ContentModality.DIRECT_MESSAGE.value)],
+            Annotated[Reply, Tag(ContentModality.REPLY.value)],
+            Annotated[TextPost, Tag(ContentModality.TEXT_POST.value)],
+            Annotated[Document, Tag(ContentModality.DOCUMENT.value)],
+            Annotated[Article, Tag(ContentModality.ARTICLE.value)],
+        ],
+        Discriminator(_discriminator),
+    ]
+
+    adapter = TypeAdapter(AnyContent)
+    raw = json.loads(content_json.read_text())
+    content = adapter.validate_python(raw)
+
+    console.print(f"[bold]Loaded:[/bold] {content.modality.value} (id={content.id})")
+
+    from marketmenow.core.distribute_cli import distribute_content
+
+    asyncio.run(distribute_content(content, console, only=only or None))
 
 
 @app.command(rich_help_panel="Info")
@@ -130,7 +210,7 @@ def platforms() -> None:
     table.add_row(
         "Instagram",
         "[green]Implemented[/]",
-        "Reels, Carousels",
+        "Videos, Images",
         "mmn instagram",
     )
     table.add_row(
@@ -139,11 +219,21 @@ def platforms() -> None:
         "Replies, Threads",
         "mmn twitter",
     )
+    table.add_row(
+        "LinkedIn",
+        "[green]Implemented[/]",
+        "Text, Images, Videos, Documents, Articles, Polls",
+        "mmn linkedin",
+    )
     table.add_row("Facebook", "[yellow]Planned[/]", "Reels, Carousels, DMs", "")
-    table.add_row("LinkedIn", "[yellow]Planned[/]", "Threads, Carousels", "")
     table.add_row("TikTok", "[yellow]Planned[/]", "Reels", "")
     table.add_row("YouTube Shorts", "[yellow]Planned[/]", "Reels", "")
-    table.add_row("Gmail / Email", "[yellow]Planned[/]", "Direct Messages", "")
+    table.add_row(
+        "Email / SMTP",
+        "[green]Implemented[/]",
+        "Bulk outreach (CSV + templates)",
+        "mmn email",
+    )
     table.add_row("Threads (Meta)", "[yellow]Planned[/]", "Threads", "")
     table.add_row("Pinterest", "[yellow]Planned[/]", "Carousels", "")
     table.add_row("Bluesky", "[yellow]Planned[/]", "Threads", "")

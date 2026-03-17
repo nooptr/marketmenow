@@ -1,0 +1,13 @@
+routes:
+  - modality: video
+    platforms: [instagram, linkedin]
+  - modality: image
+    platforms: [instagram, linkedin]
+  - modality: thread
+    platforms: [twitter]
+  - modality: article
+    platforms: [linkedin]
+  - modality: text_post
+    platforms: [twitter, linkedin]
+  - modality: document
+    platforms: [linkedin]

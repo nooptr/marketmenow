@@ -4,14 +4,18 @@ from pydantic import BaseModel, Field
 
 from marketmenow.exceptions import UnsupportedModalityError
 from marketmenow.models.content import (
+    Article,
     BaseContent,
-    Carousel,
     ContentModality,
     DirectMessage,
+    Document,
+    ImagePost,
     MediaAsset,
-    Reel,
+    Poll,
     Reply,
+    TextPost,
     Thread,
+    VideoPost,
 )
 
 
@@ -33,49 +37,54 @@ class ContentNormaliser:
 
     def normalise(self, content: BaseContent) -> NormalisedContent:
         match content:
-            case Reel():
-                return self._normalise_reel(content)
-            case Carousel():
-                return self._normalise_carousel(content)
+            case VideoPost():
+                return self._normalise_video(content)
+            case ImagePost():
+                return self._normalise_image(content)
             case Thread():
                 return self._normalise_thread(content)
             case DirectMessage():
                 return self._normalise_dm(content)
             case Reply():
                 return self._normalise_reply(content)
+            case TextPost():
+                return self._normalise_text_post(content)
+            case Document():
+                return self._normalise_document(content)
+            case Article():
+                return self._normalise_article(content)
+            case Poll():
+                return self._normalise_poll(content)
             case _:
                 raise UnsupportedModalityError(
                     platform="<core>",
                     modality=str(content.modality),
                 )
 
-    def _normalise_reel(self, reel: Reel) -> NormalisedContent:
-        media: list[MediaAsset] = [reel.video]
-        if reel.thumbnail is not None:
-            media.append(reel.thumbnail)
+    def _normalise_video(self, post: VideoPost) -> NormalisedContent:
+        media: list[MediaAsset] = [post.video]
+        if post.thumbnail is not None:
+            media.append(post.thumbnail)
 
         return NormalisedContent(
-            source=reel,
-            modality=ContentModality.REEL,
-            text_segments=[reel.caption] if reel.caption else [],
+            source=post,
+            modality=ContentModality.VIDEO,
+            text_segments=[post.caption] if post.caption else [],
             media_assets=media,
-            hashtags=reel.hashtags,
+            hashtags=post.hashtags,
         )
 
-    def _normalise_carousel(self, carousel: Carousel) -> NormalisedContent:
+    def _normalise_image(self, post: ImagePost) -> NormalisedContent:
         text_segments: list[str] = []
-        if carousel.caption:
-            text_segments.append(carousel.caption)
-        for slide in carousel.slides:
-            if slide.caption:
-                text_segments.append(slide.caption)
+        if post.caption:
+            text_segments.append(post.caption)
 
         return NormalisedContent(
-            source=carousel,
-            modality=ContentModality.CAROUSEL,
+            source=post,
+            modality=ContentModality.IMAGE,
             text_segments=text_segments,
-            media_assets=[slide.media for slide in carousel.slides],
-            hashtags=carousel.hashtags,
+            media_assets=list(post.images),
+            hashtags=post.hashtags,
         )
 
     def _normalise_thread(self, thread: Thread) -> NormalisedContent:
@@ -110,5 +119,60 @@ class ContentNormaliser:
             extra={
                 "in_reply_to_url": reply.in_reply_to_url,
                 "in_reply_to_platform_id": reply.in_reply_to_platform_id or "",
+            },
+        )
+
+    def _normalise_text_post(self, post: TextPost) -> NormalisedContent:
+        return NormalisedContent(
+            source=post,
+            modality=ContentModality.TEXT_POST,
+            text_segments=[post.body] if post.body else [],
+            media_assets=[],
+            hashtags=post.hashtags,
+        )
+
+    def _normalise_document(self, doc: Document) -> NormalisedContent:
+        text_segments: list[str] = []
+        if doc.caption:
+            text_segments.append(doc.caption)
+
+        return NormalisedContent(
+            source=doc,
+            modality=ContentModality.DOCUMENT,
+            text_segments=text_segments,
+            media_assets=[doc.file],
+            hashtags=doc.hashtags,
+            extra={"document_title": doc.title},
+        )
+
+    def _normalise_article(self, article: Article) -> NormalisedContent:
+        text_segments: list[str] = []
+        if article.commentary:
+            text_segments.append(article.commentary)
+
+        return NormalisedContent(
+            source=article,
+            modality=ContentModality.ARTICLE,
+            text_segments=text_segments,
+            media_assets=[],
+            hashtags=article.hashtags,
+            extra={"article_url": article.url},
+        )
+
+    def _normalise_poll(self, poll: Poll) -> NormalisedContent:
+        text_segments: list[str] = []
+        if poll.commentary:
+            text_segments.append(poll.commentary)
+
+        return NormalisedContent(
+            source=poll,
+            modality=ContentModality.POLL,
+            text_segments=text_segments,
+            media_assets=[],
+            hashtags=poll.hashtags,
+            extra={
+                "poll_question": poll.question,
+                "poll_options": poll.options,
+                "poll_duration_days": poll.duration_days,
             },
         )

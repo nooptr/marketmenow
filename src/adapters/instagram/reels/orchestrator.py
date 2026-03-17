@@ -8,7 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from jinja2 import Environment
-from marketmenow.models.content import MediaAsset, Reel
+from marketmenow.models.content import MediaAsset, VideoPost
 
 from ..grading.models import RubricItem
 from ..grading.service import SimpleGradingService
@@ -40,7 +40,7 @@ def _merge_default_visual(
 
 
 class ReelOrchestrator:
-    """End-to-end pipeline: template + assignment image -> rendered .mp4 Reel."""
+    """End-to-end pipeline: template + assignment image -> rendered .mp4 VideoPost."""
 
     def __init__(self, settings: InstagramSettings) -> None:
         self._settings = settings
@@ -101,8 +101,8 @@ class ReelOrchestrator:
         comment_avatar: Path | None = None,
         comment_text: str = "",
         student_name: str = "",
-    ) -> Reel:
-        """Full pipeline: grade -> script -> TTS -> render -> Reel model."""
+    ) -> VideoPost:
+        """Full pipeline: grade -> script -> TTS -> render -> VideoPost model."""
         template = self._loader.load(template_id)
         variables, resolved_beats = await self._script_gen.generate(
             template=template,
@@ -206,7 +206,7 @@ class ReelOrchestrator:
             "AIGrading", "EdTech", "Gradeasy", "AI", "SchoolHacks",
         ]
 
-        return Reel(
+        return VideoPost(
             video=video_asset,
             caption=final_caption,
             hashtags=final_hashtags,

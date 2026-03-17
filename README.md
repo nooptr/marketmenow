@@ -20,7 +20,9 @@ It ships with first-class integrations for **LangChain** and **[OpenClaw](https:
 | Platform | Status | Modalities | Highlights |
 |---|---|---|---|
 | **Instagram** | :white_check_mark: Implemented | Reels, Carousels | AI reel generation (Gemini + Remotion + TTS), Figma-to-carousel export, AI carousel generation (Gemini + Imagen) |
-| **X / Twitter** | :white_check_mark: Implemented | Replies, Threads | Browser-based engagement automation, AI reply generation (Gemini), stealth Playwright session management |
+| **X / Twitter** | :white_check_mark: Implemented | Replies, Threads | Browser-based engagement automation, AI reply generation (Gemini), AI thread generation (viral "5 things" listicles with hashtags & CTA), stealth Playwright session management |
+| **LinkedIn** | :white_check_mark: Implemented | Text, Images, Videos, Documents, Articles | Organization page posting via OAuth 2.0 REST API |
+| **Email / SMTP** | :white_check_mark: Implemented | Bulk outreach | CSV contact lists with row-range slicing, Jinja2 HTML templates, BCC to sender |
 
 > **Want to add a platform?** See [Contributing](#contributing) — the ports-and-adapters design makes it straightforward.
 
@@ -52,6 +54,8 @@ graph LR
         direction TB
         IG["Instagram"]
         TW["Twitter / X"]
+        LI["LinkedIn"]
+        EM["Email / SMTP"]
     end
 
     LC --> Orchestrator
@@ -65,6 +69,12 @@ graph LR
     TW -.-> Renderer
     TW -.-> Uploader
     TW -.-> Adapter
+    LI -.-> Renderer
+    LI -.-> Uploader
+    LI -.-> Adapter
+    EM -.-> Renderer
+    EM -.-> Uploader
+    EM -.-> Adapter
 ```
 
 ### Content Pipeline
@@ -141,6 +151,19 @@ FIGMA_API_TOKEN=your_figma_token
 TWITTER_USERNAME=your_username
 TWITTER_PASSWORD=your_password
 
+# LinkedIn
+LINKEDIN_CLIENT_ID=your_client_id
+LINKEDIN_CLIENT_SECRET=your_client_secret
+LINKEDIN_ORGANIZATION_ID=your_org_id
+
+# Email / SMTP
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=you@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=you@gmail.com
+SMTP_USE_TLS=true
+
 # AI / TTS
 GOOGLE_APPLICATION_CREDENTIALS=vertex.json
 VERTEX_AI_PROJECT=your_project_id
@@ -163,8 +186,18 @@ mmn instagram reel create \
   --template can_ai_grade_this
 
 # Run Twitter/X engagement
-mmn twitter login          # one-time interactive login
+mmn twitter login              # one-time interactive login
 mmn twitter engage --dry-run   # preview without posting
+mmn twitter thread             # generate a viral thread (preview)
+mmn twitter thread --post      # generate and publish a thread
+
+# Publish to LinkedIn
+mmn linkedin auth              # one-time OAuth consent
+mmn linkedin post --text "Hello from MarketMeNow!"
+
+# Send emails from a CSV
+mmn email send -f contacts.csv -t invite.html \
+  -s "Hey {{ name }}" -r 0-50 --dry-run
 ```
 
 ## CLI Reference
@@ -196,6 +229,30 @@ mmn twitter login               Interactive browser login (saves session)
 mmn twitter engage              Discover posts + generate & post replies
 mmn twitter discover            Preview discovered posts
 mmn twitter test-reply <URL>    Generate a reply for a specific tweet
+mmn twitter thread              Generate a viral thread (preview only)
+mmn twitter thread --post       Generate and publish a thread to X
+  -t, --topic   TEXT            Topic hint (e.g. "grading mistakes")
+  --headless                    Run the browser in headless mode
+```
+
+### LinkedIn
+
+```
+mmn linkedin auth               OAuth 2.0 browser authorization
+mmn linkedin status             Check auth status and organization info
+mmn linkedin post               Publish to your organization page
+                                  --text, --image, --video, --document, --article
+```
+
+### Email
+
+```
+mmn email send                  Send templated emails to a CSV slice
+  -f, --file      PATH          CSV file (must have an 'email' column)
+  -t, --template  PATH          HTML Jinja2 template file
+  -s, --subject   TEXT          Subject line (supports Jinja2 placeholders)
+  -r, --range     START-END    Row range, inclusive start / exclusive end
+  --dry-run                     Render without sending
 ```
 
 ## Integrations
@@ -339,7 +396,7 @@ The hexagonal architecture makes adding a new platform adapter straightforward. 
 
 4. **Add CLI commands** (optional) as a Typer app and wire them into the main `mmn` CLI.
 
-For a complete example, see the [Instagram adapter](src/adapters/instagram/) or the [Twitter adapter](src/adapters/twitter/).
+For a complete example, see the [Instagram adapter](src/adapters/instagram/), [Twitter adapter](src/adapters/twitter/), [LinkedIn adapter](src/adapters/linkedin/), or [Email adapter](src/adapters/email/).
 
 ## Configuration
 
@@ -352,6 +409,15 @@ All settings are loaded from environment variables (with `.env` file support via
 | `FIGMA_API_TOKEN` | Figma API token (for carousel export) |
 | `TWITTER_USERNAME` | Twitter/X login username |
 | `TWITTER_PASSWORD` | Twitter/X login password |
+| `LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 client ID |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 client secret |
+| `LINKEDIN_ORGANIZATION_ID` | LinkedIn organization/company page ID |
+| `SMTP_HOST` | SMTP server hostname (default: `smtp.gmail.com`) |
+| `SMTP_PORT` | SMTP server port (default: `587`) |
+| `SMTP_USERNAME` | SMTP login username |
+| `SMTP_PASSWORD` | SMTP login password (use an app password for Gmail) |
+| `SMTP_FROM` | Sender email address (also used as BCC) |
+| `SMTP_USE_TLS` | Enable STARTTLS (default: `true`) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path to Vertex AI / Gemini service account JSON |
 | `VERTEX_AI_PROJECT` | Google Cloud project ID |
 | `VERTEX_AI_LOCATION` | Google Cloud region (default: `us-central1`) |

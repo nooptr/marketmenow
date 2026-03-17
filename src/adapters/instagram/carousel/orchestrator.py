@@ -9,7 +9,7 @@ from uuid import uuid4
 from google import genai
 from google.genai import types as genai_types
 
-from marketmenow.models.content import Carousel, CarouselSlide, MediaAsset
+from marketmenow.models.content import ImagePost, MediaAsset
 
 from ..prompts import load_prompt
 from ..settings import InstagramSettings
@@ -23,7 +23,7 @@ def _ensure_vertex_credentials(settings: InstagramSettings) -> None:
 
 
 class CarouselOrchestrator:
-    """End-to-end pipeline: Gemini topic -> Imagen images -> Pillow slides -> Carousel."""
+    """End-to-end pipeline: Gemini topic -> Imagen images -> Pillow slides -> ImagePost."""
 
     GEMINI_MODEL = "gemini-2.5-flash"
     IMAGEN_MODEL = "imagen-3.0-generate-002"
@@ -42,14 +42,14 @@ class CarouselOrchestrator:
         )
         self._renderer = SlideRenderer(self._output_dir)
 
-    async def create_carousel(self) -> Carousel:
+    async def create_carousel(self) -> ImagePost:
         run_id = uuid4().hex[:8]
 
         content = await self._generate_content()
 
         cover_image_bytes, item_images = await self._generate_all_images(content)
 
-        slides: list[CarouselSlide] = []
+        images: list[MediaAsset] = []
 
         cover_path = self._renderer.render_cover(
             heading=content["cover_heading"],
@@ -57,10 +57,9 @@ class CarouselOrchestrator:
             image_bytes=cover_image_bytes,
             run_id=run_id,
         )
-        slides.append(CarouselSlide(
-            media=MediaAsset(uri=str(cover_path.resolve()), mime_type="image/png"),
-            caption=content["cover_heading"],
-        ))
+        images.append(
+            MediaAsset(uri=str(cover_path.resolve()), mime_type="image/png"),
+        )
 
         for item, img_bytes in zip(content["items"], item_images, strict=True):
             item_path = self._renderer.render_item(
@@ -70,13 +69,12 @@ class CarouselOrchestrator:
                 image_bytes=img_bytes,
                 run_id=run_id,
             )
-            slides.append(CarouselSlide(
-                media=MediaAsset(uri=str(item_path.resolve()), mime_type="image/png"),
-                caption=f"{item['number']}. {item['heading']}",
-            ))
+            images.append(
+                MediaAsset(uri=str(item_path.resolve()), mime_type="image/png"),
+            )
 
-        return Carousel(
-            slides=slides,
+        return ImagePost(
+            images=images,
             caption=content.get("caption", ""),
             hashtags=content.get("hashtags", []),
         )
