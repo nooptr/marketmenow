@@ -10,14 +10,13 @@ import {
 import type { VisualProps } from "../schema";
 import { GRADEASY_FONT } from "../fonts";
 
-const BRAND_BLUE = "#4A8DF8";
-const FRAME_BG = "#E0E0E0";
-
 export const TransitionScene: React.FC<{ visual: VisualProps }> = ({
   visual,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const brandColor = (visual.brand_color as string) ?? "#4A8DF8";
+  const frameBg = (visual.frame_background as string) ?? "#E0E0E0";
 
   const rawImage = (visual.image as string) ?? "";
   const imageSrc = rawImage ? staticFile(rawImage) : "";
@@ -44,7 +43,7 @@ export const TransitionScene: React.FC<{ visual: VisualProps }> = ({
   return (
     <AbsoluteFill
       style={{
-        background: BRAND_BLUE,
+        background: brandColor,
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -60,7 +59,7 @@ export const TransitionScene: React.FC<{ visual: VisualProps }> = ({
             alignItems: "center",
             width: "72%",
             height: "50%",
-            background: FRAME_BG,
+            background: frameBg,
             borderRadius: 8,
             padding: 24,
             transform: `translateY(${imageY}px) scale(${imageScale})`,
@@ -85,9 +84,9 @@ export const TransitionScene: React.FC<{ visual: VisualProps }> = ({
           left: 0,
           right: 0,
           height: "38%",
-          background: "#0A0A0A",
-          borderTopLeftRadius: 40,
-          borderTopRightRadius: 40,
+          background: (visual.panel_background as string) ?? "#0A0A0A",
+          borderTopLeftRadius: Number(visual.panel_border_radius ?? 40),
+          borderTopRightRadius: Number(visual.panel_border_radius ?? 40),
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -106,22 +105,22 @@ export const TransitionScene: React.FC<{ visual: VisualProps }> = ({
           <span
             style={{
               color: "#FFFFFF",
-              fontSize: 64,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            Gradeasy
+            {(visual.brand_name as string) ?? "Gradeasy"}
           </span>
           <span
             style={{
-              color: BRAND_BLUE,
-              fontSize: 64,
+              color: brandColor,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            .ai
+            {(visual.brand_suffix as string) ?? ".ai"}
           </span>
         </div>
       </div>

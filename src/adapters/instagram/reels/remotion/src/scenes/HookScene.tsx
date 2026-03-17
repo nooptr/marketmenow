@@ -21,7 +21,7 @@ export const HookScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
   return (
     <AbsoluteFill
       style={{
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+        background: (visual.background as string) ?? "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -30,13 +30,13 @@ export const HookScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         style={{
           opacity,
           transform: `scale(${scale})`,
-          color: "#fff",
-          fontSize: 52,
-          fontWeight: 800,
+          color: (visual.text_color as string) ?? "#fff",
+          fontSize: Number(visual.font_size ?? 52),
+          fontWeight: Number(visual.font_weight ?? 800),
           textAlign: "center",
-          padding: "0 60px",
-          fontFamily: "system-ui, sans-serif",
-          textShadow: "0 4px 30px rgba(0,0,0,0.5)",
+          padding: (visual.padding as string) ?? "0 60px",
+          fontFamily: (visual.font_family as string) ?? "system-ui, sans-serif",
+          textShadow: (visual.text_shadow as string) ?? "0 4px 30px rgba(0,0,0,0.5)",
         }}
       >
         {text}

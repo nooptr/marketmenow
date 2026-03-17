@@ -8,14 +8,15 @@ import {
 import type { VisualProps } from "../schema";
 import { GRADEASY_FONT } from "../fonts";
 
-const BRAND_BLUE = "#4A8DF8";
-
 export const GradeasyResponseScene: React.FC<{ visual: VisualProps }> = ({
   visual,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  const BRAND_BLUE = (visual.brand_color as string) ?? "#4A8DF8";
+  const brandName = (visual.brand_name as string) ?? "Gradeasy";
+  const brandSuffix = (visual.brand_suffix as string) ?? ".ai";
   const responseText = (visual.text_overlay as string) ?? "I gotchu bro";
 
   const logoScale = spring({
@@ -38,7 +39,7 @@ export const GradeasyResponseScene: React.FC<{ visual: VisualProps }> = ({
   return (
     <AbsoluteFill
       style={{
-        background: "#0A0A0A",
+        background: (visual.background as string) ?? "#0A0A0A",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -56,31 +57,31 @@ export const GradeasyResponseScene: React.FC<{ visual: VisualProps }> = ({
         <span
           style={{
             color: "#FFFFFF",
-            fontSize: 80,
+            fontSize: Number(visual.brand_font_size ?? 80),
             fontWeight: 700,
             letterSpacing: -1,
           }}
         >
-          Gradeasy
+          {brandName}
         </span>
         <span
           style={{
             color: BRAND_BLUE,
-            fontSize: 80,
+            fontSize: Number(visual.brand_font_size ?? 80),
             fontWeight: 700,
             letterSpacing: -1,
           }}
         >
-          .ai
+          {brandSuffix}
         </span>
       </div>
 
       {/* Response text */}
       <div
         style={{
-          color: "rgba(255,255,255,0.9)",
-          fontSize: 48,
-          fontWeight: 600,
+          color: (visual.text_color as string) ?? "rgba(255,255,255,0.9)",
+          fontSize: Number(visual.font_size ?? 48),
+          fontWeight: Number(visual.font_weight ?? 600),
             fontFamily: GRADEASY_FONT,
           textAlign: "center",
           lineHeight: 1.4,

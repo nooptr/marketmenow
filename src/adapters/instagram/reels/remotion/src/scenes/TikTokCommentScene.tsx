@@ -47,7 +47,7 @@ export const TikTokCommentScene: React.FC<{ visual: VisualProps }> = ({
   return (
     <AbsoluteFill
       style={{
-        background: "#000",
+        background: (visual.background as string) ?? "#000",
         justifyContent: "center",
         alignItems: "center",
         padding: 40,
@@ -57,8 +57,8 @@ export const TikTokCommentScene: React.FC<{ visual: VisualProps }> = ({
         style={{
           opacity: cardOpacity,
           transform: `translateY(${translateY}px)`,
-          background: "#fff",
-          borderRadius: 16,
+          background: (visual.card_background as string) ?? "#fff",
+          borderRadius: Number(visual.border_radius ?? 16),
           width: "90%",
           maxWidth: 900,
           overflow: "hidden",
@@ -98,10 +98,10 @@ export const TikTokCommentScene: React.FC<{ visual: VisualProps }> = ({
           <div style={{ flex: 1 }}>
             <div
               style={{
-                fontSize: 22,
+                fontSize: Number(visual.username_font_size ?? 22),
                 fontWeight: 700,
-                color: "#1a1a1a",
-                fontFamily: "system-ui, sans-serif",
+                color: (visual.username_color as string) ?? "#1a1a1a",
+                fontFamily: (visual.font_family as string) ?? "system-ui, sans-serif",
                 marginBottom: 4,
               }}
             >
@@ -109,10 +109,10 @@ export const TikTokCommentScene: React.FC<{ visual: VisualProps }> = ({
             </div>
             <div
               style={{
-                fontSize: 28,
+                fontSize: Number(visual.font_size ?? 28),
                 fontWeight: 400,
-                color: "#262626",
-                fontFamily: "system-ui, sans-serif",
+                color: (visual.text_color as string) ?? "#262626",
+                fontFamily: (visual.font_family as string) ?? "system-ui, sans-serif",
                 lineHeight: 1.4,
               }}
             >

@@ -10,6 +10,7 @@ from marketmenow.models.content import (
     DirectMessage,
     MediaAsset,
     Reel,
+    Reply,
     Thread,
 )
 
@@ -40,6 +41,8 @@ class ContentNormaliser:
                 return self._normalise_thread(content)
             case DirectMessage():
                 return self._normalise_dm(content)
+            case Reply():
+                return self._normalise_reply(content)
             case _:
                 raise UnsupportedModalityError(
                     platform="<core>",
@@ -96,4 +99,16 @@ class ContentNormaliser:
             media_assets=dm.attachments,
             subject=dm.subject,
             recipient_handles=[r.handle for r in dm.recipients],
+        )
+
+    def _normalise_reply(self, reply: Reply) -> NormalisedContent:
+        return NormalisedContent(
+            source=reply,
+            modality=ContentModality.REPLY,
+            text_segments=[reply.body],
+            media_assets=list(reply.media),
+            extra={
+                "in_reply_to_url": reply.in_reply_to_url,
+                "in_reply_to_platform_id": reply.in_reply_to_platform_id or "",
+            },
         )

@@ -42,7 +42,7 @@ export const FlashRevealScene: React.FC<{ visual: VisualProps }> = ({
   });
 
   return (
-    <AbsoluteFill style={{ background: "#000" }}>
+    <AbsoluteFill style={{ background: (visual.background as string) ?? "#000" }}>
       {/* Image underneath */}
       {imageSrc && (
         <AbsoluteFill
@@ -58,7 +58,7 @@ export const FlashRevealScene: React.FC<{ visual: VisualProps }> = ({
               maxWidth: "92%",
               maxHeight: "88%",
               objectFit: "contain",
-              borderRadius: 12,
+              borderRadius: Number(visual.border_radius ?? 12),
               transform: `scale(${zoom})`,
             }}
           />

@@ -26,6 +26,15 @@ class VisualSpec(BaseModel, frozen=True):
     props: dict[str, object] = Field(default_factory=dict)
 
 
+class TransitionSpec(BaseModel, frozen=True):
+    """Entry or exit transition applied to a beat in the Remotion renderer."""
+
+    type: str = "none"
+    duration_frames: int = 0
+    direction: str = ""
+    easing: str = ""
+
+
 class BeatDefinition(BaseModel, frozen=True):
     """A single beat in a reel template, as defined in YAML."""
 
@@ -36,6 +45,24 @@ class BeatDefinition(BaseModel, frozen=True):
     fixed_seconds: float = 0.0
     pad_seconds: float = 0.0
     visual: dict[str, object] = Field(default_factory=dict)
+    entry_transition: TransitionSpec = Field(default_factory=TransitionSpec)
+    exit_transition: TransitionSpec = Field(default_factory=TransitionSpec)
+
+
+class PipelineStepDef(BaseModel, frozen=True):
+    """A single step in the template's content-generation pipeline."""
+
+    id: str
+    type: str
+    inputs: dict[str, object] = Field(default_factory=dict)
+    output_var: str = ""
+    output_fields: list[str] = Field(default_factory=list)
+
+
+class PipelineConfig(BaseModel, frozen=True):
+    """Declarative pipeline configuration embedded in a reel template."""
+
+    steps: list[PipelineStepDef] = Field(default_factory=list)
 
 
 class ReelTemplate(BaseModel, frozen=True):
@@ -45,8 +72,13 @@ class ReelTemplate(BaseModel, frozen=True):
     name: str
     aspect_ratio: str = "9:16"
     fps: int = 30
+    composition_id: str = "ReelFromTemplate"
     variables: list[str] = Field(default_factory=list)
     beats: list[BeatDefinition]
+    pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
+    default_visual: dict[str, object] = Field(default_factory=dict)
+    caption_template: str = ""
+    hashtags: list[str] = Field(default_factory=list)
 
 
 class ResolvedBeat(BaseModel, frozen=True):
@@ -59,6 +91,8 @@ class ResolvedBeat(BaseModel, frozen=True):
     duration_frames: int
     visual: dict[str, object] = Field(default_factory=dict)
     subtitle: str = ""
+    entry_transition: TransitionSpec = Field(default_factory=TransitionSpec)
+    exit_transition: TransitionSpec = Field(default_factory=TransitionSpec)
 
 
 class ReelScript(BaseModel, frozen=True):
@@ -67,6 +101,7 @@ class ReelScript(BaseModel, frozen=True):
     template_id: str
     fps: int
     aspect_ratio: str
+    composition_id: str = "ReelFromTemplate"
     total_duration_frames: int
     beats: list[ResolvedBeat]
     variables: dict[str, object] = Field(default_factory=dict)

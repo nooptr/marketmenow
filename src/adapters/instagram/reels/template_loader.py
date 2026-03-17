@@ -4,9 +4,46 @@ from pathlib import Path
 
 import yaml
 
-from .models import AudioSpec, AudioType, BeatDefinition, ReelTemplate
+from .models import (
+    AudioSpec,
+    AudioType,
+    BeatDefinition,
+    PipelineConfig,
+    PipelineStepDef,
+    ReelTemplate,
+    TransitionSpec,
+)
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+
+
+def _parse_transition(raw: dict[str, object] | None) -> TransitionSpec:
+    if not raw:
+        return TransitionSpec()
+    return TransitionSpec(
+        type=str(raw.get("type", "none")),
+        duration_frames=int(raw.get("duration_frames", 0)),
+        direction=str(raw.get("direction", "")),
+        easing=str(raw.get("easing", "")),
+    )
+
+
+def _parse_pipeline(raw: dict[str, object] | None) -> PipelineConfig:
+    if not raw:
+        return PipelineConfig()
+    steps: list[PipelineStepDef] = []
+    for s in raw.get("steps", []):  # type: ignore[union-attr]
+        inputs = s.get("inputs", {})
+        steps.append(
+            PipelineStepDef(
+                id=s["id"],
+                type=s["type"],
+                inputs=inputs if isinstance(inputs, dict) else {},
+                output_var=s.get("output_var", ""),
+                output_fields=s.get("output_fields", []),
+            )
+        )
+    return PipelineConfig(steps=steps)
 
 
 class ReelTemplateLoader:
@@ -46,6 +83,8 @@ class ReelTemplateLoader:
                 fixed_seconds=b.get("fixed_seconds", 0.0),
                 pad_seconds=b.get("pad_seconds", 0.0),
                 visual=b.get("visual", {}),
+                entry_transition=_parse_transition(b.get("entry_transition")),
+                exit_transition=_parse_transition(b.get("exit_transition")),
             )
             for b in raw.get("beats", [])
         ]
@@ -55,8 +94,13 @@ class ReelTemplateLoader:
             name=raw["name"],
             aspect_ratio=raw.get("aspect_ratio", "9:16"),
             fps=raw.get("fps", 30),
+            composition_id=raw.get("composition_id", "ReelFromTemplate"),
             variables=raw.get("variables", []),
             beats=beats,
+            pipeline=_parse_pipeline(raw.get("pipeline")),
+            default_visual=raw.get("default_visual", {}),
+            caption_template=raw.get("caption_template", ""),
+            hashtags=raw.get("hashtags", []),
         )
 
     def validate(self, template_id: str) -> list[str]:
@@ -84,5 +128,19 @@ class ReelTemplateLoader:
                 and beat.duration != "fixed"
             ):
                 issues.append(f"Beat '{beat.id}': SFX audio has no file path")
+
+            for label, t in [("entry", beat.entry_transition), ("exit", beat.exit_transition)]:
+                valid_types = {"none", "fade", "slide", "scale", "wipe", "spring"}
+                if t.type not in valid_types:
+                    issues.append(
+                        f"Beat '{beat.id}': {label}_transition type "
+                        f"'{t.type}' not in {valid_types}"
+                    )
+
+        for step in tmpl.pipeline.steps:
+            if not step.id:
+                issues.append("Pipeline step missing 'id'")
+            if not step.type:
+                issues.append(f"Pipeline step '{step.id}' missing 'type'")
 
         return issues

@@ -9,12 +9,14 @@ import {
 import type { VisualProps } from "../schema";
 import { GRADEASY_FONT } from "../fonts";
 
-const BRAND_BLUE = "#4A8DF8";
-const FRAME_BG = "#E0E0E0";
-
 export const RoastScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  const BRAND_BLUE = (visual.brand_color as string) ?? "#4A8DF8";
+  const FRAME_BG = (visual.frame_background as string) ?? "#E0E0E0";
+  const brandName = (visual.brand_name as string) ?? "Gradeasy";
+  const brandSuffix = (visual.brand_suffix as string) ?? ".ai";
 
   const rawImage = (visual.image as string) ?? "";
   const imageSrc = rawImage ? staticFile(rawImage) : "";
@@ -70,9 +72,9 @@ export const RoastScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
           left: 0,
           right: 0,
           height: "38%",
-          background: "#0A0A0A",
-          borderTopLeftRadius: 40,
-          borderTopRightRadius: 40,
+          background: (visual.panel_background as string) ?? "#0A0A0A",
+          borderTopLeftRadius: Number(visual.panel_border_radius ?? 40),
+          borderTopRightRadius: Number(visual.panel_border_radius ?? 40),
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -90,22 +92,22 @@ export const RoastScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
           <span
             style={{
               color: "#FFFFFF",
-              fontSize: 64,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            Gradeasy
+            {brandName}
           </span>
           <span
             style={{
               color: BRAND_BLUE,
-              fontSize: 64,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            .ai
+            {brandSuffix}
           </span>
         </div>
       </div>
