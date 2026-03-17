@@ -9,14 +9,13 @@ import {
 import type { VisualProps } from "../schema";
 import { GRADEASY_FONT } from "../fonts";
 
-const BRAND_BLUE = "#4A8DF8";
-const FRAME_BG = "#E0E0E0";
-
 export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
   visual,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
+  const brandColor = (visual.brand_color as string) ?? "#4A8DF8";
+  const frameBg = (visual.frame_background as string) ?? "#E0E0E0";
 
   const rawImage = (visual.image as string) ?? "";
   const imageSrc = rawImage ? staticFile(rawImage) : "";
@@ -39,7 +38,7 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
   );
 
   return (
-    <AbsoluteFill style={{ background: BRAND_BLUE }}>
+    <AbsoluteFill style={{ background: brandColor }}>
       {/* Assignment image in gray frame — matching TransitionScene layout */}
       {imageSrc && (
         <div
@@ -53,7 +52,7 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
             alignItems: "center",
             width: "72%",
             height: "50%",
-            background: FRAME_BG,
+            background: frameBg,
             borderRadius: 8,
             padding: 24,
             overflow: "hidden",
@@ -76,8 +75,8 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
               left: 0,
               width: "100%",
               height: 3,
-              background: `linear-gradient(90deg, transparent, ${BRAND_BLUE}, transparent)`,
-              boxShadow: `0 0 16px ${BRAND_BLUE}, 0 0 32px rgba(74,141,248,0.3)`,
+              background: `linear-gradient(90deg, transparent, ${brandColor}, transparent)`,
+              boxShadow: `0 0 16px ${brandColor}, 0 0 32px rgba(74,141,248,0.3)`,
               opacity: scanLineProgress < 98 ? 0.95 : 0,
             }}
           />
@@ -92,9 +91,9 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
           left: 0,
           right: 0,
           height: "38%",
-          background: "#0A0A0A",
-          borderTopLeftRadius: 40,
-          borderTopRightRadius: 40,
+          background: (visual.panel_background as string) ?? "#0A0A0A",
+          borderTopLeftRadius: Number(visual.panel_border_radius ?? 40),
+          borderTopRightRadius: Number(visual.panel_border_radius ?? 40),
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -112,28 +111,28 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
           <span
             style={{
               color: "#FFFFFF",
-              fontSize: 64,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            Gradeasy
+            {(visual.brand_name as string) ?? "Gradeasy"}
           </span>
           <span
             style={{
-              color: BRAND_BLUE,
-              fontSize: 64,
+              color: brandColor,
+              fontSize: Number(visual.brand_font_size ?? 64),
               fontWeight: 700,
               letterSpacing: -1,
             }}
           >
-            .ai
+            {(visual.brand_suffix as string) ?? ".ai"}
           </span>
         </div>
         <div
           style={{
             color: "rgba(255,255,255,0.7)",
-            fontSize: 28,
+            fontSize: Number(visual.status_font_size ?? 28),
             fontWeight: 500,
             fontFamily: GRADEASY_FONT,
             letterSpacing: 0.5,
@@ -142,7 +141,7 @@ export const SegmentationScene: React.FC<{ visual: VisualProps }> = ({
             textAlign: "center",
           }}
         >
-          {`Analyzing assignment${dots}`}
+          {`${(visual.status_text as string) ?? "Analyzing assignment"}${dots}`}
         </div>
       </div>
     </AbsoluteFill>

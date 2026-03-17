@@ -17,6 +17,19 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  const background =
+    (visual.background as string) ??
+    "linear-gradient(135deg, #4285f4, #5c6bc0)";
+  const cardBackground = (visual.card_background as string) ?? "#fff";
+  const headerFontSize = Number(visual.header_font_size ?? 48);
+  const headerFontWeight = Number(visual.header_font_weight ?? 900);
+  const textColor = (visual.text_color as string) ?? "#1a1a1a";
+  const itemBackground = (visual.item_background as string) ?? "#f8f8f8";
+  const itemBorder =
+    (visual.item_border as string) ?? "1.5px solid #e0e0e0";
+  const itemBorderRadius = Number(visual.item_border_radius ?? 20);
+  const headerText = (visual.header_text as string) ?? "Rubric";
+
   let rubricItems: RubricItem[] = [];
   const rawItems = visual.rubric_items;
   if (Array.isArray(rawItems)) {
@@ -44,7 +57,7 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
   return (
     <AbsoluteFill
       style={{
-        background: "linear-gradient(135deg, #4285f4, #5c6bc0)",
+        background,
         justifyContent: "center",
         alignItems: "center",
         padding: 36,
@@ -54,7 +67,7 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         style={{
           opacity: cardOpacity,
           transform: `scale(${cardScale})`,
-          background: "#fff",
+          background: cardBackground,
           borderRadius: 28,
           padding: "40px 36px",
           width: "94%",
@@ -68,14 +81,14 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         {/* Header */}
         <div
           style={{
-            fontSize: 48,
-            fontWeight: 900,
-            color: "#1a1a1a",
+            fontSize: headerFontSize,
+            fontWeight: headerFontWeight,
+            color: textColor,
             fontFamily: "system-ui, sans-serif",
             marginBottom: 32,
           }}
         >
-          Rubric
+          {headerText}
         </div>
 
         {/* Rubric items */}
@@ -95,9 +108,9 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
               style={{
                 opacity,
                 transform: `translateY(${translateY}px)`,
-                background: "#f8f8f8",
-                border: "1.5px solid #e0e0e0",
-                borderRadius: 20,
+                background: itemBackground,
+                border: itemBorder,
+                borderRadius: itemBorderRadius,
                 padding: "28px 30px",
                 marginBottom: 20,
               }}
@@ -133,7 +146,7 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
                     style={{
                       fontSize: 32,
                       fontWeight: 800,
-                      color: "#1a1a1a",
+                      color: textColor,
                       fontFamily: "system-ui, sans-serif",
                     }}
                   >
@@ -144,7 +157,7 @@ export const RubricScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
                   style={{
                     fontSize: 32,
                     fontWeight: 700,
-                    color: "#1a1a1a",
+                    color: textColor,
                     fontFamily: "system-ui, sans-serif",
                     flexShrink: 0,
                   }}

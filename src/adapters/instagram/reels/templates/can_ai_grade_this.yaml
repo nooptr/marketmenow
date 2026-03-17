@@ -2,6 +2,64 @@ id: can_ai_grade_this
 name: "Can Our AI Grade This"
 aspect_ratio: "9:16"
 fps: 30
+composition_id: ReelFromTemplate
+
+default_visual:
+  brand_color: "#4A8DF8"
+  brand_name: "Gradeasy"
+  brand_suffix: ".ai"
+  font_family: "system-ui, sans-serif"
+  panel_background: "#0A0A0A"
+  frame_background: "#E0E0E0"
+
+caption_template: |
+  Can our AI grade this?
+
+  {{ result_comment }}
+
+  Try Gradeasy now at gradeasy.ai
+
+hashtags:
+  - AIGrading
+  - EdTech
+  - Gradeasy
+  - AI
+  - SchoolHacks
+
+pipeline:
+  steps:
+    - id: generate_rubric
+      type: rubric
+      inputs:
+        assignment_image: "{{ assignment_image }}"
+      output_var: rubric_items
+
+    - id: grade_assignment
+      type: grading
+      inputs:
+        assignment_image: "{{ assignment_image }}"
+        rubric_items: "{{ rubric_items }}"
+      output_var: grading_result
+
+    - id: write_script
+      type: llm
+      inputs:
+        prompt: script_generation
+        model: gemini-3-flash-preview
+        temperature: 0.8
+        context:
+          template_name: "{{ name }}"
+          points_awarded: "{{ grading_result.points_awarded }}"
+          max_points: "{{ grading_result.max_points }}"
+          feedback: "{{ grading_result.feedback }}"
+          rubric_eval_text: "{{ grading_result.rubric_evaluations }}"
+      output_fields:
+        - reaction_text
+        - roast_text
+        - gradeasy_response
+        - rubric_narration
+        - grading_narration
+        - result_comment
 
 variables:
   - assignment_image
@@ -20,6 +78,9 @@ variables:
 beats:
   - id: hook_text
     scene: TikTokCommentScene
+    entry_transition:
+      type: fade
+      duration_frames: 8
     audio:
       type: tts
       text: "{{ comment_text }}"
@@ -31,10 +92,12 @@ beats:
       avatar: "{{ comment_avatar }}"
       comment_text: "{{ comment_text }}"
       show_image: false
-      animation: fade_in_scale
 
   - id: hook_image
     scene: TikTokCommentScene
+    entry_transition:
+      type: scale
+      duration_frames: 6
     audio:
       type: sfx
       file: ""
@@ -46,10 +109,12 @@ beats:
       comment_text: "{{ comment_text }}"
       comment_image: "{{ assignment_image }}"
       show_image: true
-      animation: fade_in_scale
 
   - id: bruh_reveal
     scene: RevealScene
+    entry_transition:
+      type: spring
+      duration_frames: 10
     audio:
       type: sfx
       file: assets/sfx/bruh.mp3
@@ -60,6 +125,8 @@ beats:
 
   - id: reaction
     scene: FlashRevealScene
+    entry_transition:
+      type: none
     audio:
       type: sfx
       file: assets/sfx/tinnitus.mp3
@@ -72,6 +139,10 @@ beats:
 
   - id: roast
     scene: RoastScene
+    entry_transition:
+      type: slide
+      duration_frames: 10
+      direction: up
     audio:
       type: tts
       text: "{{ roast_text }}"
@@ -83,6 +154,9 @@ beats:
 
   - id: gradeasy_response
     scene: GradeasyResponseScene
+    entry_transition:
+      type: scale
+      duration_frames: 8
     audio:
       type: tts
       text: "{{ gradeasy_response }}"
@@ -94,6 +168,10 @@ beats:
 
   - id: transition
     scene: TransitionScene
+    entry_transition:
+      type: slide
+      duration_frames: 8
+      direction: left
     audio:
       type: sfx
       file: assets/sfx/whoosh.mp3
@@ -101,10 +179,12 @@ beats:
     pad_seconds: 0.3
     visual:
       image: "{{ assignment_image }}"
-      animation: slide_to_platform
 
   - id: segmentation
     scene: SegmentationScene
+    entry_transition:
+      type: fade
+      duration_frames: 10
     audio:
       type: sfx
       file: ""
@@ -112,9 +192,14 @@ beats:
     fixed_seconds: 2.5
     visual:
       image: "{{ assignment_image }}"
+      status_text: "Analyzing assignment"
 
   - id: rubric_creation
     scene: RubricScene
+    entry_transition:
+      type: slide
+      duration_frames: 10
+      direction: up
     audio:
       type: tts
       text: "{{ rubric_narration }}"
@@ -122,10 +207,12 @@ beats:
     duration: from_audio
     visual:
       rubric_items: "{{ rubric_items }}"
-      animation: stagger_appear
 
   - id: grading
     scene: GradingScene
+    entry_transition:
+      type: fade
+      duration_frames: 12
     audio:
       type: tts
       text: "{{ grading_narration }}"
@@ -136,10 +223,15 @@ beats:
       rubric_items: "{{ rubric_items }}"
       grading_result: "{{ grading_result }}"
       background_image: "{{ assignment_image }}"
-      animation: progress_checkmarks
 
   - id: result
     scene: ResultScene
+    entry_transition:
+      type: spring
+      duration_frames: 12
+    exit_transition:
+      type: fade
+      duration_frames: 15
     audio:
       type: tts
       text: "{{ result_comment }}"
@@ -148,4 +240,3 @@ beats:
     visual:
       grade: "{{ grading_result.points_awarded }}/{{ grading_result.max_points }}"
       feedback: "{{ grading_result.feedback }}"
-      animation: scale_bounce

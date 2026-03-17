@@ -1,0 +1,161 @@
+[
+  {
+    "name": "mmn_platforms",
+    "description": "List all marketing platforms supported by MarketMeNow and their content modalities.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "command": "mmn platforms"
+  },
+  {
+    "name": "mmn_instagram_reel_create",
+    "description": "Generate an Instagram reel from a template and an assignment image. Uses AI (Gemini) for grading, TTS for voiceover, and Remotion for video composition.",
+    "parameters": {
+      "type": "object",
+      "required": ["assignment"],
+      "properties": {
+        "assignment": {
+          "type": "string",
+          "description": "Path to the assignment/source image for the reel."
+        },
+        "template": {
+          "type": "string",
+          "description": "Template ID to use (default: can_ai_grade_this).",
+          "default": "can_ai_grade_this"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Caption text for the reel."
+        },
+        "hashtags": {
+          "type": "string",
+          "description": "Comma-separated hashtags."
+        },
+        "tts": {
+          "type": "string",
+          "enum": ["elevenlabs", "openai", "local", "kokoro"],
+          "description": "TTS provider to use for voiceover."
+        },
+        "publish": {
+          "type": "boolean",
+          "description": "Whether to publish to Instagram immediately.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": "mmn instagram reel create --assignment {assignment} --template {template} {?caption:--caption {caption}} {?hashtags:--hashtags {hashtags}} {?tts:--tts {tts}} {?publish:--publish}"
+  },
+  {
+    "name": "mmn_instagram_carousel_generate",
+    "description": "Generate a Top-5 carousel using AI (Gemini + Imagen) and optionally publish it to Instagram.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "output_dir": {
+          "type": "string",
+          "description": "Output directory for generated carousel images."
+        },
+        "publish": {
+          "type": "boolean",
+          "description": "Whether to publish to Instagram immediately.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": "mmn instagram carousel generate {?output_dir:--output-dir {output_dir}} {?publish:--publish}"
+  },
+  {
+    "name": "mmn_instagram_carousel_export",
+    "description": "Export Figma frames as an Instagram carousel. Requires a Figma API token.",
+    "parameters": {
+      "type": "object",
+      "required": ["file_key"],
+      "properties": {
+        "file_key": {
+          "type": "string",
+          "description": "Figma file key."
+        },
+        "frame_ids": {
+          "type": "string",
+          "description": "Comma-separated Figma frame/node IDs to export."
+        },
+        "caption": {
+          "type": "string",
+          "description": "Carousel caption."
+        },
+        "hashtags": {
+          "type": "string",
+          "description": "Comma-separated hashtags."
+        },
+        "publish": {
+          "type": "boolean",
+          "description": "Whether to publish to Instagram immediately.",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": "mmn instagram carousel export --file-key {file_key} {?frame_ids:--frame-ids {frame_ids}} {?caption:--caption {caption}} {?hashtags:--hashtags {hashtags}} {?publish:--publish}"
+  },
+  {
+    "name": "mmn_instagram_reel_list_templates",
+    "description": "List all available YAML reel templates with their beat counts and FPS.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "command": "mmn instagram reel list-templates"
+  },
+  {
+    "name": "mmn_twitter_engage",
+    "description": "Run the Twitter/X engagement loop: discover relevant posts, generate AI replies, and post them.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dry_run": {
+          "type": "boolean",
+          "description": "Generate replies without actually posting them.",
+          "default": false
+        },
+        "max_replies": {
+          "type": "integer",
+          "description": "Override the max number of replies (0 = use settings default).",
+          "default": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": "mmn twitter engage {?dry_run:--dry-run} {?max_replies:--max-replies {max_replies}}"
+  },
+  {
+    "name": "mmn_twitter_discover",
+    "description": "Discover relevant Twitter/X posts without replying. Useful for previewing what the engagement bot would target.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "command": "mmn twitter discover"
+  },
+  {
+    "name": "mmn_twitter_test_reply",
+    "description": "Generate an AI reply for a specific tweet URL without posting it.",
+    "parameters": {
+      "type": "object",
+      "required": ["post_url"],
+      "properties": {
+        "post_url": {
+          "type": "string",
+          "description": "Full URL of the tweet to generate a reply for."
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": "mmn twitter test-reply {post_url}"
+  }
+]

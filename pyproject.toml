@@ -1,12 +1,23 @@
 [project]
 name = "marketmenow"
 version = "0.1.0"
-description = "Modular marketing automation framework with a ports-and-adapters architecture"
+description = "Open-source agentic marketing framework with a ports-and-adapters architecture"
 readme = "README.md"
+license = "MIT"
 authors = [
     { email = "arnrustagi@gmail.com" }
 ]
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
 dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
@@ -19,10 +30,20 @@ dependencies = [
     "Pillow>=10.0",
     "kokoro-onnx>=0.4",
     "soundfile>=0.12",
+    "playwright>=1.40",
+    "playwright-stealth>=2.0",
 ]
 
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.3"]
+
+[project.urls]
+Homepage = "https://github.com/Wayground/marketmenow"
+Repository = "https://github.com/Wayground/marketmenow"
+Issues = "https://github.com/Wayground/marketmenow/issues"
+
 [project.scripts]
-mmn = "adapters.instagram.cli:app"
+mmn = "marketmenow.cli:app"
 
 [tool.uv.build-backend]
 module-name = ["marketmenow", "adapters"]

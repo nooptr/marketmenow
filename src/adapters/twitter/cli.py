@@ -1,0 +1,603 @@
+from __future__ import annotations
+
+import asyncio
+import csv
+import logging
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from time import monotonic
+
+import typer
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+from .browser import StealthBrowser
+from .discovery import DiscoveredPost
+from .orchestrator import (
+    ApprovalDecision,
+    ApprovalResult,
+    EngagementOrchestrator,
+    EngagementStats,
+    GeneratedReply,
+)
+from .reply_generator import ReplyGenerator
+from .settings import TwitterSettings
+
+app = typer.Typer(
+    name="mmn-x",
+    help="MarketMeNow Twitter/X engagement CLI",
+    no_args_is_help=True,
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+console = Console()
+
+_NOISY_LOGGERS = (
+    "adapters.twitter",
+    "httpx",
+    "httpcore",
+    "google_genai",
+    "google.auth",
+    "google.auth.transport",
+    "urllib3",
+)
+
+
+def _quiet_loggers() -> dict[str, int]:
+    """Silence noisy third-party loggers, return previous levels."""
+    prev: dict[str, int] = {}
+    for name in _NOISY_LOGGERS:
+        lg = logging.getLogger(name)
+        prev[name] = lg.level
+        lg.setLevel(logging.WARNING)
+    return prev
+
+
+def _restore_loggers(prev: dict[str, int]) -> None:
+    for name, level in prev.items():
+        logging.getLogger(name).setLevel(level)
+
+
+# ── Rich progress UI ────────────────────────────────────────────────
+
+
+class _ReplyEntry:
+    __slots__ = ("idx", "total", "handle", "status", "reply_text")
+
+    def __init__(self, idx: int, total: int, handle: str) -> None:
+        self.idx = idx
+        self.total = total
+        self.handle = handle
+        self.status: str = "generating"
+        self.reply_text: str = ""
+
+
+class _RichProgress:
+    """Live-updating terminal UI for the engagement loop."""
+
+    def __init__(self, live: Live) -> None:
+        self._live = live
+        self._total_handles = 0
+        self._total_hashtags = 0
+        self._handles_done: list[tuple[str, int]] = []
+        self._hashtags_done: list[tuple[str, int]] = []
+        self._total_posts = 0
+        self._candidates = 0
+        self._replies: list[_ReplyEntry] = []
+        self._phase = "discovery"
+        self._status_text = ""
+        self._start = monotonic()
+
+    def _elapsed(self) -> str:
+        secs = int(monotonic() - self._start)
+        m, s = divmod(secs, 60)
+        return f"{m}:{s:02d}"
+
+    def _render(self) -> Table:
+        grid = Table.grid(padding=(0, 1))
+        grid.add_column()
+
+        if self._phase == "discovery":
+            grid.add_row(self._render_discovery())
+        else:
+            grid.add_row(self._render_discovery_summary())
+            grid.add_row(Text())
+            grid.add_row(self._render_replies())
+
+        if self._status_text:
+            grid.add_row(Text())
+            grid.add_row(Text(f"  {self._status_text}", style="dim"))
+
+        return grid
+
+    def _render_discovery(self) -> Panel:
+        tbl = Table(show_header=False, show_edge=False, pad_edge=False, box=None)
+        tbl.add_column("icon", width=3)
+        tbl.add_column("source", min_width=20)
+        tbl.add_column("count", justify="right", width=8)
+
+        h_done = len(self._handles_done)
+        ht_done = len(self._hashtags_done)
+
+        for handle, count in self._handles_done:
+            style = "green" if count > 0 else "dim"
+            tbl.add_row("  ", f"@{handle}", f"[{style}]{count} posts[/{style}]")
+
+        remaining_handles = self._total_handles - h_done
+        if remaining_handles > 0:
+            tbl.add_row(
+                "[bold cyan]>[/bold cyan]",
+                f"[dim]{remaining_handles} more handle{'s' if remaining_handles != 1 else ''}...[/dim]",
+                "",
+            )
+
+        for tag, count in self._hashtags_done:
+            style = "green" if count > 0 else "dim"
+            tbl.add_row("  ", f"#{tag}", f"[{style}]{count} posts[/{style}]")
+
+        remaining_tags = self._total_hashtags - ht_done
+        if remaining_tags > 0:
+            tbl.add_row(
+                "[bold cyan]>[/bold cyan]",
+                f"[dim]{remaining_tags} more hashtag{'s' if remaining_tags != 1 else ''}...[/dim]",
+                "",
+            )
+
+        total_found = sum(c for _, c in self._handles_done) + sum(c for _, c in self._hashtags_done)
+        progress_str = (
+            f"Handles {h_done}/{self._total_handles}  "
+            f"Hashtags {ht_done}/{self._total_hashtags}  "
+            f"Posts {total_found}"
+        )
+
+        return Panel(
+            tbl,
+            title=f"[bold]Discovering[/bold]  [dim]{self._elapsed()}[/dim]",
+            subtitle=f"[dim]{progress_str}[/dim]",
+            border_style="cyan",
+        )
+
+    def _render_discovery_summary(self) -> Panel:
+        total_found = sum(c for _, c in self._handles_done) + sum(c for _, c in self._hashtags_done)
+        txt = Text()
+        txt.append(f"  {total_found}", style="bold green")
+        txt.append(" posts from ")
+        txt.append(f"{len(self._handles_done)}", style="bold")
+        txt.append(" handles + ")
+        txt.append(f"{len(self._hashtags_done)}", style="bold")
+        txt.append(" hashtags")
+        if self._candidates > 0 and self._candidates != total_found:
+            txt.append(f"  (generating {self._candidates} replies)", style="dim")
+        return Panel(txt, title="[bold]Discovery[/bold]", border_style="green")
+
+    def _render_replies(self) -> Panel:
+        tbl = Table(show_header=False, show_edge=False, pad_edge=False, box=None)
+        tbl.add_column("status", width=3)
+        tbl.add_column("info", ratio=1)
+
+        for entry in self._replies:
+            counter = f"[dim]{entry.idx}/{entry.total}[/dim]"
+            if entry.status == "generating":
+                tbl.add_row(
+                    "[bold yellow]~[/bold yellow]",
+                    f"{counter}  @{entry.handle}  [yellow]generating...[/yellow]",
+                )
+            elif entry.status == "generated":
+                tbl.add_row(
+                    "[bold green]✓[/bold green]",
+                    Text.from_markup(f"{counter}  @{entry.handle}\n       [dim]{entry.reply_text}[/dim]"),
+                )
+            elif entry.status == "posted":
+                tbl.add_row(
+                    "[bold green]✓[/bold green]",
+                    Text.from_markup(f"{counter}  @{entry.handle}  [green]posted[/green]\n       [dim]{entry.reply_text}[/dim]"),
+                )
+            elif entry.status == "post_failed":
+                tbl.add_row(
+                    "[bold red]✗[/bold red]",
+                    f"{counter}  @{entry.handle}  [red]post failed[/red]",
+                )
+            elif entry.status == "failed":
+                tbl.add_row(
+                    "[bold red]✗[/bold red]",
+                    f"{counter}  @{entry.handle}  [red]generate failed[/red]",
+                )
+
+        title_label = "Generating" if self._phase in ("generating", "replying") else "Done"
+        border = "yellow" if self._phase in ("generating", "replying") else "green"
+
+        return Panel(
+            tbl,
+            title=f"[bold]{title_label}[/bold]  [dim]{self._elapsed()}[/dim]",
+            border_style=border,
+        )
+
+    def _refresh(self) -> None:
+        self._live.update(self._render())
+
+    def _find_entry(self, current: int, handle: str) -> _ReplyEntry | None:
+        for e in reversed(self._replies):
+            if e.idx == current and e.handle == handle:
+                return e
+        return None
+
+    # -- ProgressCallback interface --
+
+    def on_discovery_start(self, total_handles: int, total_hashtags: int) -> None:
+        self._total_handles = total_handles
+        self._total_hashtags = total_hashtags
+        self._phase = "discovery"
+        self._refresh()
+
+    def on_handle_done(self, handle: str, posts_found: int) -> None:
+        self._handles_done.append((handle, posts_found))
+        self._refresh()
+
+    def on_hashtag_done(self, hashtag: str, posts_found: int) -> None:
+        self._hashtags_done.append((hashtag, posts_found))
+        self._refresh()
+
+    def on_discovery_end(self, total_posts: int, candidates: int) -> None:
+        self._total_posts = total_posts
+        self._candidates = candidates
+        self._phase = "generating" if candidates > 0 else "done"
+        self._status_text = ""
+        self._refresh()
+
+    def on_generating(self, current: int, total: int, handle: str) -> None:
+        self._replies.append(_ReplyEntry(current, total, handle))
+        self._status_text = ""
+        self._refresh()
+
+    def on_generated(self, current: int, total: int, handle: str, reply_text: str) -> None:
+        entry = self._find_entry(current, handle)
+        if entry:
+            entry.status = "generated"
+            entry.reply_text = reply_text
+        self._refresh()
+
+    def on_generate_failed(self, current: int, total: int, handle: str) -> None:
+        entry = self._find_entry(current, handle)
+        if entry:
+            entry.status = "failed"
+        self._refresh()
+
+    def on_reply_posted(self, current: int, total: int, handle: str, success: bool) -> None:
+        entry = self._find_entry(current, handle)
+        if entry:
+            entry.status = "posted" if success else "post_failed"
+        self._refresh()
+
+    def on_reply_wait(self, seconds: int) -> None:
+        self._status_text = f"Waiting {seconds}s before next reply..."
+        self._refresh()
+
+    def on_complete(self, stats: EngagementStats) -> None:
+        self._phase = "done"
+        self._status_text = ""
+        self._refresh()
+
+
+# ── Helpers ──────────────────────────────────────────────────────────
+
+
+def _settings() -> TwitterSettings:
+    return TwitterSettings()
+
+
+def _apply_overrides(
+    settings: TwitterSettings,
+    headless: bool = False,
+    max_replies: int = 0,
+) -> TwitterSettings:
+    overrides: dict[str, object] = {}
+    if max_replies > 0:
+        overrides["max_replies_per_day"] = max_replies
+    if headless:
+        overrides["headless"] = True
+    if overrides:
+        return TwitterSettings(**{**settings.model_dump(), **overrides})
+    return settings
+
+
+def _print_summary(stats: EngagementStats) -> None:
+    console.print()
+    tbl = Table(title="Summary", show_header=False, border_style="bold")
+    tbl.add_column("metric", style="bold")
+    tbl.add_column("value", justify="right")
+    tbl.add_row("Discovered", str(stats.total_discovered))
+    tbl.add_row("Attempted", str(stats.total_attempted))
+    tbl.add_row(
+        "Succeeded",
+        f"[green]{stats.total_succeeded}[/green]" if stats.total_succeeded else "0",
+    )
+    tbl.add_row(
+        "Failed",
+        f"[red]{stats.total_failed}[/red]" if stats.total_failed else "0",
+    )
+    for source, count in stats.posts_by_source.items():
+        tbl.add_row(f"  {source}", str(count))
+    console.print(tbl)
+
+
+def _write_csv(replies: list[GeneratedReply], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["post_url", "author_handle", "post_text", "reply_text", "engagement_score"])
+        for r in replies:
+            writer.writerow([r.post_url, r.author_handle, r.post_text, r.reply_text, r.engagement_score])
+
+
+def _read_csv(path: Path) -> list[GeneratedReply]:
+    rows: list[GeneratedReply] = []
+    with path.open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append(GeneratedReply(
+                post_url=row["post_url"],
+                author_handle=row["author_handle"],
+                post_text=row.get("post_text", ""),
+                reply_text=row["reply_text"],
+                engagement_score=int(row.get("engagement_score", 0)),
+            ))
+    return rows
+
+
+# ── Commands ─────────────────────────────────────────────────────────
+
+
+@app.command()
+def login(
+    force: bool = typer.Option(
+        False, "--force", help="Skip session check and log in fresh",
+    ),
+    cookies: bool = typer.Option(
+        False, "--cookies", help="Log in by injecting auth_token and ct0 cookies",
+    ),
+) -> None:
+    """Create a Twitter/X session for future commands.
+
+    Two methods:
+
+      mmn twitter login --cookies    Inject auth_token + ct0 from your browser
+                                     (set TWITTER_AUTH_TOKEN / TWITTER_CT0 in .env,
+                                      or you'll be prompted).
+
+      mmn twitter login              Opens Chrome to x.com -- log in manually.
+    """
+    settings = _settings()
+
+    async def _run() -> None:
+        browser = StealthBrowser(
+            session_path=settings.twitter_session_path,
+            user_data_dir=settings.twitter_user_data_dir,
+            headless=False,
+            slow_mo_ms=settings.slow_mo_ms,
+            proxy_url=settings.proxy_url,
+        )
+        async with browser:
+            if not force and not cookies:
+                typer.echo("Checking existing session...")
+                if await browser.is_logged_in():
+                    typer.echo("Already logged in! Session is valid.")
+                    return
+
+            if cookies:
+                auth_token = settings.twitter_auth_token
+                ct0 = settings.twitter_ct0
+
+                if not auth_token:
+                    auth_token = typer.prompt("auth_token cookie value")
+                if not ct0:
+                    ct0 = typer.prompt("ct0 cookie value")
+
+                await browser.login_with_cookies(auth_token, ct0)
+                typer.echo("Cookie login successful. Session saved.")
+            else:
+                typer.echo(
+                    "\nA browser window will open to x.com.\n"
+                    "Please log in manually (you have 5 minutes).\n"
+                    "The session will be saved once you reach the home feed.\n"
+                )
+                await browser.login_manual()
+                typer.echo("Login successful. Session saved.")
+
+    asyncio.run(_run())
+
+
+@app.command()
+def engage(
+    output: Path = typer.Option(
+        None, "-o", "--output",
+        help="CSV output path (default: replies_<timestamp>.csv)",
+    ),
+    max_replies: int = typer.Option(
+        0, "--max-replies", help="Override max replies (0 = use settings default)",
+    ),
+    headless: bool = typer.Option(
+        False, "--headless", help="Run the browser in headless mode",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show raw log output instead of rich UI",
+    ),
+) -> None:
+    """Discover posts and generate replies, saving them to a CSV.
+
+    Does NOT post anything. Review the CSV, edit replies if you want,
+    then run `mmn twitter reply -f <csv>` to post them.
+    """
+    settings = _apply_overrides(_settings(), headless=headless, max_replies=max_replies)
+    orchestrator = EngagementOrchestrator(settings)
+
+    csv_path = output or Path(
+        f"replies_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
+    )
+
+    async def _run() -> None:
+        if verbose:
+            replies = await orchestrator.generate_only()
+        else:
+            prev = _quiet_loggers()
+            try:
+                with Live(console=console, refresh_per_second=8, transient=False) as live:
+                    progress = _RichProgress(live)
+                    replies = await orchestrator.generate_only(progress=progress)
+            finally:
+                _restore_loggers(prev)
+
+        if not replies:
+            console.print("[yellow]No replies generated.[/yellow]")
+            return
+
+        _write_csv(replies, csv_path)
+        console.print()
+        console.print(f"[bold green]Saved {len(replies)} replies to {csv_path}[/bold green]")
+        console.print(f"[dim]Review/edit the CSV, then run:[/dim]")
+        console.print(f"  mmn twitter reply -f {csv_path}" + (" --headless" if headless else ""))
+
+    asyncio.run(_run())
+
+
+@app.command("reply")
+def reply_cmd(
+    csv_file: Path = typer.Option(
+        ..., "-f", "--file", help="CSV file with generated replies",
+        exists=True, readable=True,
+    ),
+    headless: bool = typer.Option(
+        False, "--headless", help="Run the browser in headless mode",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show raw log output instead of rich UI",
+    ),
+) -> None:
+    """Post replies from a CSV file generated by `mmn twitter engage`.
+
+    The CSV must have columns: post_url, author_handle, reply_text.
+    You can edit reply_text in the CSV before running this.
+    """
+    settings = _apply_overrides(_settings(), headless=headless)
+    orchestrator = EngagementOrchestrator(settings)
+
+    replies = _read_csv(csv_file)
+    if not replies:
+        console.print("[yellow]CSV is empty, nothing to reply.[/yellow]")
+        raise typer.Exit()
+
+    console.print(f"Loaded [bold]{len(replies)}[/bold] replies from {csv_file}")
+
+    async def _run() -> EngagementStats:
+        if verbose:
+            return await orchestrator.reply_from_list(replies)
+        else:
+            prev = _quiet_loggers()
+            try:
+                with Live(console=console, refresh_per_second=8, transient=False) as live:
+                    progress = _RichProgress(live)
+                    return await orchestrator.reply_from_list(replies, progress=progress)
+            finally:
+                _restore_loggers(prev)
+
+    stats = asyncio.run(_run())
+    _print_summary(stats)
+
+
+@app.command()
+def discover(
+    headless: bool = typer.Option(
+        False, "--headless", help="Run the browser in headless mode",
+    ),
+) -> None:
+    """Discover posts without replying. Useful for testing discovery logic."""
+    settings = _apply_overrides(_settings(), headless=headless)
+    orchestrator = EngagementOrchestrator(settings)
+
+    async def _run() -> None:
+        posts = await orchestrator.discover_only()
+        if not posts:
+            typer.echo("No posts discovered. Are you logged in?")
+            return
+        typer.echo(f"\nDiscovered {len(posts)} posts:\n")
+        for i, post in enumerate(posts, start=1):
+            typer.echo(f"  {i}. @{post.author_handle} (engagement: {post.engagement_score})")
+            typer.echo(f"     {post.post_url}")
+            typer.echo(f"     {post.post_text[:120]}...")
+            typer.echo()
+
+    asyncio.run(_run())
+
+
+@app.command("test-reply")
+def test_reply(
+    post_url: str = typer.Argument(help="URL of the tweet to generate a reply for"),
+) -> None:
+    """Generate a reply for a specific post URL without posting it."""
+    settings = _settings()
+
+    async def _run() -> None:
+        browser = StealthBrowser(
+            session_path=settings.twitter_session_path,
+            user_data_dir=settings.twitter_user_data_dir,
+            headless=settings.headless,
+            slow_mo_ms=settings.slow_mo_ms,
+            proxy_url=settings.proxy_url,
+        )
+
+        async with browser:
+            if not await browser.is_logged_in():
+                typer.echo("Not logged in. Run `mmn twitter login` first.", err=True)
+                sys.exit(1)
+
+            await browser.navigate(post_url)
+
+            page = browser.page
+            try:
+                text_el = page.locator('div[data-testid="tweetText"]').first
+                post_text = await text_el.inner_text(timeout=10_000)
+            except Exception:
+                post_text = "(could not extract tweet text)"
+
+            try:
+                handle_el = page.locator(
+                    'div[data-testid="User-Name"] a[role="link"][tabindex="-1"]'
+                )
+                href = await handle_el.get_attribute("href", timeout=5_000)
+                author = href.strip("/").split("/")[-1] if href else "unknown"
+            except Exception:
+                author = "unknown"
+
+            from .discovery import DiscoveredPost
+
+            post = DiscoveredPost(
+                author_handle=author,
+                post_url=post_url,
+                post_text=post_text,
+            )
+
+            generator = ReplyGenerator(
+                gemini_model=settings.gemini_model,
+                vertex_project=settings.vertex_ai_project,
+                vertex_location=settings.vertex_ai_location,
+            )
+            reply = await generator.generate_reply(post, reply_number=1)
+
+            typer.echo(f"\nOriginal by @{author}:")
+            typer.echo(f"  {post_text[:200]}")
+            typer.echo(f"\nGenerated reply ({len(reply)} chars):")
+            typer.echo(f"  {reply}")
+
+    asyncio.run(_run())
+
+
+if __name__ == "__main__":
+    app()

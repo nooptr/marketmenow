@@ -26,7 +26,7 @@ export const ReactionScene: React.FC<{ visual: VisualProps }> = ({ visual }) => 
   return (
     <AbsoluteFill
       style={{
-        background: "#1a1a2e",
+        background: (visual.background as string) ?? "#1a1a2e",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -38,7 +38,7 @@ export const ReactionScene: React.FC<{ visual: VisualProps }> = ({ visual }) => 
             maxWidth: "85%",
             maxHeight: "55%",
             objectFit: "contain",
-            borderRadius: 16,
+            borderRadius: Number(visual.border_radius ?? 16),
             position: "absolute",
             top: "8%",
           }}
@@ -57,13 +57,13 @@ export const ReactionScene: React.FC<{ visual: VisualProps }> = ({ visual }) => 
         <div
           style={{
             transform: `scale(${textScale})`,
-            color: "#ff6b6b",
-            fontSize: 40,
-            fontWeight: 800,
-            fontFamily: "system-ui, sans-serif",
+            color: (visual.text_color as string) ?? "#ff6b6b",
+            fontSize: Number(visual.font_size ?? 40),
+            fontWeight: Number(visual.font_weight ?? 800),
+            fontFamily: (visual.font_family as string) ?? "system-ui, sans-serif",
             textShadow: "0 3px 20px rgba(0,0,0,0.7)",
             background: "rgba(0,0,0,0.5)",
-            borderRadius: 16,
+            borderRadius: Number(visual.border_radius ?? 16),
             padding: "20px 30px",
             display: "inline-block",
           }}

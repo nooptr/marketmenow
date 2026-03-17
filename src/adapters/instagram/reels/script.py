@@ -3,48 +3,138 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from google import genai
-from google.genai import types as genai_types
 from jinja2 import Environment
 
 from ..grading.models import GradingResult, RubricItem
 from ..grading.service import SimpleGradingService
 from ..prompts import load_prompt
 from .models import AudioType, BeatDefinition, ReelTemplate
+from .pipeline_steps import (
+    PipelineContext,
+    StepRegistry,
+    _resolve_inputs,
+    default_registry,
+)
 
 _JINJA_ENV = Environment()
 
 
 class ReelScriptGenerator:
-    """Hydrates a YAML reel template with LLM-generated content and grading data."""
+    """Hydrates a YAML reel template with pipeline-generated content.
+
+    If the template declares a ``pipeline`` block, steps are dispatched via
+    the :class:`StepRegistry`.  Otherwise the legacy hardcoded grading + LLM
+    flow is used for backward compatibility.
+    """
 
     def __init__(
         self,
         grading_service: SimpleGradingService,
         vertex_project: str,
         vertex_location: str = "us-central1",
+        step_registry: StepRegistry | None = None,
     ) -> None:
         self._grader = grading_service
+        self._vertex_project = vertex_project
+        self._vertex_location = vertex_location
+        self._registry = step_registry or default_registry
+
+        from google import genai
+
         self._client = genai.Client(
             vertexai=True,
             project=vertex_project,
             location=vertex_location,
         )
-        self._model = "gemini-2.5-flash"
+        self._model = "gemini-3-flash-preview"
 
     async def generate(
         self,
         template: ReelTemplate,
         assignment_image: Path,
         rubric_items: list[RubricItem] | None = None,
+        extra_variables: dict[str, object] | None = None,
     ) -> tuple[dict[str, object], list[BeatDefinition]]:
         """Fill template variables and resolve Jinja placeholders in beats.
 
-        Returns (variables_dict, resolved_beats) where resolved_beats
-        have all ``{{ ... }}`` placeholders replaced with concrete values.
-        Audio durations are NOT yet computed -- that happens in the orchestrator
-        after TTS synthesis.
+        Returns ``(variables_dict, resolved_beats)``.  Audio durations are NOT
+        yet computed -- that happens in the orchestrator after TTS synthesis.
         """
+        if template.pipeline.steps:
+            variables = await self._run_pipeline(
+                template, assignment_image, rubric_items, extra_variables,
+            )
+        else:
+            variables = await self._legacy_generate(
+                template, assignment_image, rubric_items,
+            )
+
+        if extra_variables:
+            variables.update(extra_variables)
+
+        resolved_beats = self._resolve_beats(template.beats, variables)
+        return variables, resolved_beats
+
+    # ------------------------------------------------------------------
+    # New: declarative pipeline execution
+    # ------------------------------------------------------------------
+
+    async def _run_pipeline(
+        self,
+        template: ReelTemplate,
+        assignment_image: Path,
+        rubric_items: list[RubricItem] | None,
+        extra_variables: dict[str, object] | None,
+    ) -> dict[str, object]:
+        ctx = PipelineContext(
+            variables={
+                "assignment_image": str(assignment_image.resolve()),
+                "name": template.name,
+            },
+            services={
+                "grader": self._grader,
+                "genai_client": self._client,
+            },
+        )
+
+        if rubric_items is not None:
+            ctx.variables["rubric_items"] = [item.model_dump() for item in rubric_items]
+
+        if extra_variables:
+            ctx.variables.update(extra_variables)
+
+        for step_def in template.pipeline.steps:
+            step_func = self._registry.get(step_def.type)
+
+            resolved_inputs = _resolve_inputs(step_def.inputs, ctx.variables)
+
+            if step_def.output_fields:
+                resolved_inputs["output_fields"] = step_def.output_fields
+
+            result = await step_func(ctx, resolved_inputs)
+
+            if step_def.output_var:
+                ctx.variables[step_def.output_var] = result
+
+            if isinstance(result, dict) and step_def.output_fields:
+                for field_name in step_def.output_fields:
+                    if field_name in result:
+                        ctx.variables[field_name] = result[field_name]
+
+        return ctx.variables
+
+    # ------------------------------------------------------------------
+    # Legacy: hardcoded grading + LLM (backward compat)
+    # ------------------------------------------------------------------
+
+    async def _legacy_generate(
+        self,
+        template: ReelTemplate,
+        assignment_image: Path,
+        rubric_items: list[RubricItem] | None,
+    ) -> dict[str, object]:
+        from google.genai import types as genai_types
+
         if rubric_items is None:
             rubric_items = await self._grader.generate_rubric(assignment_image)
 
@@ -52,11 +142,13 @@ class ReelScriptGenerator:
 
         script_vars = await self._generate_script_text(template, grading_result)
 
-        variables: dict[str, object] = {
+        return {
             "assignment_image": str(assignment_image.resolve()),
             "reaction_text": script_vars["reaction_text"],
             "roast_text": script_vars.get("roast_text", script_vars["reaction_text"]),
-            "gradeasy_response": script_vars.get("gradeasy_response", "I gotchu bro, let me cook"),
+            "gradeasy_response": script_vars.get(
+                "gradeasy_response", "I gotchu bro, let me cook"
+            ),
             "reaction_image": "",
             "comment_username": "student",
             "comment_avatar": "",
@@ -68,14 +160,13 @@ class ReelScriptGenerator:
             "result_comment": script_vars["result_comment"],
         }
 
-        resolved_beats = self._resolve_beats(template.beats, variables)
-        return variables, resolved_beats
-
     async def _generate_script_text(
         self,
         template: ReelTemplate,
         grading_result: GradingResult,
     ) -> dict[str, str]:
+        from google.genai import types as genai_types
+
         prompt = load_prompt("script_generation")
         rubric_eval_text = "\n".join(
             f"  - {ev.rubric_item_name}: {ev.points_awarded}/{ev.max_points} -- {ev.feedback}"
@@ -110,6 +201,10 @@ class ReelScriptGenerator:
             data = data[0]
         return data
 
+    # ------------------------------------------------------------------
+    # Beat resolution (shared)
+    # ------------------------------------------------------------------
+
     @staticmethod
     def _resolve_beats(
         beats: list[BeatDefinition],
@@ -142,11 +237,7 @@ class ReelScriptGenerator:
 
 
 def _render_template_str(text: str, variables: dict[str, object]) -> str:
-    """Resolve Jinja2 placeholders in a string, falling back to the original on error.
-
-    If the template resolves to a complex object (dict/list), serialize it
-    as proper JSON so that the Remotion side can safely ``JSON.parse()`` it.
-    """
+    """Resolve Jinja2 placeholders in a string, falling back to the original on error."""
     if "{{" not in text:
         return text
     try:

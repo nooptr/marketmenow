@@ -1,0 +1,31 @@
+{
+  "id": "marketmenow",
+  "name": "MarketMeNow",
+  "version": "0.1.0",
+  "description": "Agentic marketing automation — publish reels, carousels, threads, and DMs across Instagram, Twitter/X, and more.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "pythonPath": {
+        "type": "string",
+        "description": "Path to the Python interpreter or venv with marketmenow installed. Defaults to 'python3'."
+      },
+      "workingDirectory": {
+        "type": "string",
+        "description": "Working directory for mmn CLI invocations (should contain your .env file)."
+      }
+    }
+  },
+  "uiHints": {
+    "pythonPath": {
+      "label": "Python path",
+      "placeholder": "python3"
+    },
+    "workingDirectory": {
+      "label": "Project directory",
+      "placeholder": "/path/to/your/marketmenow/project"
+    }
+  },
+  "skills": ["openclaw/skills"]
+}

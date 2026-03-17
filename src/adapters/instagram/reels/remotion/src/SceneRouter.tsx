@@ -1,6 +1,8 @@
 import { Audio, Series, staticFile, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import type { BeatProps, ReelProps, VisualProps } from "./schema";
+import { TransitionWrapper } from "./transitions";
 import {
+  CustomScene,
   FlashRevealScene,
   GradeasyResponseScene,
   GradingScene,
@@ -32,6 +34,7 @@ const SCENE_MAP: Record<string, SceneComponent> = {
   RubricScene,
   GradingScene,
   ResultScene,
+  CustomScene,
 };
 
 const WORDS_PER_CHUNK = 5;
@@ -128,7 +131,13 @@ export const SceneRouter: React.FC<ReelProps> = ({ beats }) => {
             key={beat.id}
             durationInFrames={beat.durationFrames}
           >
-            <Scene visual={beat.visual} />
+            <TransitionWrapper
+              entryTransition={beat.entryTransition}
+              exitTransition={beat.exitTransition}
+              durationFrames={beat.durationFrames}
+            >
+              <Scene visual={beat.visual} />
+            </TransitionWrapper>
             {beat.subtitle && <Subtitle text={beat.subtitle} />}
             {beat.audioSrc && (
               <Audio src={staticFile(beat.audioSrc)} volume={1} />

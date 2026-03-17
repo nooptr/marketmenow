@@ -92,7 +92,7 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
   return (
     <AbsoluteFill
       style={{
-        background: "linear-gradient(135deg, #4285f4, #5c6bc0)",
+        background: (visual.background as string) ?? "linear-gradient(135deg, #4285f4, #5c6bc0)",
         justifyContent: "center",
         alignItems: "center",
         padding: 36,
@@ -102,8 +102,8 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         style={{
           opacity: cardOpacity,
           transform: `scale(${cardScale})`,
-          background: "#fff",
-          borderRadius: 28,
+          background: (visual.card_background as string) ?? "#fff",
+          borderRadius: Number(visual.card_border_radius ?? 28),
           padding: "40px 36px",
           width: "94%",
           maxHeight: "92%",
@@ -121,7 +121,7 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
             alignItems: "flex-start",
             marginBottom: 28,
             paddingBottom: 24,
-            borderBottom: "2px solid #f0ece7",
+            borderBottom: (visual.divider_border as string) ?? "2px solid #f0ece7",
           }}
         >
           <div>
@@ -129,7 +129,7 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
               style={{
                 fontSize: 18,
                 fontWeight: 600,
-                color: "#999",
+                color: (visual.label_color as string) ?? "#999",
                 fontFamily: "'DM Sans', system-ui, sans-serif",
                 textTransform: "uppercase",
                 letterSpacing: 4,
@@ -140,9 +140,9 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
             </div>
             <div
               style={{
-                fontSize: 48,
+                fontSize: Number(visual.title_font_size ?? 48),
                 fontWeight: 900,
-                color: "#1a1a1a",
+                color: (visual.text_color as string) ?? "#1a1a1a",
                 fontFamily: "system-ui, sans-serif",
               }}
             >
@@ -159,7 +159,7 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
           >
             <div
               style={{
-                fontSize: 52,
+                fontSize: Number(visual.score_font_size ?? 52),
                 fontWeight: 900,
                 color: overall.accent,
                 fontFamily: "'Space Grotesk', system-ui, sans-serif",
@@ -206,7 +206,7 @@ export const GradingScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
                 transform: `translateY(${translateY}px)`,
                 background: colors.bg,
                 border: `1.5px solid ${colors.bar}30`,
-                borderRadius: 20,
+                borderRadius: Number(visual.item_border_radius ?? 20),
                 padding: "24px 28px",
                 marginBottom: 18,
                 position: "relative",

@@ -12,6 +12,7 @@ class ContentModality(str, enum.Enum):
     CAROUSEL = "carousel"
     THREAD = "thread"
     DIRECT_MESSAGE = "direct_message"
+    REPLY = "reply"
 
 
 class MediaAsset(BaseModel, frozen=True):
@@ -75,3 +76,13 @@ class DirectMessage(BaseContent):
     subject: str | None = None
     body: str
     attachments: list[MediaAsset] = Field(default_factory=list)
+
+
+class Reply(BaseContent):
+    """A reply to an existing post on any platform."""
+
+    modality: ContentModality = ContentModality.REPLY
+    in_reply_to_url: str
+    in_reply_to_platform_id: str | None = None
+    body: str
+    media: list[MediaAsset] = Field(default_factory=list)

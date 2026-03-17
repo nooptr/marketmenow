@@ -4,10 +4,10 @@ import asyncio
 import json
 import math
 import os
-import subprocess
 from pathlib import Path
 from uuid import uuid4
 
+from jinja2 import Environment
 from marketmenow.models.content import MediaAsset, Reel
 
 from ..grading.models import RubricItem
@@ -19,12 +19,24 @@ from .template_loader import ReelTemplateLoader
 from .tts import TTSProvider, TTSService
 from .tts_backends import create_tts_service
 
+_JINJA_ENV = Environment()
+
 
 def _ensure_vertex_credentials(settings: InstagramSettings) -> None:
     """Export GOOGLE_APPLICATION_CREDENTIALS so the genai SDK picks it up."""
     creds = settings.google_application_credentials
     if creds and creds.exists():
         os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve()))
+
+
+def _merge_default_visual(
+    beat_visual: dict[str, object],
+    default_visual: dict[str, object],
+) -> dict[str, object]:
+    """Return beat visual with defaults filled in for missing keys."""
+    merged = dict(default_visual)
+    merged.update(beat_visual)
+    return merged
 
 
 class ReelOrchestrator:
@@ -136,6 +148,19 @@ class ReelOrchestrator:
             template.beats, variables
         )
 
+        # Merge default_visual from template into each beat
+        if template.default_visual:
+            resolved_beats = [
+                beat.model_copy(
+                    update={
+                        "visual": _merge_default_visual(
+                            beat.visual, template.default_visual
+                        )
+                    }
+                )
+                for beat in resolved_beats
+            ]
+
         beats_with_audio = await self._synthesize_all(
             resolved_beats, template.fps
         )
@@ -144,6 +169,7 @@ class ReelOrchestrator:
             template_id=template.id,
             fps=template.fps,
             aspect_ratio=template.aspect_ratio,
+            composition_id=template.composition_id,
             total_duration_frames=sum(b.duration_frames for b in beats_with_audio),
             beats=beats_with_audio,
             variables=variables,
@@ -158,18 +184,32 @@ class ReelOrchestrator:
             height=1920,
         )
 
-        default_caption = (
-            "Can our AI grade this? 🤖📝\n"
-            "\n"
-            "Drop your assignments in the comments and we'll grade them too 👇\n"
-            "\n"
-            "Try Gradeasy now at gradeasy.ai 🚀"
-        )
+        # Render caption from template's caption_template or use caller-provided / default
+        final_caption = caption
+        if not final_caption and template.caption_template:
+            try:
+                tmpl = _JINJA_ENV.from_string(template.caption_template)
+                final_caption = tmpl.render(**variables)
+            except Exception:
+                final_caption = template.caption_template
+
+        if not final_caption:
+            final_caption = (
+                "Can our AI grade this?\n"
+                "\n"
+                "Drop your assignments in the comments and we'll grade them too\n"
+                "\n"
+                "Try Gradeasy now at gradeasy.ai"
+            )
+
+        final_hashtags = hashtags or template.hashtags or [
+            "AIGrading", "EdTech", "Gradeasy", "AI", "SchoolHacks",
+        ]
 
         return Reel(
             video=video_asset,
-            caption=caption or default_caption,
-            hashtags=hashtags or ["AIGrading", "EdTech", "Gradeasy", "AI", "SchoolHacks"],
+            caption=final_caption,
+            hashtags=final_hashtags,
         )
 
     async def _synthesize_all(
@@ -214,6 +254,8 @@ class ReelOrchestrator:
                     duration_frames=duration_frames,
                     visual=beat.visual,
                     subtitle=subtitle,
+                    entry_transition=beat.entry_transition,
+                    exit_transition=beat.exit_transition,
                 )
             )
 
@@ -318,11 +360,33 @@ class ReelOrchestrator:
                     out[k] = v
             return out
 
+        def _transition_to_dict(t: object) -> dict[str, object]:
+            if hasattr(t, "model_dump"):
+                return t.model_dump()  # type: ignore[union-attr]
+            return {"type": "none", "durationFrames": 0, "direction": "", "easing": ""}
+
         beat_props: list[dict[str, object]] = []
         for b in script.beats:
             audio_src = ""
             if b.audio_path:
                 audio_src = _stage_file(b.audio_path)
+
+            entry_t = _transition_to_dict(b.entry_transition)
+            exit_t = _transition_to_dict(b.exit_transition)
+            # Normalize Python snake_case to JS camelCase
+            entry_t = {
+                "type": entry_t.get("type", "none"),
+                "durationFrames": entry_t.get("duration_frames", 0),
+                "direction": entry_t.get("direction", ""),
+                "easing": entry_t.get("easing", ""),
+            }
+            exit_t = {
+                "type": exit_t.get("type", "none"),
+                "durationFrames": exit_t.get("duration_frames", 0),
+                "direction": exit_t.get("direction", ""),
+                "easing": exit_t.get("easing", ""),
+            }
+
             beat_props.append({
                 "id": b.id,
                 "scene": b.scene,
@@ -330,6 +394,8 @@ class ReelOrchestrator:
                 "durationFrames": b.duration_frames,
                 "visual": _rewrite_visual(b.visual),
                 "subtitle": b.subtitle,
+                "entryTransition": entry_t,
+                "exitTransition": exit_t,
             })
 
         props = {"fps": script.fps, "beats": beat_props}
@@ -339,12 +405,14 @@ class ReelOrchestrator:
 
         output_path = self._output_dir / f"reel_{run_id}.mp4"
 
+        composition_id = script.composition_id or "ReelFromTemplate"
+
         cmd = [
             "npx",
             "remotion",
             "render",
             "src/index.ts",
-            "GradeThisReel",
+            composition_id,
             str(output_path.resolve()),
             "--props",
             str(props_path.resolve()),

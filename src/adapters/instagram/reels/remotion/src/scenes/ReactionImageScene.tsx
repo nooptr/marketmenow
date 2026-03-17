@@ -35,7 +35,7 @@ export const ReactionImageScene: React.FC<{ visual: VisualProps }> = ({
   return (
     <AbsoluteFill
       style={{
-        background: "#1a1a2e",
+        background: (visual.background as string) ?? "#1a1a2e",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -49,7 +49,7 @@ export const ReactionImageScene: React.FC<{ visual: VisualProps }> = ({
             maxWidth: "90%",
             maxHeight: "60%",
             objectFit: "contain",
-            borderRadius: 20,
+            borderRadius: Number(visual.image_border_radius ?? 20),
             opacity: imageOpacity,
             transform: `scale(${zoom})`,
             boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
@@ -70,13 +70,13 @@ export const ReactionImageScene: React.FC<{ visual: VisualProps }> = ({
           <div
             style={{
               transform: `scale(${textSpring})`,
-              color: "#ff6b6b",
-              fontSize: 40,
-              fontWeight: 800,
-              fontFamily: "system-ui, sans-serif",
+              color: (visual.text_color as string) ?? "#ff6b6b",
+              fontSize: Number(visual.font_size ?? 40),
+              fontWeight: Number(visual.font_weight ?? 800),
+              fontFamily: (visual.font_family as string) ?? "system-ui, sans-serif",
               textShadow: "0 3px 20px rgba(0,0,0,0.7)",
               background: "rgba(0,0,0,0.6)",
-              borderRadius: 16,
+              borderRadius: Number(visual.border_radius ?? 16),
               padding: "20px 30px",
               display: "inline-block",
             }}

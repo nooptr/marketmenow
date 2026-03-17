@@ -69,15 +69,15 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
     [0, pct],
   );
 
-  const ringRadius = 155;
-  const ringSize = 380;
+  const ringSize = Number(visual.ring_size ?? 380);
+  const ringRadius = ringSize * (155 / 380);
   const circumference = 2 * Math.PI * ringRadius;
   const strokeDashoffset = circumference * (1 - ringProgress);
 
   return (
     <AbsoluteFill
       style={{
-        background: "#faf8f5",
+        background: (visual.background as string) ?? "#faf8f5",
         justifyContent: "center",
         alignItems: "center",
       }}
@@ -121,7 +121,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         {/* Label */}
         <div
           style={{
-            fontSize: 22,
+            fontSize: Number(visual.header_font_size ?? 22),
             fontWeight: 600,
             color: "#aaa",
             fontFamily: "'DM Sans', system-ui, sans-serif",
@@ -187,7 +187,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
           >
             <div
               style={{
-                fontSize: 64,
+                fontSize: Number(visual.grade_font_size ?? 64),
                 fontWeight: 900,
                 color: colors.accent,
                 fontFamily: "'Space Grotesk', system-ui, sans-serif",
@@ -203,7 +203,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
         <div
           style={{
             opacity: gradeOpacity,
-            fontSize: 36,
+            fontSize: Number(visual.label_font_size ?? 36),
             fontWeight: 800,
             color: colors.accent,
             fontFamily: "'Space Grotesk', system-ui, sans-serif",
@@ -232,7 +232,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
             opacity: feedbackOpacity,
             transform: `translateY(${feedbackY}px)`,
             background: "#ffffff",
-            borderRadius: 20,
+            borderRadius: Number(visual.card_border_radius ?? 20),
             padding: "36px 40px",
             boxShadow: "0 2px 16px rgba(0,0,0,0.05)",
             border: "1px solid #ebe7e2",
@@ -242,7 +242,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
           <div
             style={{
               color: "#444",
-              fontSize: 32,
+              fontSize: Number(visual.feedback_font_size ?? 32),
               fontWeight: 500,
               fontFamily: "'DM Sans', system-ui, sans-serif",
               textAlign: "center",
@@ -273,7 +273,7 @@ export const ResultScene: React.FC<{ visual: VisualProps }> = ({ visual }) => {
               textTransform: "uppercase",
             }}
           >
-            Gradeasy
+            {(visual.brand_name as string) ?? "Gradeasy"}
           </span>
           <div style={{ width: 40, height: 2, background: "#d0ccc6" }} />
         </div>
