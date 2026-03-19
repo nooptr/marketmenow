@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -327,6 +328,27 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
     await asyncio.gather(*[_run_one(e) for e in entries], return_exceptions=True)
 
 
+_ERROR_MARKERS = re.compile(
+    r"(Traceback \(most recent call last\)|Error:|Exception:|FAILED|raise \w+)",
+    re.IGNORECASE,
+)
+
+
+def _extract_error(stderr: str, stdout: str, exit_code: int) -> str:
+    """Pull the most useful error snippet from CLI subprocess output."""
+    for source in (stderr, stdout):
+        lines = source.strip().splitlines()
+        for line in reversed(lines):
+            stripped = line.strip()
+            if stripped and _ERROR_MARKERS.search(stripped):
+                return stripped[:1000]
+        if lines:
+            last = lines[-1].strip()
+            if last:
+                return last[:1000]
+    return f"Process exited with code {exit_code}"
+
+
 async def _run_single_command(entry: _BatchEntry) -> CliResult:
     """Run a single publish command that does generate+publish in one shot."""
     await db.update_content_status(entry.item_id, "posting")
@@ -359,10 +381,7 @@ async def _run_single_command(entry: _BatchEntry) -> CliResult:
             ProgressEvent(event_type="done", message=f"{entry.platform} posted successfully"),
         )
     else:
-        error = result.stderr.strip()[:500]
-        if not error:
-            tail = "\n".join(result.stdout.strip().splitlines()[-10:])
-            error = tail[:500] if tail else f"Exit code {result.exit_code}"
+        error = _extract_error(result.stderr, result.stdout, result.exit_code)
         await db.update_content_status(
             entry.item_id,
             "failed",
@@ -393,10 +412,7 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
     )
 
     if gen_result.exit_code != 0:
-        error = gen_result.stderr.strip()[:500]
-        if not error:
-            tail = "\n".join(gen_result.stdout.strip().splitlines()[-10:])
-            error = tail[:500] if tail else f"Exit code {gen_result.exit_code}"
+        error = _extract_error(gen_result.stderr, gen_result.stdout, gen_result.exit_code)
         await db.update_content_status(
             entry.item_id,
             "failed",
@@ -443,11 +459,13 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
             entry.item_id, ProgressEvent(event_type="done", message="Reddit comments posted")
         )
     else:
-        error = pub_result.stderr.strip()[:500]
-        if not error:
-            tail = "\n".join(pub_result.stdout.strip().splitlines()[-10:])
-            error = tail[:500] if tail else f"Exit code {pub_result.exit_code}"
-        await db.update_content_status(entry.item_id, "failed", error_message=error)
+        error = _extract_error(pub_result.stderr, pub_result.stdout, pub_result.exit_code)
+        await db.update_content_status(
+            entry.item_id,
+            "failed",
+            error_message=error,
+            preview_data={"stdout": pub_result.stdout[:3000], "stderr": pub_result.stderr[:3000]},
+        )
         hub.publish(
             entry.item_id,
             ProgressEvent(event_type="error", message=f"Posting failed: {error[:200]}"),
