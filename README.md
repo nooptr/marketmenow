@@ -168,15 +168,23 @@ mmn email send -f contacts.csv -t template.html -r 0-100
 
 All brand identity lives in YAML files, not code. Repurpose the entire tool for your product in under an hour.
 
-**Step 1 - Swap the brand (5 min):** Open `prompts/` and replace `Gradeasy` with your brand name, URL, and audience keywords.
+**Prompts (text content — tweets, carousels, LinkedIn, Reddit, email):**
 
-**Step 2 - Tweak the voice (10 min):** Each prompt has a persona section. Edit the voice for each platform in `prompts/<platform>/`.
-
-**Step 3 - Adjust topics (5 min):** Search for topic constraints and replace with your domain.
-
-**Step 4 - Set mention rate:** Each prompt has a `MENTION STRATEGY` section controlling how often your brand appears.
+1. **Swap the brand (5 min):** Open `prompts/` and replace `Gradeasy` with your brand name, URL, and audience keywords.
+2. **Tweak the voice (10 min):** Each prompt has a persona section. Edit the voice for each platform in `prompts/<platform>/`.
+3. **Adjust topics (5 min):** Search for topic constraints and replace with your domain.
+4. **Set mention rate:** Each prompt has a `MENTION STRATEGY` section controlling how often your brand appears.
 
 Or use the **meta-prompt** in `prompts/prompt.md` to generate entire prompt YAML files with any AI chat.
+
+**Reels (video content):**
+
+The existing reels are purpose-built for Gradeasy's concept. For your product you'll want a completely different reel — different narrative, different scenes, different voice. The **reel template meta-prompt** in [`src/adapters/instagram/reels/templates/prompt.md`](src/adapters/instagram/reels/templates/prompt.md) lets you paste your brand details and reel concept into ChatGPT / Claude and get back both files you need:
+
+1. A **template YAML** — the video structure (scenes, beats, transitions, pipeline)
+2. A **companion prompt YAML** — the AI persona that writes the script
+
+Drop them into `src/adapters/instagram/reels/templates/` and `prompts/instagram/`, then run `mmn reel create --template your_id`. Full schema reference, available scenes, transitions, and pipeline steps are all in that file.
 
 </details>
 

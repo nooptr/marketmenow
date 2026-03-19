@@ -106,15 +106,27 @@ Content must revolve around COOKING, MEAL PREP, and KITCHEN HACKS.
 
 ## Reel Templates
 
-Reel templates live in `src/adapters/instagram/reels/templates/` and define the full video structure -- scenes, transitions, audio, and the pipeline that generates the content. See the existing `can_ai_grade_this.yaml` for the complete schema.
+Reel templates live in `src/adapters/instagram/reels/templates/` and define the full video structure — scenes, transitions, audio, and the content-generation pipeline. The existing `can_ai_grade_this.yaml` is purpose-built for Gradeasy's "Can AI Grade This?" concept. **For your product, you'll want a completely different reel concept** — different narrative, different scenes, different voice.
 
-To create a new reel format:
+### Quick route: use the meta-prompt
 
-1. Copy `can_ai_grade_this.yaml` to a new file (e.g., `product_demo.yaml`)
-2. Change the `id`, `name`, `caption_template`, `hashtags`, and `hook_lines`
-3. Define your `pipeline.steps` (what content to generate and in what order)
-4. Define your `beats` (the visual scenes and their audio)
-5. Reference prompt files from `prompts/instagram/` in your pipeline's `llm` steps
+The fastest way to create a reel template for your product is the **meta-prompt** in [`src/adapters/instagram/reels/templates/prompt.md`](../src/adapters/instagram/reels/templates/prompt.md). Paste it into ChatGPT or Claude, fill in your brand details and reel concept, and it generates both:
+
+1. The **template YAML** (the video structure — scenes, beats, transitions, pipeline)
+2. The **companion prompt YAML** (the AI persona that writes the script)
+
+### Manual route: build it yourself
+
+1. **Define your concept.** What's the story? Before/after demo? User challenge? Meme format? Tutorial speedrun?
+2. **Create a prompt YAML** in `prompts/instagram/` for your script. This defines the voice, characters, and what JSON fields the LLM returns.
+3. **Create a template YAML** in `src/adapters/instagram/reels/templates/`:
+   - Set `id`, `name`, `default_visual` (your brand colors/name)
+   - Set `caption_template`, `hashtags`, `hook_lines`
+   - Define `pipeline.steps` — at minimum one `llm` step referencing your prompt
+   - Define `beats` — 6-12 scenes with audio and transitions (30-60 second reel)
+4. **Test it:** `mmn reel create --template your_template_id`
+
+The full schema reference (every scene, every prop, every transition, every pipeline step) is in [`src/adapters/instagram/reels/templates/prompt.md`](../src/adapters/instagram/reels/templates/prompt.md).
 
 ---
 
@@ -168,14 +180,9 @@ runs produce content that sounds like the same person wrote it.
 
 ## Examples of What You Can Generate
 
-### New Reel Format
+### New Reel Script Prompt
 
-Use the meta-prompt above with:
-- **Platform**: instagram reel
-- **Content type**: "a product demo reel where a user tries to do something the hard way, then the AI tool does it instantly"
-- **Voice**: "frustrated user character + smooth confident AI narrator"
-
-Then create a matching reel template YAML in `src/adapters/instagram/reels/templates/`.
+Use the meta-prompt above to generate a new `prompts/instagram/` YAML for the LLM that writes your reel script. For the actual reel template (video structure, scenes, pipeline), use the dedicated **reel template meta-prompt** in [`src/adapters/instagram/reels/templates/prompt.md`](../src/adapters/instagram/reels/templates/prompt.md) — it generates both the template YAML and the companion prompt YAML together.
 
 ### New Twitter Persona
 
