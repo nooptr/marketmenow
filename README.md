@@ -242,18 +242,9 @@ Checked items are shipped. Unchecked items are planned or in progress.
 
 ### Done
 
-- [x] **Ports-and-adapters architecture** — protocol-based adapters, `AdapterRegistry`, zero-touch core when adding platforms
-- [x] **Instagram adapter** — Reels (Remotion pipeline, TTS, AI scripting) + Carousels (Imagen + Pillow), publish via Graph API
-- [x] **Twitter / X adapter** — reply generation, threads, engagement automation, post discovery, performance tracking
-- [x] **YouTube adapter** — Shorts upload via Data API v3 with OAuth flow
-- [x] **Email adapter** — bulk outreach from CSV + HTML templates, Gemini paraphrasing, offset-based batching
-- [x] **Content pipeline** — normalise → render → upload → publish, campaign orchestrator, scheduler
-- [x] **In-context learning** — learns from your top-performing posts on Instagram and Twitter to match your voice over time
-- [x] **Reel template system** — YAML-driven video structure + meta-prompt to generate new templates with any AI chat
-- [x] **Web dashboard** — live progress via SSE, per-platform generation, batch pipelines, approve/reject workflow
-- [x] **CLI tooling** — `mmn` commands for every platform (reel, carousel, twitter, reddit, linkedin, youtube, email)
-- [x] **Brand customization via YAML** — prompts, voice, topics, mention strategy — all config, no code
-- [x] **Test suite** — core, models, renderers, pipeline steps, reels, email, LangChain integration
+- [x] **6-platform content engine** — Instagram Reels & Carousels, Twitter replies & threads, Reddit comments, LinkedIn posts, YouTube Shorts, bulk email — generate and publish from one CLI or web dashboard
+- [x] **In-context learning & brand templates** — learns from top-performing posts to match your voice; YAML-driven brand identity (prompts, visuals, mention strategy) with Figma MCP integration
+- [x] **Ports-and-adapters core** — modular pipeline (normalise → render → upload → publish), campaign orchestrator, scheduler, and `AdapterRegistry` — add a platform with zero changes to core
 
 ### Up Next
 
