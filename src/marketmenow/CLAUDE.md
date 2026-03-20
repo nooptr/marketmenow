@@ -22,6 +22,7 @@ This package is **platform-agnostic**. It must never import from `src/adapters/`
 | `core/orchestrator.py`    | `Orchestrator` + `CampaignResult` — runs campaigns across targets in parallel |
 | `core/distributor.py`     | `ContentDistributor` — resolves platforms from `DistributionMap`, delegates to `Orchestrator` |
 | `core/registry_builder.py`| `build_registry()` — auto-registers adapters (lazy imports, graceful skip on missing config) |
+| `core/text_sanitiser.py`  | `sanitise_text()` — strips em/en-dashes from all text fields (anti-AI-detection) |
 | `core/scheduler.py`       | `Scheduler` — in-process scheduled campaign execution        |
 | `core/distribute_cli.py`  | Shared async helper for CLI `distribute` command             |
 | `integrations/langchain.py`| LangChain tool/chain integration                            |
@@ -32,6 +33,7 @@ This package is **platform-agnostic**. It must never import from `src/adapters/`
 BaseContent
   → ContentNormaliser.normalise()  →  NormalisedContent
   → bundle.renderer.render()      →  NormalisedContent (platform-adapted)
+  → sanitise_text()                →  NormalisedContent (em/en-dashes stripped)
   → bundle.uploader.upload_batch() →  list[MediaRef] (stored in extra._media_refs)
   → bundle.adapter.publish()       →  PublishResult
 ```

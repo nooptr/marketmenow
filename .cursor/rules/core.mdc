@@ -16,8 +16,9 @@ is `registry_builder.py`, which uses lazy imports inside try/except blocks.
 `ContentPipeline.execute(content, platform)` runs four stages:
 1. `ContentNormaliser.normalise()` — match/case on content type
 2. `bundle.renderer.render()` — platform-specific transformation
-3. `bundle.uploader.upload_batch()` — media upload, refs stored in `extra._media_refs`
-4. `bundle.adapter.publish()` (or `send_dm()` for DIRECT_MESSAGE)
+3. `sanitise_text()` — strip em/en-dashes from all text fields (anti-AI-detection)
+4. `bundle.uploader.upload_batch()` — media upload, refs stored in `extra._media_refs`
+5. `bundle.adapter.publish()` (or `send_dm()` for DIRECT_MESSAGE)
 
 ## Orchestrator (`orchestrator.py`)
 

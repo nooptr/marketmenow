@@ -31,10 +31,10 @@ docker compose up -d                 # Start PostgreSQL (required for web dashbo
 
 Ports-and-adapters (hexagonal). The core engine is completely platform-agnostic.
 
-**Pipeline flow:** Content → Normalise → Render → Upload → Publish
+**Pipeline flow:** Content → Normalise → Render → Sanitise → Upload → Publish
 
 Key components:
-- `ContentPipeline` (`core/pipeline.py`) — executes the four-stage pipeline for one platform
+- `ContentPipeline` (`core/pipeline.py`) — executes the five-stage pipeline for one platform
 - `Orchestrator` (`core/orchestrator.py`) — runs a Campaign across multiple targets via `asyncio.gather`
 - `ContentDistributor` (`core/distributor.py`) — resolves target platforms from a `DistributionMap` then delegates to `Orchestrator`
 - `AdapterRegistry` (`registry.py`) — holds `PlatformBundle` instances keyed by platform name
@@ -123,3 +123,16 @@ FastAPI app with Jinja2 templates. Runs `mmn` CLI commands as subprocesses via `
 ## Commit Messages
 
 Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`.
+
+## Documentation Maintenance
+
+When making structural changes (new adapter, new modality, protocol change, new CLI command, new web route, pipeline change), update the relevant docs **in the same commit**:
+
+- **New/removed adapter** → update this file (Adapters table), `src/adapters/CLAUDE.md`, `AGENTS.md` (if key files change), `README.md` (platform table)
+- **New/removed modality** → update this file (Content Models), `src/marketmenow/CLAUDE.md`
+- **Protocol signature change** → update this file (Protocols), `src/marketmenow/CLAUDE.md`
+- **New CLI command** → update this file (Commands), `README.md`
+- **Web architecture change** → update `src/web/CLAUDE.md`, `.cursor/rules/web.mdc`
+- **Pipeline/orchestration change** → update `src/marketmenow/CLAUDE.md`, `.cursor/rules/core.mdc`
+
+Keep updates surgical — edit only the affected sections, matching existing tone and format.
