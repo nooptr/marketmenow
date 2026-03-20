@@ -236,6 +236,42 @@ graph LR
 
 </details>
 
+## Roadmap
+
+Checked items are shipped. Unchecked items are planned or in progress.
+
+### Done
+
+- [x] **Ports-and-adapters architecture** — protocol-based adapters, `AdapterRegistry`, zero-touch core when adding platforms
+- [x] **Instagram adapter** — Reels (Remotion pipeline, TTS, AI scripting) + Carousels (Imagen + Pillow), publish via Graph API
+- [x] **Twitter / X adapter** — reply generation, threads, engagement automation, post discovery, performance tracking
+- [x] **YouTube adapter** — Shorts upload via Data API v3 with OAuth flow
+- [x] **Email adapter** — bulk outreach from CSV + HTML templates, Gemini paraphrasing, offset-based batching
+- [x] **Content pipeline** — normalise → render → upload → publish, campaign orchestrator, scheduler
+- [x] **In-context learning** — learns from your top-performing posts on Instagram and Twitter to match your voice over time
+- [x] **Reel template system** — YAML-driven video structure + meta-prompt to generate new templates with any AI chat
+- [x] **Web dashboard** — live progress via SSE, per-platform generation, batch pipelines, approve/reject workflow
+- [x] **CLI tooling** — `mmn` commands for every platform (reel, carousel, twitter, reddit, linkedin, youtube, email)
+- [x] **Brand customization via YAML** — prompts, voice, topics, mention strategy — all config, no code
+- [x] **Test suite** — core, models, renderers, pipeline steps, reels, email, LangChain integration
+
+### Up Next
+
+- [ ] **Reddit & LinkedIn publish** — finish WIP uploaders for both platforms, full end-to-end tests
+- [ ] **Personas** — bundle brand voice, visual identity, prompts, and platform credentials into switchable "personas" so you can manage multiple brands or collaborate with a team from one install
+- [ ] **Twitter discovery & cold DM** — find Twitter accounts relevant to your brand, score them, and send personalized cold DMs at human-like pace
+- [ ] **Pipelines & modularisation** — composable pipelines that chain the existing tools (discover → generate → review → publish) into reusable flows you define in YAML and execute with a single command
+
+## Star History
+
+<a href="https://star-history.com/#thearnavrustagi/marketmenow&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=thearnavrustagi/marketmenow&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=thearnavrustagi/marketmenow&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=thearnavrustagi/marketmenow&type=Date" width="600" />
+ </picture>
+</a>
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and the PR process.

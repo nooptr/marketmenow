@@ -311,7 +311,10 @@ class StealthBrowser:
             await compose_btn.click()
         await self._random_delay(1.0, 2.0)
 
-        tweet_box = self.page.locator('div[data-testid="tweetTextarea_0"]')
+        dialog = self.page.locator('div[role="dialog"][aria-modal="true"]')
+        await dialog.wait_for(state="visible", timeout=10_000)
+
+        tweet_box = dialog.locator('div[data-testid="tweetTextarea_0"]')
         await tweet_box.wait_for(state="visible", timeout=10_000)
         await tweet_box.click()
         await self._random_delay(0.3, 0.8)
@@ -324,7 +327,7 @@ class StealthBrowser:
         await self._random_delay(0.5, 1.0)
 
         for idx, tweet_text in enumerate(tweets[1:], start=1):
-            add_btn = self.page.locator(
+            add_btn = dialog.locator(
                 'button[data-testid="addButton"], div[role="button"][data-testid="addButton"]'
             )
             try:
@@ -335,11 +338,11 @@ class StealthBrowser:
                 await self.page.keyboard.press("Control+Enter")
             await self._random_delay(0.8, 1.5)
 
-            next_box = self.page.locator(f'div[data-testid="tweetTextarea_{idx}"]')
+            next_box = dialog.locator(f'div[data-testid="tweetTextarea_{idx}"]')
             try:
                 await next_box.wait_for(state="visible", timeout=8_000)
             except Exception:
-                all_boxes = self.page.locator('div[data-testid^="tweetTextarea_"]')
+                all_boxes = dialog.locator('div[data-testid^="tweetTextarea_"]')
                 count = await all_boxes.count()
                 if count > idx:
                     next_box = all_boxes.nth(idx)
@@ -358,7 +361,7 @@ class StealthBrowser:
 
         await self._random_delay(1.0, 2.0)
 
-        post_all_btn = self.page.locator('button[data-testid="tweetButton"]')
+        post_all_btn = dialog.locator('button[data-testid="tweetButton"]')
         await post_all_btn.wait_for(state="visible", timeout=10_000)
         await post_all_btn.click()
         await self._random_delay(3.0, 5.0)
