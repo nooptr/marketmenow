@@ -12,6 +12,10 @@ The web app spawns `mmn` CLI commands as subprocesses — it does not call the
 Python pipeline directly. `cli_runner.py` handles subprocess execution and
 progress parsing. Real-time updates flow through `EventHub` → WebSocket.
 
+Adapter CLIs are mounted as **hidden groups** in `marketmenow/cli.py`
+(`hidden=True`). They don't appear in `mmn --help` but remain callable by the
+web frontend. New workflows (like `reddit-launch`) use `mmn run <name>` directly.
+
 ## Key Modules
 
 - `app.py` — FastAPI app with lifespan (DB pool + queue worker), WebSocket at

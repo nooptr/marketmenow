@@ -53,6 +53,13 @@ htmlcov/
 # ── Vault (contact CSVs, offset markers) ──────────────
 vault/
 
+# ── Brand-specific content (prompts, email templates, reel templates) ──
+/prompts/
+/templates/
+src/adapters/instagram/reels/templates/can_ai_grade_this.yaml
+src/adapters/instagram/reels/assets/usernames.txt
+src/adapters/instagram/reels/assets/avatars/
+
 # ── Misc ───────────────────────────────────────────────
 *.log
 replies_*

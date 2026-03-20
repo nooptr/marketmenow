@@ -54,4 +54,6 @@ with chromium. Store browser state files in project root (gitignored).
 ## CLI Integration
 
 Create a Typer app in `cli.py` and register it in `marketmenow/cli.py` via
-`app.add_typer(yourplatform_app, name="yourplatform", ...)`.
+`app.add_typer(yourplatform_app, name="yourplatform", hidden=True)`.
+Adapter CLIs are hidden from `mmn --help` — the user-facing CLI uses
+`mmn run <workflow>`. Hidden commands remain callable by the web frontend.

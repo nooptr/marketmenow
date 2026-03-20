@@ -9,7 +9,7 @@ Platform-specific implementations. Each adapter package is independent and must 
 | `instagram/` | VIDEO, IMAGE                                   | `create_instagram_bundle()`      |
 | `twitter/`   | THREAD, REPLY                                  | `create_twitter_bundle()`        |
 | `linkedin/`  | TEXT_POST, IMAGE, VIDEO, DOCUMENT, ARTICLE, POLL | `create_linkedin_bundle()`     |
-| `reddit/`    | REPLY                                          | `create_reddit_bundle()`         |
+| `reddit/`    | REPLY, TEXT_POST                               | `create_reddit_bundle()`         |
 | `youtube/`   | VIDEO                                          | `create_youtube_bundle()`        |
 | `email/`     | DIRECT_MESSAGE                                 | `create_email_bundle()`          |
 | `facebook/`  | (planned)                                      | `create_facebook_bundle()`       |
@@ -67,10 +67,11 @@ Multi-image generation via Imagen + Pillow compositing.
 
 Discovery (handles + hashtags → posts) → LLM reply generation → human approval callback → Playwright posting. Includes `PerformanceTracker` and caching.
 
-### Reddit Two-Phase (`reddit/orchestrator.py`)
+### Reddit (`reddit/`)
 
-Phase 1: `mmn reddit engage` — discover subreddits, generate comments to CSV.
-Phase 2: `mmn reddit reply -f comments.csv` — post from the CSV.
+**Engagement (two-phase):** `orchestrator.py` discovers subreddit posts, generates comments to CSV, then posts from the CSV.
+
+**Launch posts:** `post_generator.py` + `RedditPostGenerator` generates Reddit-native posts (update / milestone / launch) via Gemini. `client.submit_text_post()` submits them. Campaign config lives in `campaigns/*.yaml`. The `--brief` param accepts raw content (blog draft, release notes) for the AI to adapt.
 
 ### LinkedIn (`linkedin/`)
 
@@ -86,4 +87,4 @@ Each adapter reads credentials from env vars via pydantic-settings. See `.env.ex
 - All adapter methods are `async def`.
 - Settings use pydantic `BaseSettings` reading from environment.
 - Browser automation uses Playwright (chromium).
-- CLI subcommands use Typer, registered in `marketmenow/cli.py`.
+- CLI subcommands use Typer, registered in `marketmenow/cli.py` as **hidden groups** (`hidden=True`). The user-facing CLI uses `mmn run <workflow>`; hidden adapter commands remain callable by the web frontend subprocess runner.

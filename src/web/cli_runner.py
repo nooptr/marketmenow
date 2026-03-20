@@ -466,6 +466,49 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                 },
             ],
         },
+        "launch": {
+            "label": "Reddit Launch Posts",
+            "modality": "text_post",
+            "params": [
+                {
+                    "name": "config",
+                    "type": "text",
+                    "required": False,
+                    "help": "Path to campaign YAML config",
+                },
+                {
+                    "name": "product_name",
+                    "type": "text",
+                    "required": False,
+                    "help": "Product name (or set in config YAML)",
+                },
+                {
+                    "name": "product_description",
+                    "type": "textarea",
+                    "required": False,
+                    "help": "One-line product description (or set in config YAML)",
+                },
+                {
+                    "name": "subreddits",
+                    "type": "text",
+                    "required": False,
+                    "help": "Comma-separated subreddits (or set in config YAML)",
+                },
+                {
+                    "name": "post_type",
+                    "type": "select",
+                    "required": False,
+                    "options": ["update", "milestone", "launch"],
+                    "help": "Post type",
+                },
+                {
+                    "name": "brief",
+                    "type": "textarea",
+                    "required": False,
+                    "help": "Raw content for the AI to adapt (blog draft, release notes, etc.)",
+                },
+            ],
+        },
     },
     "email": {
         "send": {
@@ -629,6 +672,40 @@ def _build_reddit_engage_publish(_params: dict, output_dir: str) -> list[str]:
     return ["mmn", "reddit", "reply", "-f", os.path.join(output_dir, "comments.csv")]
 
 
+def _build_reddit_launch_generate(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "reddit-launch", "--dry-run"]
+    if params.get("config"):
+        cmd.extend(["--config", params["config"]])
+    if params.get("product_name"):
+        cmd.extend(["--product-name", params["product_name"]])
+    if params.get("product_description"):
+        cmd.extend(["--product-description", params["product_description"]])
+    if params.get("subreddits"):
+        cmd.extend(["--subreddits", params["subreddits"]])
+    if params.get("post_type"):
+        cmd.extend(["--post-type", params["post_type"]])
+    if params.get("brief"):
+        cmd.extend(["--brief", params["brief"]])
+    return cmd
+
+
+def _build_reddit_launch_publish(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "reddit-launch"]
+    if params.get("config"):
+        cmd.extend(["--config", params["config"]])
+    if params.get("product_name"):
+        cmd.extend(["--product-name", params["product_name"]])
+    if params.get("product_description"):
+        cmd.extend(["--product-description", params["product_description"]])
+    if params.get("subreddits"):
+        cmd.extend(["--subreddits", params["subreddits"]])
+    if params.get("post_type"):
+        cmd.extend(["--post-type", params["post_type"]])
+    if params.get("brief"):
+        cmd.extend(["--brief", params["brief"]])
+    return cmd
+
+
 _YT_TITLE_VARIANTS = [
     "Can our AI grade this? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
     "Can AI actually grade your homework? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
@@ -723,6 +800,7 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
     },
     "reddit": {
         "engage": (_build_reddit_engage_generate, _build_reddit_engage_publish),
+        "launch": (_build_reddit_launch_generate, _build_reddit_launch_publish),
     },
     "email": {
         "send": (_build_email_generate, _build_email_publish),

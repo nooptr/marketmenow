@@ -94,11 +94,49 @@ class RedditAdapter:
             )
 
     async def _publish_post(self, content: NormalisedContent) -> PublishResult:
-        return PublishResult(
-            platform="reddit",
-            success=False,
-            error_message="Text post publishing not yet implemented — comment-only for now",
-        )
+        subreddit: str = content.extra.get("subreddit", "")  # type: ignore[assignment]
+        title: str = content.extra.get("title", "")  # type: ignore[assignment]
+        body = content.text_segments[0] if content.text_segments else ""
+
+        if not subreddit or not title:
+            return PublishResult(
+                platform="reddit",
+                success=False,
+                error_message="Missing 'subreddit' or 'title' in content extra",
+            )
+
+        try:
+            resp = await self._client.submit_text_post(subreddit, title, body)
+            json_data = resp.get("json", {})
+            errors = json_data.get("errors", []) if isinstance(json_data, dict) else []  # type: ignore[union-attr]
+
+            if errors:
+                error_str = str(errors)
+                logger.error("Reddit submit errors for r/%s: %s", subreddit, error_str)
+                return PublishResult(
+                    platform="reddit",
+                    success=False,
+                    error_message=error_str,
+                )
+
+            data = json_data.get("data", {}) if isinstance(json_data, dict) else {}  # type: ignore[union-attr]
+            post_url = data.get("url", "") if isinstance(data, dict) else ""  # type: ignore[union-attr]
+            post_id = data.get("id", "") if isinstance(data, dict) else ""  # type: ignore[union-attr]
+
+            return PublishResult(
+                platform="reddit",
+                success=True,
+                remote_post_id=str(post_id),
+                remote_url=str(post_url),
+                published_at=datetime.now(UTC),
+            )
+        except Exception as exc:
+            logger.exception("Failed to submit post to r/%s", subreddit)
+            return PublishResult(
+                platform="reddit",
+                success=False,
+                error_message=str(exc),
+            )
 
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(

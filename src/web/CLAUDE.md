@@ -31,6 +31,10 @@ Browser → FastAPI routes → cli_runner.run_cli_streaming() → subprocess (uv
 
 ## Key Patterns
 
+### Hidden CLI Groups
+
+The user-facing CLI exposes `mmn run <workflow>`, but the web frontend calls the **original per-platform commands** (`mmn reel create`, `mmn twitter engage`, etc.) as subprocesses. These adapter CLIs are re-mounted in `marketmenow/cli.py` with `hidden=True` — they don't appear in `mmn --help` but remain callable by the web frontend. The `reddit-launch` workflow is the exception: it uses `mmn run reddit-launch` directly.
+
 ### CLI Runner
 
 `cli_runner.py` defines `PLATFORM_META` (JSON-serializable params per platform/command) and `BUILDERS` (server-side functions that construct `mmn` CLI argument lists). Each platform/command has a generate builder and a publish builder.

@@ -120,7 +120,13 @@ async def send_single(
 
     if dry_run:
         logger.info("[DRY RUN] → %s | Subject: %s", to_address, subject)
-        return SendResult(row_index=0, email=to_address, success=True)
+        return SendResult(
+            row_index=0,
+            email=to_address,
+            success=True,
+            rendered_html=html,
+            rendered_subject=subject,
+        )
 
     async with aiosmtplib.SMTP(
         hostname=settings.smtp_host,
@@ -191,7 +197,13 @@ async def send_batch(
                 subject_template,
                 contact.template_vars,
             )
-            result = SendResult(row_index=row_idx, email=contact.email, success=True)
+            result = SendResult(
+                row_index=row_idx,
+                email=contact.email,
+                success=True,
+                rendered_html=html,
+                rendered_subject=subject,
+            )
             results.append(result)
             if on_progress:
                 on_progress(i, total, contact.email, True, "")

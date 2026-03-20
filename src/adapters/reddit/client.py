@@ -104,6 +104,31 @@ class RedditClient:
     # Write operations
     # ------------------------------------------------------------------
 
+    async def submit_text_post(
+        self,
+        subreddit: str,
+        title: str,
+        text: str,
+    ) -> dict[str, object]:
+        """Submit a new text (self) post to a subreddit.
+
+        Returns the Reddit API response including the new post URL.
+        """
+        if not self._modhash:
+            await self.get_me()
+
+        url = f"{_BASE}/api/submit"
+        payload = {
+            "sr": subreddit,
+            "kind": "self",
+            "title": title,
+            "text": text,
+            "api_type": "json",
+            "uh": self._modhash,
+        }
+        resp = await self._post(url, data=payload)
+        return resp  # type: ignore[return-value]
+
     async def post_comment(self, parent_fullname: str, text: str) -> dict[str, object]:
         """Post a comment on a submission or reply to a comment.
 

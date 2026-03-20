@@ -8,8 +8,9 @@ alwaysApply: false
 
 ## Platform Agnosticism
 
-This package must never import from `src/adapters/` directly. The only exception
-is `registry_builder.py`, which uses lazy imports inside try/except blocks.
+This package must never import from `src/adapters/` directly. The exceptions are
+`registry_builder.py` and `workflow_registry.py`, which use lazy imports inside
+try/except blocks.
 
 ## Pipeline (`pipeline.py`)
 
@@ -41,6 +42,15 @@ builds a `Campaign`, and delegates to `Orchestrator`.
 4. Catches all exceptions — missing config silently skips that platform
 
 When adding a new adapter, add a corresponding `_try_yourplatform()` here.
+
+## Workflow System (`workflow.py`, `workflow_registry.py`)
+
+`Workflow` is a named sequence of `WorkflowStep` instances sharing a `WorkflowContext`.
+Steps implement the `WorkflowStep` protocol: `name`, `description`, `execute(ctx)`.
+The context carries `params` (CLI args) and `artifacts` (step outputs).
+
+`build_workflow_registry()` auto-discovers built-in workflows from `workflows/` via
+lazy imports. When adding a new workflow, add a `_try_register()` call here.
 
 ## Scheduler (`scheduler.py`)
 

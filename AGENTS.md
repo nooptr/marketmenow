@@ -10,12 +10,15 @@ uv run --extra dev pytest             # Test
 uv run ruff check src/ tests/        # Lint
 uv run ruff format src/ tests/       # Format
 uv run mmn --help                    # CLI
+uv run mmn workflows                 # List marketing workflows
+uv run mmn run <workflow> [OPTIONS]  # Run a workflow
+uv run mmn auth <platform>           # Authenticate
 uv run mmn-web                       # Web dashboard (localhost:8000)
 ```
 
 ## Architecture Invariants
 
-- **`src/marketmenow/`** is platform-agnostic. It must never import platform SDKs or adapter code (except lazy imports in `core/registry_builder.py`).
+- **`src/marketmenow/`** is platform-agnostic. It must never import platform SDKs or adapter code (except lazy imports in `core/registry_builder.py`, `core/workflow_registry.py`, and `steps/`).
 - **`src/adapters/`** contains all platform-specific logic. Adapter packages are independent and must not import from each other.
 - All adapter interfaces are `typing.Protocol` with `@runtime_checkable` — use structural subtyping, never ABC inheritance.
 - All data models are Pydantic `BaseModel` with `frozen=True` — mutate via `model_copy(update={...})`.
@@ -35,9 +38,14 @@ uv run mmn-web                       # Web dashboard (localhost:8000)
 | `src/marketmenow/registry.py`           | `PlatformBundle` + `AdapterRegistry`       |
 | `src/marketmenow/core/pipeline.py`      | Content pipeline (normalise → render → upload → publish) |
 | `src/marketmenow/core/registry_builder.py` | Auto-registers adapters from env vars   |
+| `src/marketmenow/core/workflow.py`      | `WorkflowStep` protocol, `WorkflowContext`, `Workflow` runner |
+| `src/marketmenow/core/workflow_registry.py` | `WorkflowRegistry` + `build_workflow_registry()` |
+| `src/marketmenow/steps/*.py`            | Reusable workflow steps (generate, post, discover, etc.) |
+| `src/marketmenow/workflows/*.py`        | Built-in workflow definitions              |
 | `src/marketmenow/models/content.py`     | Content modalities and data models         |
 | `src/marketmenow/normaliser.py`         | `NormalisedContent` + `ContentNormaliser`  |
-| `src/marketmenow/cli.py`               | Main CLI entry point                       |
+| `src/marketmenow/cli.py`               | Main CLI entry point (+ hidden adapter CLI aliases for web frontend) |
+| `campaigns/*.yaml`                     | YAML campaign config files (e.g. reddit-launch) |
 | `src/web/app.py`                        | FastAPI app                                |
 | `src/web/cli_runner.py`                | Subprocess runner + progress parsing       |
 | `tests/conftest.py`                     | Mock adapters and content factories        |
