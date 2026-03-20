@@ -566,7 +566,7 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                     "name": "privacy",
                     "type": "select",
                     "required": False,
-                    "options": ["private", "unlisted", "public"],
+                    "options": ["public", "unlisted", "private"],
                     "help": "Privacy status",
                 },
             ],
