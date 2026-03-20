@@ -46,7 +46,62 @@ def build_workflow_registry() -> WorkflowRegistry:
     _try_register(registry, "marketmenow.workflows.youtube_short", "workflow")
     _try_register(registry, "marketmenow.workflows.reddit_launch", "workflow")
 
+    _load_custom_workflows(registry)
+
     return registry
+
+
+def _load_custom_workflows(registry: WorkflowRegistry) -> None:
+    """Scan ``workflows/custom/*.yaml`` and register each as a Workflow."""
+    from pathlib import Path
+
+    import yaml
+
+    from marketmenow.core.workflow import ParamDef, ParamType, Workflow
+    from marketmenow.steps.registry import get_step_class
+
+    custom_dir = Path(__file__).resolve().parent.parent / "workflows" / "custom"
+    if not custom_dir.is_dir():
+        return
+
+    for yaml_path in sorted(custom_dir.glob("*.yaml")):
+        try:
+            with yaml_path.open("r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+
+            name = data.get("name", yaml_path.stem)
+            description = data.get("description", "")
+            step_names: list[str] = data.get("steps", [])
+            param_defs_raw: list[dict[str, object]] = data.get("params", [])
+
+            steps = []
+            for sname in step_names:
+                cls = get_step_class(sname)
+                steps.append(cls())
+
+            params = []
+            for pdef in param_defs_raw:
+                params.append(
+                    ParamDef(
+                        name=str(pdef.get("name", "")),
+                        type=ParamType(str(pdef.get("type", "string"))),
+                        required=bool(pdef.get("required", False)),
+                        default=pdef.get("default"),
+                        help=str(pdef.get("help", "")),
+                        short=str(pdef.get("short", "")),
+                    )
+                )
+
+            wf = Workflow(
+                name=name,
+                description=description,
+                steps=tuple(steps),
+                params=tuple(params),
+            )
+            registry.register(wf)
+            logger.debug("Registered custom workflow: %s (from %s)", name, yaml_path.name)
+        except Exception as exc:
+            logger.debug("Skipping custom workflow %s: %s", yaml_path.name, exc)
 
 
 def _try_register(

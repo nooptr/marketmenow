@@ -189,16 +189,20 @@ async def run_cli(
     output_dir: str | None = None,
     timeout: float = 600,
     cwd: str | None = None,
+    env_overrides: dict[str, str] | None = None,
 ) -> CliResult:
     """Execute an mmn CLI command via subprocess and capture results."""
     full_cmd = [UV_BIN, "run", *command_parts]
     logger.info("Running: %s", " ".join(full_cmd))
+
+    full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
 
     proc = await asyncio.create_subprocess_exec(
         *full_cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
+        env=full_env,
     )
 
     try:
@@ -272,6 +276,7 @@ async def run_cli_streaming(
     output_dir: str | None = None,
     timeout: float = 3600,
     cwd: str | None = None,
+    env_overrides: dict[str, str] | None = None,
 ) -> CliResult:
     """Like ``run_cli`` but streams output line-by-line to the EventHub.
 
@@ -284,11 +289,14 @@ async def run_cli_streaming(
         item_id, ProgressEvent(event_type="phase", message="Starting: " + " ".join(command_parts))
     )
 
+    full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
+
     proc = await asyncio.create_subprocess_exec(
         *full_cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
+        env=full_env,
     )
 
     assert proc.stdout is not None

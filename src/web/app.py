@@ -71,13 +71,17 @@ async def content_ws(websocket: WebSocket, item_id: UUID) -> None:
 
 # ── Routes ──────────────────────────────────────────────────────────
 
+from web.routes.credentials import router as credentials_router  # noqa: E402
 from web.routes.dashboard import router as dashboard_router  # noqa: E402
+from web.routes.flows import router as flows_router  # noqa: E402
 from web.routes.generate import router as generate_router  # noqa: E402
 from web.routes.queue import router as queue_router  # noqa: E402
 from web.routes.review import router as review_router  # noqa: E402
 from web.routes.webhooks import router as webhooks_router  # noqa: E402
 
 app.include_router(dashboard_router)
+app.include_router(flows_router)
+app.include_router(credentials_router)
 app.include_router(generate_router)
 app.include_router(review_router)
 app.include_router(queue_router)

@@ -18,6 +18,7 @@ env/
 # ── Environment / secrets ──────────────────────────────
 .env
 vertex.json
+credentials.yaml
 *_session.json
 .twitter_browser_profile/
 .twitter_audit_log.jsonl
