@@ -10,6 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from adapters.email.cli import app as email_app
+from adapters.facebook.cli import app as facebook_app
 from adapters.instagram.cli import app as instagram_app
 from adapters.instagram.cli import carousel_app, reel_app
 from adapters.linkedin.cli import app as linkedin_app
@@ -51,6 +52,12 @@ app.add_typer(
     linkedin_app,
     name="linkedin",
     help="LinkedIn organization page posting.",
+    rich_help_panel="Platforms",
+)
+app.add_typer(
+    facebook_app,
+    name="facebook",
+    help="Facebook posting and group engagement.",
     rich_help_panel="Platforms",
 )
 app.add_typer(
@@ -245,7 +252,12 @@ def platforms() -> None:
         "Text, Images, Videos, Documents, Articles, Polls",
         "mmn linkedin",
     )
-    table.add_row("Facebook", "[yellow]Planned[/]", "Reels, Carousels, DMs", "")
+    table.add_row(
+        "Facebook",
+        "[green]Implemented[/]",
+        "Text, Images, Videos, Group Posts",
+        "mmn facebook",
+    )
     table.add_row("TikTok", "[yellow]Planned[/]", "Reels", "")
     table.add_row(
         "YouTube Shorts",
