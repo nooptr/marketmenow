@@ -70,6 +70,14 @@ Live progress, streaming logs, approve/reject per item. One click to publish all
 Add a platform with zero changes to core. Ports-and-adapters architecture.
 </td>
 </tr>
+<tr>
+<td align="center">
+<h3>Auto-Heal</h3>
+One command runs lint, format, and tests — then hands failures to the Cursor agent to fix automatically.
+</td>
+<td align="center" colspan="2">
+</td>
+</tr>
 </table>
 
 <br/>

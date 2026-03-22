@@ -47,16 +47,18 @@ def _load_campaign_profiles() -> list[dict[str, object]]:
         try:
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
             if isinstance(data, dict) and data.get("platform"):
-                profiles.append({
-                    "filename": p.name,
-                    "path": str(p),
-                    "platform": data.get("platform", ""),
-                    "product_name": data.get("product", {}).get("name", "Untitled"),
-                    "product_tagline": data.get("product", {}).get("tagline", ""),
-                    "min_score": data.get("ideal_customer", {}).get("min_score", 0),
-                    "max_messages": data.get("messaging", {}).get("max_messages", 10),
-                    "vectors": len(data.get("discovery", [])),
-                })
+                profiles.append(
+                    {
+                        "filename": p.name,
+                        "path": str(p),
+                        "platform": data.get("platform", ""),
+                        "product_name": data.get("product", {}).get("name", "Untitled"),
+                        "product_tagline": data.get("product", {}).get("tagline", ""),
+                        "min_score": data.get("ideal_customer", {}).get("min_score", 0),
+                        "max_messages": data.get("messaging", {}).get("max_messages", 10),
+                        "vectors": len(data.get("discovery", [])),
+                    }
+                )
         except (yaml.YAMLError, AttributeError):
             continue
     return profiles
@@ -70,22 +72,24 @@ def _get_outreach_workflows() -> list[dict[str, object]]:
     result = []
     for wf in registry.list_all():
         if wf.name in outreach_names:
-            result.append({
-                "name": wf.name,
-                "description": wf.description,
-                "steps": [{"name": s.name, "description": s.description} for s in wf.steps],
-                "params": [
-                    {
-                        "name": p.name,
-                        "type": p.type.value,
-                        "required": p.required,
-                        "default": p.default,
-                        "help": p.help,
-                        "short": p.short,
-                    }
-                    for p in wf.params
-                ],
-            })
+            result.append(
+                {
+                    "name": wf.name,
+                    "description": wf.description,
+                    "steps": [{"name": s.name, "description": s.description} for s in wf.steps],
+                    "params": [
+                        {
+                            "name": p.name,
+                            "type": p.type.value,
+                            "required": p.required,
+                            "default": p.default,
+                            "help": p.help,
+                            "short": p.short,
+                        }
+                        for p in wf.params
+                    ],
+                }
+            )
     return result
 
 
@@ -98,7 +102,9 @@ def _history_stats(contacted: dict[str, dict[str, object]]) -> dict[str, object]
         by_platform[plat] = by_platform.get(plat, 0) + 1
 
     avg_score = 0.0
-    scores = [v.get("score", 0) for v in contacted.values() if isinstance(v.get("score"), int | float)]
+    scores = [
+        v.get("score", 0) for v in contacted.values() if isinstance(v.get("score"), int | float)
+    ]
     if scores:
         avg_score = sum(scores) / len(scores)
 
@@ -116,14 +122,16 @@ def _history_entries(contacted: dict[str, dict[str, object]]) -> list[dict[str, 
     entries = []
     for key, val in contacted.items():
         platform, handle = key.split(":", 1) if ":" in key else ("unknown", key)
-        entries.append({
-            "platform": platform,
-            "handle": handle,
-            "sent_at": val.get("sent_at", ""),
-            "message_preview": val.get("message_preview", ""),
-            "score": val.get("score", 0),
-            "success": val.get("success", True),
-        })
+        entries.append(
+            {
+                "platform": platform,
+                "handle": handle,
+                "sent_at": val.get("sent_at", ""),
+                "message_preview": val.get("message_preview", ""),
+                "score": val.get("score", 0),
+                "success": val.get("success", True),
+            }
+        )
     entries.sort(key=lambda e: e.get("sent_at", ""), reverse=True)
     return entries
 
@@ -220,7 +228,10 @@ async def _run_outreach(
         )
 
         if result.exit_code == 0:
-            preview: dict[str, object] = {"stdout": result.stdout[:3000], "files": result.output_files}
+            preview: dict[str, object] = {
+                "stdout": result.stdout[:3000],
+                "files": result.output_files,
+            }
             primary = result.output_files[0] if result.output_files else None
             await db.update_content_status(
                 item_id,

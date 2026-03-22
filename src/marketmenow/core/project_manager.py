@@ -46,7 +46,11 @@ class ProjectManager:
         return self._root / slug
 
     def _active_file(self) -> Path:
-        return self._root.parent / _ACTIVE_PROJECT_FILE if self._root.name == "projects" else self._root / _ACTIVE_PROJECT_FILE
+        return (
+            self._root.parent / _ACTIVE_PROJECT_FILE
+            if self._root.name == "projects"
+            else self._root / _ACTIVE_PROJECT_FILE
+        )
 
     # ── create ────────────────────────────────────────────────────────
 
@@ -102,7 +106,9 @@ class ProjectManager:
             cfg = child / "project.yaml"
             if cfg.is_file():
                 try:
-                    projects.append(ProjectConfig(**yaml.safe_load(cfg.read_text(encoding="utf-8"))))
+                    projects.append(
+                        ProjectConfig(**yaml.safe_load(cfg.read_text(encoding="utf-8")))
+                    )
                 except Exception:
                     logger.warning("Skipping invalid project at %s", child)
         return projects

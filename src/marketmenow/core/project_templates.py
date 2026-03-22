@@ -89,7 +89,7 @@ def generate_reddit_prompt(brand: BrandConfig, persona: PersonaConfig) -> str:
         "MENTION STRATEGY",
         f"You mention {brand.url} in roughly {{{{ mention_rate }}}}% of comments.",
         "When should_mention is true, mention it as a natural aside — e.g.",
-        f'"I\'ve been using {brand.url} for this and it\'s been solid."',
+        f"\"I've been using {brand.url} for this and it's been solid.\"",
         "When should_mention is false, do NOT mention the product at all.",
         "",
         "REDDIT CULTURE RULES",

@@ -260,9 +260,7 @@ def _phase_outreach(
         "min_score": int(min_score_raw),
     }
 
-    content = generate_outreach_campaign(
-        brand, customer, rubric, discovery_vectors, messaging
-    )
+    content = generate_outreach_campaign(brand, customer, rubric, discovery_vectors, messaging)
     path = pm.save_file(slug, "campaigns", "twitter-outreach.yaml", content=content)
     files.append(path)
     console.print(f"  [green]✓[/green] Saved {path}")
@@ -344,7 +342,9 @@ def _phase_reel_templates(
 
         template_id = typer.prompt("  Template ID (e.g. 'product-demo')")
 
-        console.print("  Paste the YAML template below. Type [bold]END[/bold] on its own line when done:")
+        console.print(
+            "  Paste the YAML template below. Type [bold]END[/bold] on its own line when done:"
+        )
         yaml_content = _read_until_sentinel("END")
 
         path = pm.save_reel_template(slug, template_id, yaml_content)
@@ -427,20 +427,24 @@ def _phase_summary(
         console.print(f"  [green]✓[/green] Active project set to [bold]{slug}[/bold]")
 
     console.print()
-    console.print(Panel(
-        "\n".join([
-            "[bold]What's Next[/bold]",
-            "",
-            f"  mmn run twitter-engage --project {slug}",
-            f"  mmn run reddit-engage --project {slug}",
-            f"  mmn run instagram-reel --project {slug}",
-            f"  mmn run twitter-outreach --project {slug}",
-            "",
-            "  mmn workflows            — list all available workflows",
-            "  mmn-web                  — open the web dashboard",
-        ]),
-        style="blue",
-    ))
+    console.print(
+        Panel(
+            "\n".join(
+                [
+                    "[bold]What's Next[/bold]",
+                    "",
+                    f"  mmn run twitter-engage --project {slug}",
+                    f"  mmn run reddit-engage --project {slug}",
+                    f"  mmn run instagram-reel --project {slug}",
+                    f"  mmn run twitter-outreach --project {slug}",
+                    "",
+                    "  mmn workflows            — list all available workflows",
+                    "  mmn-web                  — open the web dashboard",
+                ]
+            ),
+            style="blue",
+        )
+    )
 
 
 # ── main entry point ────────────────────────────────────────────────────
@@ -457,11 +461,13 @@ def run_onboarding(
     if pm is None:
         pm = ProjectManager()
 
-    console.print(Panel(
-        "[bold]MarketMeNow Project Setup[/bold]\n"
-        "Create a new marketing project in 10 easy steps.",
-        style="magenta",
-    ))
+    console.print(
+        Panel(
+            "[bold]MarketMeNow Project Setup[/bold]\n"
+            "Create a new marketing project in 10 easy steps.",
+            style="magenta",
+        )
+    )
 
     # Phase 1 — Brand
     brand = _phase_brand(console)
@@ -499,9 +505,7 @@ def run_onboarding(
 
     # Phase 5 — Twitter targets
     if "twitter" in customer.platforms:
-        result.twitter_targets_created = _phase_twitter_targets(
-            console, pm, slug, files
-        )
+        result.twitter_targets_created = _phase_twitter_targets(console, pm, slug, files)
 
     # Phase 6 — Reddit targets
     if "reddit" in customer.platforms:
@@ -511,9 +515,7 @@ def run_onboarding(
 
     # Phase 7 — Outreach profile
     if "twitter" in customer.platforms:
-        result.outreach_profile_created = _phase_outreach(
-            console, pm, slug, brand, customer, files
-        )
+        result.outreach_profile_created = _phase_outreach(console, pm, slug, brand, customer, files)
 
     # Phase 8 — Platform prompts
     result.prompts_created = _phase_prompts(
@@ -522,9 +524,7 @@ def run_onboarding(
 
     # Phase 9 — Reel templates
     if "instagram" in customer.platforms:
-        result.reel_templates = _phase_reel_templates(
-            console, pm, slug, brand, customer, files
-        )
+        result.reel_templates = _phase_reel_templates(console, pm, slug, brand, customer, files)
 
     # Phase 10 — Summary & activation
     _phase_summary(console, pm, slug, result)

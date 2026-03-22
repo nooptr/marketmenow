@@ -31,6 +31,7 @@ class TestPromptResolutionWithProject:
         import inspect
 
         from adapters.twitter.prompts import load_prompt
+
         sig = inspect.signature(load_prompt)
         assert "project_slug" in sig.parameters
 
@@ -38,6 +39,7 @@ class TestPromptResolutionWithProject:
         import inspect
 
         from adapters.reddit.prompts import load_prompt
+
         sig = inspect.signature(load_prompt)
         assert "project_slug" in sig.parameters
 
@@ -45,5 +47,6 @@ class TestPromptResolutionWithProject:
         import inspect
 
         from adapters.instagram.prompts import load_prompt
+
         sig = inspect.signature(load_prompt)
         assert "project_slug" in sig.parameters

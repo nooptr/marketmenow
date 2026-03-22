@@ -111,7 +111,9 @@ def project_list() -> None:
     active = pm.get_active_project()
 
     if not projects:
-        console.print("[dim]No projects found. Run [bold]mmn project add <slug>[/bold] to create one.[/dim]")
+        console.print(
+            "[dim]No projects found. Run [bold]mmn project add <slug>[/bold] to create one.[/dim]"
+        )
         return
 
     table = Table(title="Projects", show_header=True, border_style="dim")
@@ -153,7 +155,9 @@ def project_info(
     pm = ProjectManager()
     slug = slug or pm.get_active_project() or ""
     if not slug:
-        console.print("[red]No active project. Run [bold]mmn project use <slug>[/bold] first.[/red]")
+        console.print(
+            "[red]No active project. Run [bold]mmn project use <slug>[/bold] first.[/red]"
+        )
         raise typer.Exit(1)
 
     try:
@@ -163,15 +167,17 @@ def project_info(
         raise typer.Exit(1) from exc
 
     b = cfg.brand
-    console.print(Panel(
-        f"[bold]{b.name}[/bold]{b.logo_suffix}  •  {b.url}\n"
-        f"{b.tagline}\n"
-        f"Color: {b.color}  •  Logo: {b.logo_letter}{b.logo_suffix}\n\n"
-        + (f"Target: {cfg.target_customer.description}\n" if cfg.target_customer else "")
-        + f"Default persona: {cfg.default_persona}",
-        title=f"Project: {slug}",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{b.name}[/bold]{b.logo_suffix}  •  {b.url}\n"
+            f"{b.tagline}\n"
+            f"Color: {b.color}  •  Logo: {b.logo_letter}{b.logo_suffix}\n\n"
+            + (f"Target: {cfg.target_customer.description}\n" if cfg.target_customer else "")
+            + f"Default persona: {cfg.default_persona}",
+            title=f"Project: {slug}",
+            border_style="cyan",
+        )
+    )
 
     personas = pm.list_personas(slug)
     if personas:
@@ -198,7 +204,9 @@ def persona_add(
     pm = ProjectManager()
     slug = pm.get_active_project()
     if not slug:
-        console.print("[red]No active project. Run [bold]mmn project use <slug>[/bold] first.[/red]")
+        console.print(
+            "[red]No active project. Run [bold]mmn project use <slug>[/bold] first.[/red]"
+        )
         raise typer.Exit(1)
 
     description = typer.prompt("Description")
@@ -391,7 +399,9 @@ def run_workflow(
         "--info",
         help="Show detailed help for this workflow",
     ),
-    project: str = typer.Option("", "--project", "-p", help="Project slug (default: active project)"),
+    project: str = typer.Option(
+        "", "--project", "-p", help="Project slug (default: active project)"
+    ),
     persona: str = typer.Option("", "--persona", help="Persona name (default: project default)"),
 ) -> None:
     """Run a marketing workflow by name.
@@ -455,6 +465,7 @@ def run_workflow(
     persona_config = None
     try:
         from marketmenow.core.project_manager import ProjectManager
+
         pm = ProjectManager()
         proj_slug = project or pm.get_active_project()
         if proj_slug:
@@ -474,7 +485,9 @@ def run_workflow(
         )
     )
 
-    result = asyncio.run(wf.run(params, console=console, project=proj_config, persona=persona_config))
+    result = asyncio.run(
+        wf.run(params, console=console, project=proj_config, persona=persona_config)
+    )
 
     console.print()
     if result.success:

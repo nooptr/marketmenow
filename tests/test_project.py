@@ -116,9 +116,7 @@ class TestProjectConfig:
         assert cfg.target_customer is None
 
     def test_env_overrides(self) -> None:
-        cfg = ProjectConfig(
-            slug="x", brand=_brand(), env_overrides={"TWITTER_USERNAME": "bot"}
-        )
+        cfg = ProjectConfig(slug="x", brand=_brand(), env_overrides={"TWITTER_USERNAME": "bot"})
         assert cfg.env_overrides["TWITTER_USERNAME"] == "bot"
 
     def test_yaml_roundtrip(self, tmp_path: Path) -> None:

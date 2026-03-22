@@ -10,6 +10,7 @@ router = APIRouter(prefix="/project", tags=["project"])
 
 def _get_pm():
     from marketmenow.core.project_manager import ProjectManager
+
     return ProjectManager()
 
 

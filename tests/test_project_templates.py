@@ -22,6 +22,7 @@ def _brand() -> BrandConfig:
         features=["fast", "reliable"],
     )
 
+
 def _persona() -> PersonaConfig:
     return PersonaConfig(
         name="default",
@@ -30,6 +31,7 @@ def _persona() -> PersonaConfig:
         tone="casual, funny",
         example_phrases=["ngl", "lowkey"],
     )
+
 
 def _customer() -> TargetCustomer:
     return TargetCustomer(
@@ -74,9 +76,7 @@ class TestGenerateRedditPrompt:
 
 class TestGenerateTargets:
     def test_twitter_targets_valid_yaml(self):
-        result = generate_twitter_targets(
-            ["@user1", "@user2"], ["#hash1"], ["@company1"]
-        )
+        result = generate_twitter_targets(["@user1", "@user2"], ["#hash1"], ["@company1"])
         data = yaml.safe_load(result)
         assert "influencers" in data
         assert "@user1" in data["influencers"]
@@ -91,7 +91,8 @@ class TestGenerateTargets:
 class TestGenerateOutreachCampaign:
     def test_contains_product_info(self):
         result = generate_outreach_campaign(
-            _brand(), _customer(),
+            _brand(),
+            _customer(),
             [{"name": "Fit", "description": "Role fit", "max_points": 3}],
             [{"type": "pain_search", "entries": ["testing pain"], "max_per_entry": 5}],
             {"tone": "casual", "max_messages": 10, "max_message_length": 280},
@@ -100,7 +101,8 @@ class TestGenerateOutreachCampaign:
 
     def test_valid_yaml(self):
         result = generate_outreach_campaign(
-            _brand(), _customer(),
+            _brand(),
+            _customer(),
             [{"name": "Fit", "description": "Role fit", "max_points": 3}],
             [{"type": "pain_search", "entries": ["testing pain"], "max_per_entry": 5}],
             {"tone": "casual", "max_messages": 10, "max_message_length": 280},
