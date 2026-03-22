@@ -174,6 +174,10 @@ mmn youtube upload video.mp4
 # Email
 mmn email send -f contacts.csv -t template.html -r 0-100
 
+# Auto-heal (lint + format + test, then auto-fix via Cursor agent)
+mmn heal              # fix issues automatically
+mmn heal --no-fix     # report only, don't invoke the agent
+mmn heal --verbose    # show full lint/test output
 ```
 
 </details>
@@ -263,6 +267,7 @@ Checked items are shipped. Unchecked items are planned or in progress.
 - [x] **Personas** — bundle brand voice, visual identity, prompts, and platform credentials into switchable "personas" so you can manage multiple brands or collaborate with a team from one install
 - [x] **Twitter discovery & cold DM** — find Twitter accounts relevant to your brand, score them, and send personalized cold DMs at human-like pace
 - [x] **Pipelines & modularisation** — composable pipelines that chain the existing tools (discover → generate → review → publish) into reusable flows you define in YAML and execute with a single command
+- [x] **Auto-heal** — `mmn heal` runs lint, format, and the full test suite in one shot; remaining failures are handed off to the Cursor agent for automatic source-code fixes (never weakens tests)
 ### Up Next
 
 - [ ] **Reddit & LinkedIn publish** — finish WIP uploaders for both platforms, full end-to-end tests
