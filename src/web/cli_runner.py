@@ -189,16 +189,20 @@ async def run_cli(
     output_dir: str | None = None,
     timeout: float = 600,
     cwd: str | None = None,
+    env_overrides: dict[str, str] | None = None,
 ) -> CliResult:
     """Execute an mmn CLI command via subprocess and capture results."""
     full_cmd = [UV_BIN, "run", *command_parts]
     logger.info("Running: %s", " ".join(full_cmd))
+
+    full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
 
     proc = await asyncio.create_subprocess_exec(
         *full_cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
+        env=full_env,
     )
 
     try:
@@ -272,6 +276,7 @@ async def run_cli_streaming(
     output_dir: str | None = None,
     timeout: float = 3600,
     cwd: str | None = None,
+    env_overrides: dict[str, str] | None = None,
 ) -> CliResult:
     """Like ``run_cli`` but streams output line-by-line to the EventHub.
 
@@ -284,11 +289,14 @@ async def run_cli_streaming(
         item_id, ProgressEvent(event_type="phase", message="Starting: " + " ".join(command_parts))
     )
 
+    full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
+
     proc = await asyncio.create_subprocess_exec(
         *full_cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
+        env=full_env,
     )
 
     assert proc.stdout is not None
@@ -528,6 +536,49 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                 },
             ],
         },
+        "launch": {
+            "label": "Reddit Launch Posts",
+            "modality": "text_post",
+            "params": [
+                {
+                    "name": "config",
+                    "type": "text",
+                    "required": False,
+                    "help": "Path to campaign YAML config",
+                },
+                {
+                    "name": "product_name",
+                    "type": "text",
+                    "required": False,
+                    "help": "Product name (or set in config YAML)",
+                },
+                {
+                    "name": "product_description",
+                    "type": "textarea",
+                    "required": False,
+                    "help": "One-line product description (or set in config YAML)",
+                },
+                {
+                    "name": "subreddits",
+                    "type": "text",
+                    "required": False,
+                    "help": "Comma-separated subreddits (or set in config YAML)",
+                },
+                {
+                    "name": "post_type",
+                    "type": "select",
+                    "required": False,
+                    "options": ["update", "milestone", "launch"],
+                    "help": "Post type",
+                },
+                {
+                    "name": "brief",
+                    "type": "textarea",
+                    "required": False,
+                    "help": "Raw content for the AI to adapt (blog draft, release notes, etc.)",
+                },
+            ],
+        },
     },
     "email": {
         "send": {
@@ -577,7 +628,7 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                     "name": "privacy",
                     "type": "select",
                     "required": False,
-                    "options": ["private", "unlisted", "public"],
+                    "options": ["public", "unlisted", "private"],
                     "help": "Privacy status",
                 },
             ],
@@ -755,6 +806,40 @@ def _build_reddit_engage_publish(_params: dict, output_dir: str) -> list[str]:
     return ["mmn", "reddit", "reply", "-f", os.path.join(output_dir, "comments.csv")]
 
 
+def _build_reddit_launch_generate(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "reddit-launch", "--dry-run"]
+    if params.get("config"):
+        cmd.extend(["--config", params["config"]])
+    if params.get("product_name"):
+        cmd.extend(["--product-name", params["product_name"]])
+    if params.get("product_description"):
+        cmd.extend(["--product-description", params["product_description"]])
+    if params.get("subreddits"):
+        cmd.extend(["--subreddits", params["subreddits"]])
+    if params.get("post_type"):
+        cmd.extend(["--post-type", params["post_type"]])
+    if params.get("brief"):
+        cmd.extend(["--brief", params["brief"]])
+    return cmd
+
+
+def _build_reddit_launch_publish(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "reddit-launch"]
+    if params.get("config"):
+        cmd.extend(["--config", params["config"]])
+    if params.get("product_name"):
+        cmd.extend(["--product-name", params["product_name"]])
+    if params.get("product_description"):
+        cmd.extend(["--product-description", params["product_description"]])
+    if params.get("subreddits"):
+        cmd.extend(["--subreddits", params["subreddits"]])
+    if params.get("post_type"):
+        cmd.extend(["--post-type", params["post_type"]])
+    if params.get("brief"):
+        cmd.extend(["--brief", params["brief"]])
+    return cmd
+
+
 _YT_TITLE_VARIANTS = [
     "Can our AI grade this? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
     "Can AI actually grade your homework? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
@@ -813,7 +898,7 @@ def _build_youtube_short_publish(params: dict, output_dir: str) -> list[str]:
 
 
 def _build_email_generate(params: dict, _output_dir: str) -> list[str]:
-    cmd = ["mmn", "email", "send", "--dry-run"]
+    cmd = ["mmn", "email", "send", "--dry-run", "--paraphrase"]
     if params.get("template"):
         cmd.extend(["-t", params["template"]])
     if params.get("file"):
@@ -824,7 +909,7 @@ def _build_email_generate(params: dict, _output_dir: str) -> list[str]:
 
 
 def _build_email_publish(params: dict, _output_dir: str) -> list[str]:
-    cmd = ["mmn", "email", "send"]
+    cmd = ["mmn", "email", "send", "--paraphrase"]
     if params.get("template"):
         cmd.extend(["-t", params["template"]])
     if params.get("file"):
@@ -853,6 +938,7 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
     },
     "reddit": {
         "engage": (_build_reddit_engage_generate, _build_reddit_engage_publish),
+        "launch": (_build_reddit_launch_generate, _build_reddit_launch_publish),
     },
     "email": {
         "send": (_build_email_generate, _build_email_publish),

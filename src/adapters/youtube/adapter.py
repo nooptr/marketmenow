@@ -33,7 +33,7 @@ class YouTubeAdapter:
         client_id: str,
         client_secret: str,
         refresh_token: str,
-        default_privacy: str = "private",
+        default_privacy: str = "public",
         default_category_id: str = "27",
     ) -> None:
         self._client_id = client_id

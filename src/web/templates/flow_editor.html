@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Flow Editor - MarketMeNow{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+  <h1 class="text-2xl font-semibold text-white">
+    {% if existing_name %}Edit Flow: {{ existing_name }}{% else %}New Flow{% endif %}
+  </h1>
+  <a href="/flows" class="px-4 py-1.5 rounded-lg text-sm font-medium border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors">
+    &larr; Back to Flows
+  </a>
+</div>
+
+<div class="flex gap-2 mb-6 border-b border-zinc-800">
+  <button id="tab-visual" onclick="switchTab('visual')"
+          class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors border-white text-white">
+    Visual
+  </button>
+  <button id="tab-yaml" onclick="switchTab('yaml')"
+          class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors border-transparent text-zinc-500 hover:text-zinc-300">
+    YAML
+  </button>
+</div>
+
+<!-- ── Visual Mode ────────────────────────────────────────── -->
+<div id="panel-visual">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="flex flex-col gap-6">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col gap-5">
+        <h2 class="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Workflow Info</h2>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Name</label>
+          <input type="text" id="wf-name" placeholder="my-reddit-blitz"
+                 class="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-white focus:ring-1 focus:ring-white/20 transition-colors outline-none">
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Description</label>
+          <input type="text" id="wf-desc" placeholder="What does this flow do?"
+                 class="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-white focus:ring-1 focus:ring-white/20 transition-colors outline-none">
+        </div>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Steps</h2>
+          <button onclick="addStep()"
+                  class="px-3 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors">
+            + Add Step
+          </button>
+        </div>
+        <div id="step-list" class="flex flex-col gap-2"></div>
+        <p id="step-empty" class="text-xs text-zinc-600 py-4 text-center">No steps added yet. Click + Add Step.</p>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Parameters</h2>
+          <button onclick="addParam()"
+                  class="px-3 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors">
+            + Add Param
+          </button>
+        </div>
+        <div id="param-list" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h2 class="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-4">Preview</h2>
+        <pre id="yaml-preview" class="font-mono text-[11px] bg-black p-4 rounded-lg max-h-96 overflow-y-auto whitespace-pre-wrap text-zinc-400"></pre>
+      </div>
+      <button onclick="saveVisual()"
+              class="w-full flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black hover:bg-zinc-200 transition-colors">
+        Save Flow
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── YAML Mode ──────────────────────────────────────────── -->
+<div id="panel-yaml" class="hidden">
+  <form hx-post="/flows/save" hx-target="#toast-container" hx-swap="afterbegin"
+        class="flex flex-col gap-6">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+      <label class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider block mb-2">Workflow YAML</label>
+      <textarea name="yaml_content" id="yaml-editor" rows="24"
+                class="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-sm text-zinc-100 font-mono focus:border-white focus:ring-1 focus:ring-white/20 transition-colors outline-none resize-y"
+                placeholder="name: my-workflow&#10;description: What it does&#10;steps:&#10;  - generate-reddit-posts&#10;  - post-to-subreddits&#10;params:&#10;  - name: subreddits&#10;    type: string&#10;    required: true&#10;    help: Comma-separated subreddits">{{ existing_yaml }}</textarea>
+    </div>
+    <button type="submit"
+            class="w-full flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black hover:bg-zinc-200 transition-colors">
+      Save Flow
+    </button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+var availableSteps = {{ steps | tojson }};
+
+function switchTab(tab) {
+  document.getElementById('panel-visual').classList.toggle('hidden', tab !== 'visual');
+  document.getElementById('panel-yaml').classList.toggle('hidden', tab !== 'yaml');
+  document.getElementById('tab-visual').classList.toggle('text-white', tab === 'visual');
+  document.getElementById('tab-visual').classList.toggle('border-white', tab === 'visual');
+  document.getElementById('tab-visual').classList.toggle('text-zinc-500', tab !== 'visual');
+  document.getElementById('tab-visual').classList.toggle('border-transparent', tab !== 'visual');
+  document.getElementById('tab-yaml').classList.toggle('text-white', tab === 'yaml');
+  document.getElementById('tab-yaml').classList.toggle('border-white', tab === 'yaml');
+  document.getElementById('tab-yaml').classList.toggle('text-zinc-500', tab !== 'yaml');
+  document.getElementById('tab-yaml').classList.toggle('border-transparent', tab !== 'yaml');
+  if (tab === 'yaml') syncVisualToYaml();
+}
+
+function addStep() {
+  var list = document.getElementById('step-list');
+  document.getElementById('step-empty').style.display = 'none';
+  var row = document.createElement('div');
+  row.className = 'flex items-center gap-2 step-row';
+  row.innerHTML =
+    '<span class="cursor-grab text-zinc-600 hover:text-zinc-400 drag-handle">&#9776;</span>' +
+    '<select onchange="updatePreview()" class="flex-1 bg-black border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:border-white focus:ring-1 focus:ring-white/20 outline-none step-select">' +
+    '<option value="">Select step...</option>' +
+    availableSteps.map(function(s) { return '<option value="' + s.name + '">' + s.name + ' — ' + s.description + '</option>'; }).join('') +
+    '</select>' +
+    '<button onclick="this.parentElement.remove(); updatePreview();" class="text-red-400 hover:text-red-300 text-sm px-1">&times;</button>';
+  list.appendChild(row);
+  updatePreview();
+}
+
+function addParam() {
+  var list = document.getElementById('param-list');
+  var row = document.createElement('div');
+  row.className = 'grid grid-cols-[1fr_80px_40px_40px] gap-2 items-center param-row';
+  row.innerHTML =
+    '<input type="text" placeholder="param_name" class="bg-black border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-zinc-100 outline-none param-name" onchange="updatePreview()">' +
+    '<select class="bg-black border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-100 outline-none param-type" onchange="updatePreview()">' +
+    '<option value="string">string</option><option value="int">int</option><option value="bool">bool</option><option value="path">path</option><option value="float">float</option>' +
+    '</select>' +
+    '<label class="flex items-center justify-center" title="Required"><input type="checkbox" class="w-3.5 h-3.5 rounded bg-black border-zinc-700 param-req" onchange="updatePreview()"></label>' +
+    '<button onclick="this.parentElement.remove(); updatePreview();" class="text-red-400 hover:text-red-300 text-sm text-center">&times;</button>';
+  list.appendChild(row);
+  updatePreview();
+}
+
+function buildYaml() {
+  var name = document.getElementById('wf-name').value || 'my-workflow';
+  var desc = document.getElementById('wf-desc').value || '';
+  var steps = [];
+  document.querySelectorAll('.step-select').forEach(function(sel) { if (sel.value) steps.push(sel.value); });
+  var params = [];
+  document.querySelectorAll('.param-row').forEach(function(row) {
+    var n = row.querySelector('.param-name').value;
+    if (!n) return;
+    var p = { name: n, type: row.querySelector('.param-type').value };
+    if (row.querySelector('.param-req').checked) p.required = true;
+    params.push(p);
+  });
+  var lines = ['name: ' + name];
+  if (desc) lines.push('description: "' + desc.replace(/"/g, '\\"') + '"');
+  lines.push('steps:');
+  steps.forEach(function(s) { lines.push('  - ' + s); });
+  if (params.length > 0) {
+    lines.push('params:');
+    params.forEach(function(p) {
+      lines.push('  - name: ' + p.name);
+      lines.push('    type: ' + p.type);
+      if (p.required) lines.push('    required: true');
+    });
+  }
+  return lines.join('\n');
+}
+
+function updatePreview() {
+  document.getElementById('yaml-preview').textContent = buildYaml();
+}
+
+function syncVisualToYaml() {
+  document.getElementById('yaml-editor').value = buildYaml();
+}
+
+function saveVisual() {
+  var yaml = buildYaml();
+  var form = new FormData();
+  form.append('yaml_content', yaml);
+  htmx.ajax('POST', '/flows/save', { values: { yaml_content: yaml }, target: '#toast-container', swap: 'afterbegin' });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  new Sortable(document.getElementById('step-list'), {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: function() { updatePreview(); }
+  });
+  document.getElementById('wf-name').addEventListener('input', updatePreview);
+  document.getElementById('wf-desc').addEventListener('input', updatePreview);
+  updatePreview();
+});
+</script>
+{% endblock %}

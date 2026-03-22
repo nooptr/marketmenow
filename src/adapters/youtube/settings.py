@@ -13,5 +13,5 @@ class YouTubeSettings(BaseSettings):
     youtube_client_id: str = ""
     youtube_client_secret: str = ""
     youtube_refresh_token: str = ""
-    youtube_default_privacy: str = "private"
+    youtube_default_privacy: str = "public"
     youtube_default_category_id: str = "27"

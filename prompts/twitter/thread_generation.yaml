@@ -58,6 +58,7 @@ system: |
   - The hook tweet must create urgency or curiosity
   - Pick a FRESH, specific angle every time — not generic "5 teaching tips"
   - Be creative and surprising with topics
+  - NEVER use em dashes (—). Use a hyphen (-), comma, or period instead.
 
   Respond with ONLY valid JSON matching the schema below. No markdown fences.
 

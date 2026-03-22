@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 from uuid import uuid4
 
@@ -13,6 +14,9 @@ from marketmenow.models.content import ImagePost, MediaAsset
 from ..prompts import load_prompt
 from ..settings import InstagramSettings
 from .renderer import SlideRenderer
+
+_MAX_IMAGE_RETRIES = 3
+_INITIAL_BACKOFF_S = 2.0
 
 
 def _ensure_vertex_credentials(settings: InstagramSettings) -> None:
@@ -113,22 +117,39 @@ class CarouselOrchestrator:
         return results[0], list(results[1:])
 
     async def _generate_image(self, prompt: str) -> bytes:
-        """Generate an image, retrying with a simplified prompt if the safety filter fires."""
-        for _attempt, current_prompt in enumerate([prompt, self._simplify_prompt(prompt)]):
-            response = await self._client.aio.models.generate_images(
-                model=self.IMAGEN_MODEL,
-                prompt=current_prompt,
-                config=genai_types.GenerateImagesConfig(
-                    number_of_images=1,
-                    aspect_ratio="3:4",
-                    person_generation=genai_types.PersonGeneration.ALLOW_ADULT,
-                    safety_filter_level=genai_types.SafetyFilterLevel.BLOCK_ONLY_HIGH,
-                ),
-            )
-            if response.generated_images:
-                return response.generated_images[0].image.image_bytes
+        """Generate an image with retry + exponential backoff on API errors."""
+        prompts = [prompt, self._simplify_prompt(prompt), self._fallback_prompt()]
+        last_error: Exception | None = None
 
-        raise RuntimeError(f"Imagen returned no images after retries for: {prompt[:80]}...")
+        for attempt, current_prompt in enumerate(prompts):
+            for retry in range(_MAX_IMAGE_RETRIES):
+                try:
+                    response = await self._client.aio.models.generate_images(
+                        model=self.IMAGEN_MODEL,
+                        prompt=current_prompt,
+                        config=genai_types.GenerateImagesConfig(
+                            number_of_images=1,
+                            aspect_ratio="3:4",
+                            person_generation=genai_types.PersonGeneration.ALLOW_ADULT,
+                            safety_filter_level=genai_types.SafetyFilterLevel.BLOCK_ONLY_HIGH,
+                        ),
+                    )
+                    if response.generated_images:
+                        return response.generated_images[0].image.image_bytes
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    wait = _INITIAL_BACKOFF_S * (2**retry)
+                    logging.getLogger(__name__).warning(
+                        "Imagen attempt %d/%d failed (prompt variant %d): %s — retrying in %.0fs",
+                        retry + 1, _MAX_IMAGE_RETRIES, attempt + 1, exc, wait,
+                    )
+                    await asyncio.sleep(wait)
+
+        raise RuntimeError(
+            f"Imagen failed after all retries for: {prompt[:80]}... "
+            f"Last error: {last_error}"
+        )
 
     @staticmethod
     def _simplify_prompt(prompt: str) -> str:
@@ -138,4 +159,13 @@ class CarouselOrchestrator:
             "A beautiful, high-quality editorial photograph, "
             + " ".join(words)
             + ", soft natural lighting, clean composition, no text"
+        )
+
+    @staticmethod
+    def _fallback_prompt() -> str:
+        """Last-resort generic prompt that should never be rejected."""
+        return (
+            "A professional editorial photograph of a clean modern desk "
+            "with notebooks, pens, and a laptop, warm natural lighting, "
+            "shallow depth of field, no text or people"
         )

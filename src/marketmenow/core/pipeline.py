@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from marketmenow.core.text_sanitiser import sanitise_text
 from marketmenow.models.content import BaseContent, ContentModality
 from marketmenow.models.result import MediaRef, PublishResult, SendResult
 from marketmenow.normaliser import ContentNormaliser, NormalisedContent
@@ -17,6 +18,7 @@ class ContentPipeline:
         normalised: NormalisedContent = self._normaliser.normalise(content)
 
         rendered: NormalisedContent = await bundle.renderer.render(normalised)
+        rendered = sanitise_text(rendered)
 
         media_refs: list[MediaRef] = await bundle.uploader.upload_batch(rendered.media_assets)
         rendered = rendered.model_copy(

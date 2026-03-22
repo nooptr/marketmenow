@@ -8,10 +8,12 @@ alwaysApply: true
 ## Project Layout
 
 ```
-src/marketmenow/       # Platform-agnostic core (models, ports, core logic)
-src/adapters/          # Platform-specific adapters (instagram, twitter, linkedin, reddit, email)
-tests/                 # Test suite (pytest + pytest-asyncio)
-pyproject.toml         # Single source of truth for deps and config
+src/marketmenow/          # Platform-agnostic core (models, ports, core logic, workflows)
+src/marketmenow/steps/    # Reusable workflow steps (generate, post, discover, etc.)
+src/marketmenow/workflows/# Built-in workflow definitions
+src/adapters/             # Platform-specific adapters (instagram, twitter, linkedin, reddit, email)
+tests/                    # Test suite (pytest + pytest-asyncio)
+pyproject.toml            # Single source of truth for deps and config
 ```
 
 ## Ports and Adapters
@@ -32,6 +34,15 @@ pyproject.toml         # Single source of truth for deps and config
 3. Optionally implement `AnalyticsCollector`.
 4. Bundle into `PlatformBundle` and register with `AdapterRegistry`.
 5. No changes needed in `core/`, `models/`, or `ports/`.
+
+## Adding a New Workflow
+
+1. Create a step in `src/marketmenow/steps/yourstep.py` implementing `WorkflowStep`
+   protocol: `name`, `description`, `async execute(ctx: WorkflowContext)`.
+2. Create `src/marketmenow/workflows/your_workflow.py` composing steps into a
+   `Workflow(name, description, steps, params)`.
+3. Add a `_try_register()` call in `core/workflow_registry.py`.
+4. No changes needed in `core/`, `models/`, `ports/`, or `cli.py`.
 
 ## Adding a New Content Modality
 

@@ -45,7 +45,8 @@ class LinkedInAPIClient:
             "/rest/images?action=initializeUpload",
             json={"initializeUploadRequest": {"owner": self._author}},
         )
-        init_resp.raise_for_status()
+        if not init_resp.is_success:
+            self._raise_with_hint(init_resp, "initialize image upload")
         data = init_resp.json()["value"]
         upload_url: str = data["uploadUrl"]
         image_urn: str = data["image"]
@@ -59,7 +60,8 @@ class LinkedInAPIClient:
                 "Authorization": self._client.headers["Authorization"],
             },
         )
-        put_resp.raise_for_status()
+        if not put_resp.is_success:
+            self._raise_with_hint(put_resp, "upload image bytes")
 
         logger.info("Uploaded image %s -> %s", path.name, image_urn)
         return image_urn
@@ -148,11 +150,29 @@ class LinkedInAPIClient:
         logger.debug("POST /rest/posts author=%s", body.get("author"))
         resp = await self._client.post("/rest/posts", json=body)
         if resp.status_code >= 400:
-            detail = resp.text
-            logger.error(
-                "LinkedIn API %d: %s", resp.status_code, detail,
-            )
-            resp.raise_for_status()
+            self._raise_with_hint(resp, "create post")
         post_id = resp.headers.get("x-restli-id", "")
         logger.info("Created LinkedIn post: %s", post_id)
         return post_id
+
+    @staticmethod
+    def _raise_with_hint(resp: httpx.Response, action: str) -> None:
+        detail = resp.text[:500]
+        status = resp.status_code
+        hint = ""
+        detail_lower = detail.lower()
+        if status == 401 or "unauthorized" in detail_lower:
+            hint = "LinkedIn access token is invalid or expired. Run `mmn auth linkedin --oauth` to generate a new one."
+        elif status == 403 or "not enough permissions" in detail_lower:
+            hint = "Your LinkedIn token lacks the required scope. Re-authenticate with `mmn auth linkedin --oauth` and approve w_member_social permission."
+        elif "author" in detail_lower and "invalid" in detail_lower:
+            hint = "LINKEDIN_PERSON_URN is wrong. Run `mmn auth linkedin --oauth` which auto-detects your URN, or set it manually in .env."
+        elif status == 429:
+            hint = "LinkedIn rate limit hit. Wait a few minutes before retrying."
+        elif status >= 500:
+            hint = "LinkedIn's servers are having issues. Try again in a few minutes."
+        msg = f"LinkedIn API error {status} during {action}: {detail}"
+        if hint:
+            msg += f"\n  -> Fix: {hint}"
+        logger.error(msg)
+        raise httpx.HTTPStatusError(msg, request=resp.request, response=resp)

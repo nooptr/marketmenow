@@ -4,6 +4,8 @@ import asyncio
 import logging
 import os
 import re
+import tempfile
+import webbrowser
 from pathlib import Path
 
 import typer
@@ -34,6 +36,26 @@ logger = logging.getLogger(__name__)
 console = Console()
 
 _RANGE_RE = re.compile(r"^(\d+)-(\d+)$")
+
+
+def _preview_in_browser(results: list[SendResult]) -> None:
+    """Write rendered emails to temp HTML files and open the first in the browser."""
+    previewed = [r for r in results if r.rendered_html]
+    if not previewed:
+        return
+    result = previewed[0]
+    subject_bar = (
+        f'<div style="background:#f0f0f0;padding:12px 20px;font-family:Arial,sans-serif;'
+        f'font-size:14px;color:#555;border-bottom:1px solid #ddd;">'
+        f'<strong>Subject:</strong> {result.rendered_subject} &nbsp;&nbsp;|&nbsp;&nbsp;'
+        f'<strong>To:</strong> {result.email}</div>'
+    )
+    html = result.rendered_html.replace("<body", f"<body>\n{subject_bar}\n<!-- original body -->", 1)
+    with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as f:
+        f.write(html)
+        tmp_path = f.name
+    webbrowser.open(f"file://{tmp_path}")
+    console.print(f"[cyan]Preview opened in browser:[/cyan] {tmp_path}")
 
 
 def _ensure_vertex_credentials(settings: EmailSettings) -> None:
@@ -264,6 +286,8 @@ def send(
 
         results = asyncio.run(_run_single())
         _print_summary(results, dry_run)
+        if dry_run:
+            _preview_in_browser(results)
         return
 
     if not csv_file:
@@ -312,3 +336,5 @@ def send(
 
     results = asyncio.run(_run())
     _print_summary(results, dry_run)
+    if dry_run:
+        _preview_in_browser(results)

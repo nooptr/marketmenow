@@ -286,7 +286,7 @@ def _render_with_pillow(content: dict[str, object], output_dir: Path) -> Path:
         qtype = q.get("type", "")
         text = str(q.get("text", ""))
         options = q.get("options")
-        answer_lines = int(q.get("answer_lines", 2))
+        answer_lines = int(q.get("answer_lines") or 2)
 
         header = f"Q{num}."
         if qtype:

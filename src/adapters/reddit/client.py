@@ -104,6 +104,31 @@ class RedditClient:
     # Write operations
     # ------------------------------------------------------------------
 
+    async def submit_text_post(
+        self,
+        subreddit: str,
+        title: str,
+        text: str,
+    ) -> dict[str, object]:
+        """Submit a new text (self) post to a subreddit.
+
+        Returns the Reddit API response including the new post URL.
+        """
+        if not self._modhash:
+            await self.get_me()
+
+        url = f"{_BASE}/api/submit"
+        payload = {
+            "sr": subreddit,
+            "kind": "self",
+            "title": title,
+            "text": text,
+            "api_type": "json",
+            "uh": self._modhash,
+        }
+        resp = await self._post(url, data=payload)
+        return resp  # type: ignore[return-value]
+
     async def post_comment(self, parent_fullname: str, text: str) -> dict[str, object]:
         """Post a comment on a submission or reply to a comment.
 
@@ -134,7 +159,7 @@ class RedditClient:
     ) -> dict[str, object] | list[object]:
         resp = await self._http.get(url, params=params)  # type: ignore[arg-type]
         self._check_rate_limit(resp)
-        resp.raise_for_status()
+        self._raise_for_status(resp)
         return resp.json()  # type: ignore[no-any-return]
 
     async def _post(
@@ -144,8 +169,25 @@ class RedditClient:
     ) -> dict[str, object] | list[object]:
         resp = await self._http.post(url, data=data)  # type: ignore[arg-type]
         self._check_rate_limit(resp)
-        resp.raise_for_status()
+        self._raise_for_status(resp)
         return resp.json()  # type: ignore[no-any-return]
+
+    @staticmethod
+    def _raise_for_status(resp: httpx.Response) -> None:
+        if resp.is_success:
+            return
+        status = resp.status_code
+        hint = ""
+        if status == 403:
+            hint = "Reddit session cookie is invalid or expired. Grab a fresh reddit_session cookie from your browser and update REDDIT_SESSION in .env."
+        elif status == 429:
+            hint = "Reddit rate limit hit. Wait a few minutes before retrying."
+        elif status >= 500:
+            hint = "Reddit's servers are having issues. Try again in a few minutes."
+        msg = f"Reddit API error {status}: {resp.text[:300]}"
+        if hint:
+            msg += f"\n  -> Fix: {hint}"
+        raise httpx.HTTPStatusError(msg, request=resp.request, response=resp)
 
     def _check_rate_limit(self, resp: httpx.Response) -> None:
         remaining = resp.headers.get("x-ratelimit-remaining")

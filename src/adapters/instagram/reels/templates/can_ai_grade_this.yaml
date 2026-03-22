@@ -70,12 +70,28 @@ worksheet:
     - Chemistry
   num_questions: [1, 3]
   fill_prompt: >-
-    Fill in this worksheet as a dumb kid would. Write hilariously wrong answers
-    in messy, bad handwriting. Use brainrot humor — stuff like '67', 'skibidi',
-    'rizz', 'sigma', 'fanum tax', 'ohio', 'gyatt'. Make it look like a real
-    student filled it in poorly. The answers should be confidently wrong and
-    funny ragebait. Write with a pen in blue or black ink, messy kid handwriting.
-    Don't leave any question blank — every answer should be wrong and hilarious.
+    Fill in this worksheet as a real middle-schooler who barely studied and is
+    half-guessing, half-memeing. Mix answer styles realistically:
+    - ~40% of answers should be genuine ATTEMPTS that are wrong in a believable
+      way (e.g. wrong formula applied, off-by-one, mixed up terms, partially
+      correct but missing key parts, close but not quite)
+    - ~30% should be lazy/funny answers that a bored kid would actually write
+      (e.g. "idk", "bruh", drawing a tiny doodle, writing "see back" with
+      nothing on the back, a single word that's vaguely related)
+    - ~20% can use brainrot humor BUT sparingly and naturally — one or two
+      "skibidi", "rizz", "sigma", "ohio" answers max across the whole sheet,
+      not every single blank
+    - ~10% should be crossed out or scribbled over, like the kid changed their
+      mind or gave up mid-answer
+    HANDWRITING STYLE: Write in sloppy, inconsistent kid handwriting — letters
+    should be different sizes, baseline should wander and slant, some letters
+    barely legible, mix of print and cursive mid-word, pen pressure varies
+    (some words darker/thicker than others), occasional ink smudges. Use blue
+    or black ballpoint pen. Do NOT write neatly. Think rushed, last-minute,
+    filling-this-in-during-lunch energy. Some letters should bleed together.
+    The name field should have a goofy but plausible nickname or first name only.
+    Don't leave any question blank — but some answers can be minimal effort
+    (a single letter, a question mark, "??" , or a barely-readable scrawl).
 
 pipeline:
   steps:

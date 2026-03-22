@@ -32,7 +32,7 @@
 |---|---|:---:|:---:|:---:|
 | **Instagram** | Reels, Carousels | ✅ | ✅ | ✅ |
 | **X / Twitter** | Replies, Threads | ✅ | ✅ | ✅ |
-| **Reddit** | Comments | ✅ | 🚧 WIP | - |
+| **Reddit** | Comments, Posts | ✅ | ✅ | - |
 | **LinkedIn** | Posts, Images, Videos, Docs | ✅ | 🚧 WIP | - |
 | **YouTube** | Shorts | ✅ | ✅ | - |
 | **Email** | Bulk outreach | ✅ | ✅ | - |
@@ -125,7 +125,7 @@ You only need credentials for the platforms you use:
 | Twitter/X | `TWITTER_AUTH_TOKEN`, `TWITTER_CT0` (or `mmn twitter login`) |
 | Reddit | `REDDIT_SESSION` cookie, `REDDIT_USERNAME` |
 | LinkedIn | `LINKEDIN_ACCESS_TOKEN` (or `LINKEDIN_LI_AT` cookie) |
-| YouTube | Google OAuth 2.0 (`mmn youtube auth`) |
+| YouTube | Google OAuth 2.0 (`mmn auth youtube`) |
 | Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` |
 | AI (all) | AI Studio: `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) **or** Vertex: `GOOGLE_APPLICATION_CREDENTIALS`, `VERTEX_AI_PROJECT` |
 
@@ -164,6 +164,7 @@ mmn youtube upload video.mp4
 
 # Email
 mmn email send -f contacts.csv -t template.html -r 0-100
+
 ```
 
 </details>
@@ -240,6 +241,33 @@ graph LR
 **Adding a platform:** Create `src/adapters/yourplatform/`, implement the protocols, register with `AdapterRegistry`. Zero changes to core.
 
 </details>
+
+## Roadmap
+
+Checked items are shipped. Unchecked items are planned or in progress.
+
+### Done
+
+- [x] **6-platform content engine** — Instagram Reels & Carousels, Twitter replies & threads, Reddit comments, LinkedIn posts, YouTube Shorts, bulk email — generate and publish from one CLI or web dashboard
+- [x] **In-context learning & brand templates** — learns from top-performing posts to match your voice; YAML-driven brand identity (prompts, visuals, mention strategy) with Figma MCP integration
+- [x] **Ports-and-adapters core** — modular pipeline (normalise → render → upload → publish), campaign orchestrator, scheduler, and `AdapterRegistry` — add a platform with zero changes to core
+
+### Up Next
+
+- [ ] **Reddit & LinkedIn publish** — finish WIP uploaders for both platforms, full end-to-end tests
+- [ ] **Personas** — bundle brand voice, visual identity, prompts, and platform credentials into switchable "personas" so you can manage multiple brands or collaborate with a team from one install
+- [ ] **Twitter discovery & cold DM** — find Twitter accounts relevant to your brand, score them, and send personalized cold DMs at human-like pace
+- [ ] **Pipelines & modularisation** — composable pipelines that chain the existing tools (discover → generate → review → publish) into reusable flows you define in YAML and execute with a single command
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=thearnavrustagi%2Fmarketmenow&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=thearnavrustagi/marketmenow&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=thearnavrustagi/marketmenow&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=thearnavrustagi/marketmenow&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ## Contributing
 

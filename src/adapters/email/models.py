@@ -25,3 +25,5 @@ class SendResult(BaseModel, frozen=True):
     email: str
     success: bool
     error: str = ""
+    rendered_html: str = ""
+    rendered_subject: str = ""

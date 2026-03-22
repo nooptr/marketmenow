@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 from pathlib import Path
 
 from google.genai.types import GenerateContentConfig
@@ -37,6 +38,14 @@ _TOPIC_HINTS = [
     "classroom management tips that save grading time",
     "ways to make grading less soul-crushing",
 ]
+
+
+def _sanitise_json(raw: str) -> str:
+    """Strip markdown fences and trailing commas that Gemini sometimes emits."""
+    raw = re.sub(r"^```(?:json)?\s*\n?", "", raw)
+    raw = re.sub(r"\n?```\s*$", "", raw)
+    raw = re.sub(r",\s*([}\]])", r"\1", raw)
+    return raw.strip()
 
 
 class GeneratedThread(BaseModel, frozen=True):
@@ -107,7 +116,7 @@ class ThreadGenerator:
             winning_posts=[p.model_dump() for p in winning_posts],
         )
 
-        raw_json: str | None = None
+        data: dict[str, object] | None = None
         last_exc: BaseException | None = None
 
         for attempt in range(1, _MAX_RETRIES + 1):
@@ -122,6 +131,8 @@ class ThreadGenerator:
                     ),
                 )
                 raw_json = (response.text or "").strip()
+                raw_json = _sanitise_json(raw_json)
+                data = json.loads(raw_json)
                 break
             except Exception as exc:
                 last_exc = exc
@@ -136,15 +147,20 @@ class ThreadGenerator:
                     )
                     await asyncio.sleep(backoff)
 
-        if raw_json is None:
+        if data is None:
             raise RuntimeError(
                 f"All {_MAX_RETRIES} Gemini attempts failed for thread generation"
             ) from last_exc
+        cleaned_tweets: list[dict[str, object]] = []
+        for t in data["tweets"]:
+            t = dict(t)
+            if isinstance(t.get("text"), str):
+                t["text"] = t["text"].replace("\u2014", "-").replace("\u2013", "-")
+            cleaned_tweets.append(t)
 
-        data = json.loads(raw_json)
         thread = GeneratedThread(
             topic=data["topic"],
-            tweets=[TweetEntry(**t) for t in data["tweets"]],
+            tweets=[TweetEntry(**t) for t in cleaned_tweets],
         )
 
         for tweet in thread.tweets:
