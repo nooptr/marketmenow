@@ -1,9 +1,9 @@
 system: ""
 
 user: |
-  You are an expert teacher. Look at this assignment image and generate a
-  grading rubric with 3-5 criteria. Each criterion should be clear and
-  specific to what you see in the assignment.
+  You are an expert evaluator. Look at this image and generate an evaluation
+  rubric with 3-5 criteria. Each criterion should be clear and specific to
+  what you see in the content.
 
   Respond with valid JSON matching this schema exactly:
   {

@@ -21,6 +21,7 @@ class WinningReply(BaseModel, frozen=True):
     likes: int = 0
     retweets: int = 0
     url: str = ""
+    embedding: list[float] = Field(default_factory=list)
 
 
 class WinningPost(BaseModel, frozen=True):
@@ -28,6 +29,7 @@ class WinningPost(BaseModel, frozen=True):
     likes: int = 0
     retweets: int = 0
     url: str = ""
+    embedding: list[float] = Field(default_factory=list)
 
 
 class TopExamplesCache(BaseModel):
@@ -78,6 +80,8 @@ class PerformanceTracker:
         posts = await self._collect_posts()
         replies = await self._collect_replies()
 
+        posts, replies = await self._attach_embeddings(posts, replies)
+
         cache = TopExamplesCache(
             last_collected=datetime.now(UTC).isoformat(),
             replies=replies,
@@ -91,6 +95,56 @@ class PerformanceTracker:
             len(replies),
         )
         return cache
+
+    async def _attach_embeddings(
+        self,
+        posts: list[WinningPost],
+        replies: list[WinningReply],
+    ) -> tuple[list[WinningPost], list[WinningReply]]:
+        """Compute embeddings for collected examples via Gemini."""
+        try:
+            from marketmenow.core.embedding_store import EmbeddingStore
+        except Exception:
+            logger.warning("Could not import EmbeddingStore, skipping embeddings")
+            return posts, replies
+
+        try:
+            store = EmbeddingStore()
+        except Exception:
+            logger.warning("Could not create EmbeddingStore, skipping embeddings")
+            return posts, replies
+
+        all_texts = [p.text for p in posts] + [r.our_reply for r in replies]
+        if not all_texts:
+            return posts, replies
+
+        try:
+            embeddings = await store.embed_texts(all_texts)
+        except Exception:
+            logger.warning("Embedding call failed, saving without embeddings", exc_info=True)
+            return posts, replies
+
+        n_posts = len(posts)
+        new_posts = [
+            p.model_copy(update={"embedding": embeddings[i]})
+            for i, p in enumerate(posts)
+            if embeddings[i]
+        ] + [p for i, p in enumerate(posts) if not embeddings[i]]
+
+        new_replies = [
+            r.model_copy(update={"embedding": embeddings[n_posts + i]})
+            for i, r in enumerate(replies)
+            if embeddings[n_posts + i]
+        ] + [r for i, r in enumerate(replies) if not embeddings[n_posts + i]]
+
+        logger.info(
+            "Attached embeddings to %d/%d posts and %d/%d replies",
+            sum(1 for p in new_posts if p.embedding),
+            len(posts),
+            sum(1 for r in new_replies if r.embedding),
+            len(replies),
+        )
+        return new_posts, new_replies
 
     # ------------------------------------------------------------------
     # Posts tab

@@ -14,7 +14,7 @@
 
 ---
 
-> Marketing was eating 2+ hours/day as a solo founder. So I built myself an intern. After one week: **14k+ impressions, 700+ website visits, ~5 min/day of my time.** ([results on Gradeasy](https://gradeasy.com))
+> Marketing was eating 2+ hours/day as a solo founder. So I built an intern that never sleeps.
 
 <br/>
 
@@ -210,7 +210,7 @@ Switch between products any time with `mmn project use <slug>`. Workflows, promp
 
 #### The hard way - manual YAML editing
 
-**Prompts (text content):** Open `prompts/` (or `projects/<slug>/prompts/`) and edit directly. Each file has a persona section for voice, topic constraints for domain, and a `MENTION STRATEGY` section for brand frequency. Or use the meta-prompt in `prompts/prompt.md` to generate entire prompt YAMLs with any AI chat.
+**Prompts (text content):** Prompts use a decomposed architecture: a **persona YAML** (`personas/default.yaml` or `prompts/<platform>/persona.yaml`) defines voice, tone, and example phrases, while **function templates** (`prompts/<platform>/reply_generation.yaml`, `comment_generation.yaml`, `script_generation.yaml`, etc.) define the task-specific instructions. Edit these in `projects/<slug>/` to customize per product. Or use the meta-prompt in `prompts/prompt.md` to generate entire prompt YAMLs with any AI chat.
 
 **Reels (video content):** Use the reel template meta-prompt in [`src/adapters/instagram/reels/templates/prompt.md`](src/adapters/instagram/reels/templates/prompt.md) to generate a **template YAML** (scenes, beats, transitions) and a **companion prompt YAML** (the AI persona). Drop them into `src/adapters/instagram/reels/templates/` and `prompts/instagram/`, then `mmn reel create --template your_id`.
 

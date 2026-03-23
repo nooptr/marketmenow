@@ -866,14 +866,9 @@ _YT_TITLE_VARIANTS = [
 ]
 
 _YT_DEFAULT_DESCRIPTION = (
-    "Our AI looked at this assignment and said 'hold my coffee' ☕🤖\n"
-    "Watch it roast — sorry, GRADE — a real student submission with zero mercy and 100% accuracy.\n"
-    "Teachers are shaking. Students are vibing. The future is here.\n"
+    "AI-generated content from MarketMeNow.\n"
     "\n"
-    "Check Gradeasy out at https://gradeasy.ai\n"
-    "\n"
-    "#chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok "
-    "#ai #edtech #grading #teacher #student #school #homework #viral"
+    "#shorts #shortvideo #ai #contentcreation #marketing"
 )
 
 

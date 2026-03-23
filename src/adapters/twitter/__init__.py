@@ -27,7 +27,11 @@ def create_twitter_bundle(
     )
 
     return PlatformBundle(
-        adapter=TwitterAdapter(browser),
+        adapter=TwitterAdapter(
+            browser,
+            auth_token=settings.twitter_auth_token,
+            ct0=settings.twitter_ct0,
+        ),
         renderer=TwitterRenderer(),
         uploader=TwitterUploader(),
     )

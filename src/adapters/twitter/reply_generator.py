@@ -4,16 +4,19 @@ import asyncio
 import logging
 import random
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from google.genai.types import GenerateContentConfig
-from jinja2 import Template
-from pydantic import BaseModel
 
+from marketmenow.core.diversity_selector import select_diverse_examples
+from marketmenow.core.prompt_builder import PromptBuilder
 from marketmenow.integrations.genai import create_genai_client
 
 from .discovery import DiscoveredPost
 from .performance_tracker import WinningReply, load_examples_cache
-from .prompts import load_prompt
+
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
 
 logger = logging.getLogger(__name__)
 
@@ -21,21 +24,8 @@ _MAX_RETRIES = 3
 _INITIAL_BACKOFF_S = 5.0
 
 
-class ProductContext(BaseModel, frozen=True):
-    name: str = "Gradeasy"
-    url: str = "gradeasy.ai"
-    tagline: str = "AI-powered grading assistant for K-12 teachers"
-    features: list[str] = [
-        "Grades assignments against rubrics in seconds",
-        "Supports images, PDFs, and handwritten work",
-        "Saves teachers 8-15 hours per week",
-        "Teachers keep full control over final grades",
-        "Free to try",
-    ]
-
-
 class ReplyGenerator:
-    """Generates witty, persona-driven replies using Gemini."""
+    """Generates persona-driven replies using Gemini with epsilon-greedy ICL."""
 
     def __init__(
         self,
@@ -45,7 +35,10 @@ class ReplyGenerator:
         vertex_location: str = "us-central1",
         top_examples_path: Path | None = None,
         max_examples: int = 5,
-        product: ProductContext | None = None,
+        epsilon: float = 0.3,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
     ) -> None:
         self._client = create_genai_client(
             vertex_project=vertex_project,
@@ -53,9 +46,13 @@ class ReplyGenerator:
         )
         self._model = gemini_model
         self._mention_rate = mention_rate
-        self._context = product or ProductContext()
         self._top_examples_path = top_examples_path
         self._max_examples = max_examples
+        self._epsilon = epsilon
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
+        self._prompt_builder = PromptBuilder()
 
     def _load_winning_replies(self) -> list[WinningReply]:
         if self._top_examples_path is None:
@@ -68,29 +65,77 @@ class ReplyGenerator:
             key=lambda r: r.likes + r.retweets,
             reverse=True,
         )
-        return ranked[: self._max_examples]
+        return ranked[: self._max_examples * 4]
 
     async def generate_reply(
         self,
         post: DiscoveredPost,
         reply_number: int = 1,
-    ) -> str:
+    ) -> tuple[str, bool]:
+        """Generate a reply. Returns ``(reply_text, is_exploring)``."""
         should_mention = random.randint(1, 100) <= self._mention_rate
-        winning_examples = self._load_winning_replies()
 
-        prompt_data = load_prompt("reply_generation")
+        exploring = random.random() < self._epsilon
 
-        system_template = Template(prompt_data["system"])
-        system_prompt = system_template.render(mention_rate=self._mention_rate)
+        icl_examples: list[dict[str, object]] | None = None
+        if not exploring:
+            candidates = self._load_winning_replies()
+            if candidates:
+                selected = select_diverse_examples(
+                    candidates,
+                    [c.embedding for c in candidates],
+                    n=self._max_examples,
+                )
+                icl_examples = [e.model_dump() for e in selected]
 
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            author_handle=post.author_handle,
-            post_text=post.post_text[:500],
-            reply_number=reply_number,
-            should_mention=should_mention,
-            winning_examples=[e.model_dump() for e in winning_examples],
-        )
+        if should_mention:
+            brand_name = self._brand.name if self._brand else "the product"
+            directive = (
+                f"weave in a {brand_name} mention — be creative, never salesy, "
+                "never the same trick twice"
+            )
+        else:
+            directive = (
+                "DO NOT mention any product. Just be funny, insightful, or "
+                "genuinely supportive. Build the character, not the brand."
+            )
+
+        template_vars: dict[str, object] = {
+            "author_handle": post.author_handle,
+            "post_text": post.post_text[:500],
+            "reply_number": reply_number,
+            "should_mention": should_mention,
+            "mention_rate": self._mention_rate,
+            "directive": directive,
+        }
+
+        if self._persona and self._brand:
+            prompt = self._prompt_builder.build(
+                platform="twitter",
+                function="reply",
+                persona=self._persona,
+                brand=self._brand,
+                icl_examples=icl_examples,
+                template_vars=template_vars,
+                project_slug=self._project_slug,
+            )
+            system_prompt = prompt.system
+            user_prompt = prompt.user
+        else:
+            from .prompts import load_prompt
+
+            prompt_data = load_prompt(
+                "reply_generation", project_slug=self._project_slug,
+            )
+            from jinja2 import Template
+
+            system_prompt = Template(prompt_data["system"]).render(
+                mention_rate=self._mention_rate,
+            )
+            user_prompt = Template(prompt_data["user"]).render(
+                **template_vars,
+                winning_examples=icl_examples or [],
+            )
 
         reply_text: str | None = None
         last_exc: BaseException | None = None
@@ -126,10 +171,14 @@ class ReplyGenerator:
                 f"All {_MAX_RETRIES} Gemini attempts failed for @{post.author_handle}"
             ) from last_exc
 
+        mode = "explore" if exploring else "exploit"
+        n_examples = 0 if icl_examples is None else len(icl_examples)
         logger.info(
-            "Generated reply for @%s (mention=%s): %s",
+            "Generated reply for @%s (mention=%s, mode=%s, examples=%d): %s",
             post.author_handle,
             should_mention,
+            mode,
+            n_examples,
             reply_text[:80],
         )
-        return reply_text
+        return reply_text, exploring

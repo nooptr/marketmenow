@@ -63,6 +63,9 @@ class AuditEntry(BaseModel):
     reply_text: str
     success: bool
     error: str = ""
+    icl_mode: str = ""
+    epsilon: float = 0.0
+    num_examples: int = 0
 
 
 class EngagementStats(BaseModel):
@@ -136,9 +139,18 @@ class _NullProgress:
 class EngagementOrchestrator:
     """Runs the full discover-generate-reply engagement loop."""
 
-    def __init__(self, settings: TwitterSettings) -> None:
+    def __init__(
+        self,
+        settings: TwitterSettings,
+        persona: object | None = None,
+        brand: object | None = None,
+        project_slug: str | None = None,
+    ) -> None:
         self._settings = settings
         self._normaliser = ContentNormaliser()
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
 
     async def run(
         self,
@@ -180,6 +192,10 @@ class EngagementOrchestrator:
                 vertex_location=self._settings.vertex_ai_location,
                 top_examples_path=self._settings.top_examples_path,
                 max_examples=self._settings.max_examples_in_prompt,
+                epsilon=self._settings.epsilon,
+                persona=self._persona,
+                brand=self._brand,
+                project_slug=self._project_slug,
             )
 
             targets = self._load_targets()
@@ -229,7 +245,7 @@ class EngagementOrchestrator:
                 prog.on_generating(i, len(candidates), post.author_handle)
 
                 try:
-                    reply_text = await generator.generate_reply(post, reply_number=i)
+                    reply_text, _exploring = await generator.generate_reply(post, reply_number=i)
                 except Exception:
                     logger.exception("Failed to generate reply for %s", post.post_url)
                     stats.total_failed += 1
@@ -350,6 +366,10 @@ class EngagementOrchestrator:
                 vertex_location=self._settings.vertex_ai_location,
                 top_examples_path=self._settings.top_examples_path,
                 max_examples=self._settings.max_examples_in_prompt,
+                epsilon=self._settings.epsilon,
+                persona=self._persona,
+                brand=self._brand,
+                project_slug=self._project_slug,
             )
 
             targets = self._load_targets()
@@ -391,7 +411,7 @@ class EngagementOrchestrator:
                 prog.on_generating(i, len(candidates), post.author_handle)
 
                 try:
-                    reply_text = await generator.generate_reply(post, reply_number=i)
+                    reply_text, _exploring = await generator.generate_reply(post, reply_number=i)
                 except Exception:
                     logger.exception("Failed to generate reply for %s", post.post_url)
                     prog.on_generate_failed(i, len(candidates), post.author_handle)
@@ -538,6 +558,9 @@ class EngagementOrchestrator:
                 vertex_location=self._settings.vertex_ai_location,
                 top_examples_path=self._settings.top_examples_path,
                 max_examples=self._settings.max_examples_in_prompt,
+                persona=self._persona,
+                brand=self._brand,
+                project_slug=self._project_slug,
             )
 
             try:

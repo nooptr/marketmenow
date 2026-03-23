@@ -6,38 +6,26 @@ import logging
 import random
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+import yaml
 from google.genai.types import GenerateContentConfig
-from jinja2 import Template
 from pydantic import BaseModel, Field
 
+from marketmenow.core.prompt_builder import PromptBuilder
 from marketmenow.integrations.genai import create_genai_client
 
 from .performance_tracker import WinningPost, load_examples_cache
-from .prompts import load_prompt
+
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
 
 logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 3
 _INITIAL_BACKOFF_S = 5.0
 
-_TOPIC_HINTS = [
-    "grading mistakes teachers don't realise they're making",
-    "AI grading myths that need to die",
-    "time-saving grading hacks for burnt-out teachers",
-    "why rubric-based grading changes everything",
-    "feedback techniques that actually improve student outcomes",
-    "signs your grading process is broken",
-    "things teachers waste time on that AI can handle",
-    "assessment strategies backed by research",
-    "how to give better feedback in less time",
-    "grading habits that are stealing your weekends",
-    "what students actually want from feedback",
-    "common rubric mistakes and how to fix them",
-    "AI tools every teacher should know about in 2025",
-    "classroom management tips that save grading time",
-    "ways to make grading less soul-crushing",
-]
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _sanitise_json(raw: str) -> str:
@@ -46,6 +34,23 @@ def _sanitise_json(raw: str) -> str:
     raw = re.sub(r"\n?```\s*$", "", raw)
     raw = re.sub(r",\s*([}\]])", r"\1", raw)
     return raw.strip()
+
+
+def _load_topic_hints(project_slug: str | None, platform: str = "twitter") -> list[str]:
+    """Load topic hints from the project directory, or return empty list."""
+    if not project_slug:
+        return []
+    topics_path = _PROJECT_ROOT / "projects" / project_slug / "topics.yaml"
+    if not topics_path.exists():
+        return []
+    try:
+        with topics_path.open("r", encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+        hints = data.get(platform, data.get("topics", []))
+        return list(hints) if isinstance(hints, list) else []
+    except Exception:
+        logger.warning("Failed to load topics from %s", topics_path)
+        return []
 
 
 class GeneratedThread(BaseModel, frozen=True):
@@ -75,6 +80,9 @@ class ThreadGenerator:
         vertex_location: str = "us-central1",
         top_examples_path: Path | None = None,
         max_examples: int = 5,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
     ) -> None:
         self._client = create_genai_client(
             vertex_project=vertex_project,
@@ -83,6 +91,10 @@ class ThreadGenerator:
         self._model = gemini_model
         self._top_examples_path = top_examples_path
         self._max_examples = max_examples
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
+        self._prompt_builder = PromptBuilder()
 
     def _load_winning_posts(self) -> list[WinningPost]:
         if self._top_examples_path is None:
@@ -102,19 +114,39 @@ class ThreadGenerator:
         topic_hint: str = "",
     ) -> GeneratedThread:
         if not topic_hint:
-            topic_hint = random.choice(_TOPIC_HINTS)
+            hints = _load_topic_hints(self._project_slug, "twitter")
+            if hints:
+                topic_hint = random.choice(hints)
 
         winning_posts = self._load_winning_posts()
 
-        prompt_data = load_prompt("thread_generation")
+        template_vars: dict[str, object] = {
+            "topic_hint": topic_hint,
+            "winning_posts": [p.model_dump() for p in winning_posts],
+        }
 
-        system_prompt = prompt_data["system"]
+        if self._persona and self._brand:
+            prompt = self._prompt_builder.build(
+                platform="twitter",
+                function="thread",
+                persona=self._persona,
+                brand=self._brand,
+                icl_examples=None,
+                template_vars=template_vars,
+                project_slug=self._project_slug,
+            )
+            system_prompt = prompt.system
+            user_prompt = prompt.user
+        else:
+            from .prompts import load_prompt
 
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            topic_hint=topic_hint,
-            winning_posts=[p.model_dump() for p in winning_posts],
-        )
+            prompt_data = load_prompt(
+                "thread_generation", project_slug=self._project_slug,
+            )
+            from jinja2 import Template
+
+            system_prompt = prompt_data["system"]
+            user_prompt = Template(prompt_data["user"]).render(**template_vars)
 
         data: dict[str, object] | None = None
         last_exc: BaseException | None = None

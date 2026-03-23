@@ -43,9 +43,9 @@ def _customer() -> TargetCustomer:
 
 
 class TestGenerateTwitterPrompt:
-    def test_contains_brand_name(self):
+    def test_contains_brand_variable(self):
         result = generate_twitter_prompt(_brand(), _persona())
-        assert "TestBrand" in result
+        assert "{{ brand.name }}" in result or "{{brand.name}}" in result
 
     def test_contains_persona_voice(self):
         result = generate_twitter_prompt(_brand(), _persona())
@@ -55,23 +55,21 @@ class TestGenerateTwitterPrompt:
         result = generate_twitter_prompt(_brand(), _persona())
         data = yaml.safe_load(result)
         assert "system" in data
-        assert "user" in data
 
     def test_has_template_variables(self):
         result = generate_twitter_prompt(_brand(), _persona())
-        assert "{{ author_handle }}" in result or "{{author_handle}}" in result
+        assert "{{ brand" in result
 
 
 class TestGenerateRedditPrompt:
-    def test_contains_brand_name(self):
+    def test_contains_brand_variable(self):
         result = generate_reddit_prompt(_brand(), _persona())
-        assert "TestBrand" in result or "testbrand" in result.lower()
+        assert "{{ brand.url }}" in result or "{{brand.url}}" in result
 
     def test_valid_yaml(self):
         result = generate_reddit_prompt(_brand(), _persona())
         data = yaml.safe_load(result)
         assert "system" in data
-        assert "user" in data
 
 
 class TestGenerateTargets:

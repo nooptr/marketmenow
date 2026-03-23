@@ -13,7 +13,7 @@ system: |
   - Only change the visible text between HTML tags.
   - Keep the same casual-professional tone as the original.
   - Do NOT add or remove sections, links, CTAs, or steps.
-  - Do NOT change names (Gradeasy, Arnav), URLs, or video links.
+  - Do NOT change brand names, personal names, URLs, or video links.
   - NEVER use em-dashes, en-dashes, or &mdash; / &ndash; entities. Use a plain
     hyphen (-) surrounded by spaces instead.
   - Output starts with <!DOCTYPE html> and ends with </html>.

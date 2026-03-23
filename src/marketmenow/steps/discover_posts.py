@@ -41,7 +41,15 @@ class DiscoverPostsStep:
         if max_replies > 0:
             settings = settings.model_copy(update={"max_replies_per_day": max_replies})
 
-        orchestrator = EngagementOrchestrator(settings)
+        persona = ctx.persona
+        brand = ctx.project.brand if ctx.project else None
+        project_slug = ctx.project.slug if ctx.project else None
+        orchestrator = EngagementOrchestrator(
+            settings,
+            persona=persona,
+            brand=brand,
+            project_slug=project_slug,
+        )
 
         with ctx.console.status("[bold cyan]Discovering Twitter posts..."):
             posts = await orchestrator.discover_only()

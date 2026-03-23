@@ -15,8 +15,28 @@ logger = logging.getLogger(__name__)
 class TwitterAdapter:
     """Browser-based Twitter/X adapter satisfying ``PlatformAdapter`` protocol."""
 
-    def __init__(self, browser: StealthBrowser) -> None:
+    def __init__(
+        self,
+        browser: StealthBrowser,
+        auth_token: str = "",
+        ct0: str = "",
+    ) -> None:
         self._browser = browser
+        self._auth_token = auth_token
+        self._ct0 = ct0
+
+    async def _ensure_browser(self) -> None:
+        """Launch the browser and authenticate via cookies if needed."""
+        if self._browser._page is None:
+            await self._browser.launch()
+        if not await self._browser.is_logged_in():
+            if self._auth_token and self._ct0:
+                await self._browser.login_with_cookies(self._auth_token, self._ct0)
+            else:
+                raise RuntimeError(
+                    "Twitter session expired and no auth cookies configured. "
+                    "Set TWITTER_AUTH_TOKEN and TWITTER_CT0 in .env, or run `mmn auth twitter`."
+                )
 
     @property
     def platform_name(self) -> str:
@@ -28,6 +48,7 @@ class TwitterAdapter:
         )
 
     async def authenticate(self, credentials: dict[str, str]) -> None:
+        await self._ensure_browser()
         if not await self._browser.is_logged_in():
             username = credentials.get("username", "")
             password = credentials.get("password", "")
@@ -40,6 +61,7 @@ class TwitterAdapter:
                 )
 
     async def publish(self, content: NormalisedContent) -> PublishResult:
+        await self._ensure_browser()
         if content.modality == ContentModality.REPLY:
             return await self._publish_reply(content)
         if content.modality == ContentModality.THREAD:
@@ -103,6 +125,7 @@ class TwitterAdapter:
             )
 
     async def send_dm(self, content: NormalisedContent) -> SendResult:
+        await self._ensure_browser()
         from .outreach.dm_sender import TwitterDMSender
 
         handle = content.recipient_handles[0] if content.recipient_handles else ""

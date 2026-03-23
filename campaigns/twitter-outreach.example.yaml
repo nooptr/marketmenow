@@ -5,34 +5,33 @@
 platform: twitter
 
 product:
-  name: "Gradeasy"
-  url: "https://gradeasy.ai"
-  tagline: "AI-powered grading assistant for K-12 teachers"
-  value_prop: "Saves teachers 8-15 hours/week on grading"
+  name: "Your Product"
+  url: "https://yourproduct.com"
+  tagline: "One-line description of what your product does"
+  value_prop: "The key benefit your target customer gets"
 
 ideal_customer:
   description: >
-    K-12 teachers who are overwhelmed by grading workload,
-    spend evenings/weekends grading, and are open to using
-    technology to save time.
+    Describe your ideal customer profile here. Who are they?
+    What problems do they face? What makes them a good fit?
 
   rubric:
     - name: "Role Fit"
       description: >
-        Is this person a K-12 teacher, professor, TA, or education professional?
-        Bio says "teacher", "educator", etc. or posts clearly indicate teaching role.
+        Does this person match your target role / industry?
+        Look for bio keywords and post content that indicate fit.
       max_points: 3
 
     - name: "Pain Signal"
       description: >
-        Have they expressed frustration about grading specifically?
-        Mentions of late nights grading, piles of papers, grading burnout.
+        Have they expressed frustration with the problem your product solves?
+        Look for complaints, rants, or questions about the problem space.
       max_points: 3
 
     - name: "Tech Openness"
       description: >
-        Do they use or discuss edtech tools? Mention AI, apps, digital tools?
-        Are they curious about technology rather than resistant?
+        Do they use or discuss tools in your space? Mention AI, apps, etc.?
+        Are they curious about solutions rather than resistant?
       max_points: 3
 
     - name: "Engagement Level"
@@ -49,37 +48,31 @@ ideal_customer:
   min_score: 8
   max_prospects_to_enrich: 50
 
-# Discovery vectors — presence = enabled, remove an entry to disable that vector.
+# Discovery vectors -- presence = enabled, remove an entry to disable that vector.
 discovery:
   - type: pain_search
     entries:
-      - '"grading takes forever" -is:retweet'
-      - '"up late grading" OR "grading all weekend" -is:retweet'
-      - '"so many papers to grade" -is:retweet lang:en'
-      - '(grading OR marking) (exhausted OR overwhelmed) -is:retweet'
-      - '"AI grading" OR "automate grading" lang:en'
+      - '"your pain point query" -is:retweet'
+      - '"another pain point" OR "related complaint" -is:retweet'
     max_per_entry: 5
 
   - type: conversation_mining
     entries:
-      - "@coolcatteacher"
-      - "@cultofpedagogy"
-      - "@TeachBetter"
+      - "@industry_influencer_1"
+      - "@industry_influencer_2"
     max_per_entry: 5
 
   - type: hashtag_scan
     entries:
-      - "#teacherlife"
-      - "#teacherproblems"
-      - "#gradingseason"
-      - "#edtech"
+      - "#yourindustry"
+      - "#relevanthashtag"
     max_per_entry: 5
 
 messaging:
   max_messages: 10
   min_delay_seconds: 120
   max_delay_seconds: 300
-  tone: "casual, helpful, peer-to-peer — like a fellow teacher sharing a find, not a salesperson"
+  tone: "casual, helpful, peer-to-peer -- like someone sharing a find, not a salesperson"
   reference_post: true
   pause_every_n: 5
   long_pause_seconds: 600

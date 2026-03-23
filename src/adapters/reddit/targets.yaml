@@ -1,34 +1,15 @@
+# Reddit engagement targets -- format reference.
+# Override these by placing a targets/reddit.yaml in your project directory
+# (e.g. projects/<slug>/targets/reddit.yaml).
+
 subreddits:
-  # Primary US teacher communities
-  - "Teachers"
-  - "teaching"
-  - "education"
-  - "edtech"
-  - "Professors"
-  - "highereducation"
-  - "ECEProfessionals"
-
-  # Subject-specific (grading-heavy)
-  - "ScienceTeachers"
-  - "mathteachers"
-  - "ELATeachers"
-  - "historyteachers"
-  - "csed"
-
-  # Adjacent / monitor
-  - "AskAcademia"
-  - "GradSchool"
+  # Communities relevant to your product / audience
+  - "yoursubreddit"
+  - "relatedcommunity"
+  - "industrytalk"
 
 search_queries:
-  - "grading"
-  - "grading papers"
-  - "rubric"
-  - "AI grading"
-  - "grading workload"
-  - "grading time"
-  - "grading essays"
-  - "grading burnout"
-  - "feedback on papers"
-  - "standardized grading"
-  - "grading consistency"
-  - "late work grading"
+  # Search terms Reddit users might use
+  - "relevant pain point"
+  - "industry problem"
+  - "tool recommendation"

@@ -34,6 +34,9 @@ This package is **platform-agnostic**. It must never import from `src/adapters/`
 | `core/text_sanitiser.py`  | `sanitise_text()` — strips em/en-dashes from all text fields (anti-AI-detection) |
 | `core/scheduler.py`       | `Scheduler` — in-process scheduled campaign execution        |
 | `core/distribute_cli.py`  | Shared async helper for CLI `distribute` command             |
+| `core/prompt_builder.py`  | `PromptBuilder` — composable prompt assembly from persona + function + ICL blocks |
+| `core/embedding_store.py` | `EmbeddingStore` — Gemini text-embedding-004 wrapper with batch embed and cosine distance |
+| `core/diversity_selector.py` | `select_diverse_examples()` — farthest-point sampling for diverse ICL example selection |
 | `integrations/langchain.py`| LangChain tool/chain integration                            |
 
 ## Pipeline Flow
@@ -105,6 +108,17 @@ Modular, platform-agnostic cold outreach system. The core defines models, protoc
 **YAML-driven config:** Changing the `CustomerProfile` YAML fully reconfigures discovery queries, rubric criteria, tone, message length, and rate limits. Zero code changes.
 
 **Platform adapters** implement the three protocols. Adding a new platform = new discovery vectors + profile enricher + message sender. The scorer and message generator are reused.
+
+## Prompt System (core/prompt_builder.py)
+
+Composable prompt architecture that separates **persona** (who the account is) from **function** (what it's doing) and **ICL** (in-context learning examples).
+
+- `PromptBuilder.build()` assembles prompts from three building blocks: persona template (project-scoped), function template (global), and optional ICL examples.
+- Resolution order for each sub-prompt: `projects/{slug}/prompts/{platform}/{file}` → `projects/{slug}/prompts/{file}` → `prompts/{platform}/{file}`.
+- Epsilon-greedy ICL: per reply, `random.random() < epsilon` decides explore (no examples) vs exploit (diverse high-performing examples via farthest-point embedding sampling).
+- `EmbeddingStore` wraps Gemini `text-embedding-004` for embedding winning replies/posts.
+- `select_diverse_examples()` implements greedy farthest-point sampling: seed with highest-engagement candidate, greedily add the candidate with max min-distance to the selected set.
+- Falls back to legacy monolithic prompt files when decomposed files are absent.
 
 ## Key Rules
 

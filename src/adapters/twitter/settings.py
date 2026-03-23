@@ -23,7 +23,7 @@ class TwitterSettings(BaseSettings):
     google_application_credentials: Path = Path("vertex.json")
     vertex_ai_project: str = ""
     vertex_ai_location: str = "us-central1"
-    gemini_model: str = "gemini-3.1-flash-preview"
+    gemini_model: str = "gemini-2.5-pro"
 
     # Rate limiting
     max_replies_per_day: int = 20
@@ -32,7 +32,7 @@ class TwitterSettings(BaseSettings):
     cooldown_hours: int = 24
 
     # Browser
-    headless: bool = False
+    headless: bool = True
     slow_mo_ms: int = 50
     proxy_url: str = ""
     viewport_width: int = 1280
@@ -49,3 +49,8 @@ class TwitterSettings(BaseSettings):
     top_examples_path: Path = Path(".twitter_top_examples.json")
     max_examples_in_prompt: int = 5
     examples_max_age_hours: int = 168  # re-collect weekly
+
+    # Epsilon-greedy exploration vs exploitation for ICL.
+    # Per reply, draw random.random() < epsilon => explore (no ICL examples).
+    # Otherwise => exploit (diverse ICL examples via farthest-point sampling).
+    epsilon: float = 0.3

@@ -284,7 +284,7 @@ class StealthBrowser:
         if not await reply_btn.is_visible():
             reply_btn = self.page.locator('button[data-testid="tweetButton"]')
 
-        await reply_btn.click()
+        await self._force_click(reply_btn)
         await self._random_delay(2.0, 4.0)
 
         logger.info("Reply posted to %s", post_url)
@@ -327,28 +327,17 @@ class StealthBrowser:
         await self._random_delay(0.5, 1.0)
 
         for idx, tweet_text in enumerate(tweets[1:], start=1):
-            add_btn = dialog.locator(
-                'button[data-testid="addButton"], div[role="button"][data-testid="addButton"]'
-            )
-            try:
-                await add_btn.wait_for(state="visible", timeout=5_000)
-                await add_btn.click()
-            except Exception:
-                logger.warning("Add-tweet button not found, trying keyboard shortcut")
-                await self.page.keyboard.press("Control+Enter")
-            await self._random_delay(0.8, 1.5)
+            added = await self._click_add_tweet(dialog, idx)
+            if not added:
+                logger.error(
+                    "Could not add tweet %d/%d to thread — posting what we have",
+                    idx,
+                    len(tweets) - 1,
+                )
+                break
 
             next_box = dialog.locator(f'div[data-testid="tweetTextarea_{idx}"]')
-            try:
-                await next_box.wait_for(state="visible", timeout=8_000)
-            except Exception:
-                all_boxes = dialog.locator('div[data-testid^="tweetTextarea_"]')
-                count = await all_boxes.count()
-                if count > idx:
-                    next_box = all_boxes.nth(idx)
-                else:
-                    next_box = all_boxes.last
-
+            await next_box.wait_for(state="visible", timeout=8_000)
             await next_box.click()
             await self._random_delay(0.3, 0.8)
 
@@ -363,11 +352,82 @@ class StealthBrowser:
 
         post_all_btn = dialog.locator('button[data-testid="tweetButton"]')
         await post_all_btn.wait_for(state="visible", timeout=10_000)
-        await post_all_btn.click()
+        await self._force_click(post_all_btn)
         await self._random_delay(3.0, 5.0)
+
+        try:
+            await dialog.wait_for(state="hidden", timeout=10_000)
+        except Exception:
+            logger.warning("Compose dialog still visible after posting")
 
         logger.info("Thread posted (%d tweets)", len(tweets))
         return True
+
+    async def _click_add_tweet(self, dialog: object, expected_idx: int) -> bool:
+        """Click the '+' button to add a new tweet entry to the thread.
+
+        Tries three strategies: direct testid click with force (bypasses
+        overlay), broad page-level selector, and Tab-key navigation.
+        Returns True if a new textarea appeared.
+        """
+        from playwright.async_api import Locator
+
+        dlg: Locator = dialog  # type: ignore[assignment]
+        textarea_sel = f'div[data-testid="tweetTextarea_{expected_idx}"]'
+
+        # Strategy 1: force-click [data-testid="addButton"] inside dialog
+        add_btn = dlg.locator('[data-testid="addButton"]')
+        try:
+            await add_btn.wait_for(state="visible", timeout=3_000)
+            await self._force_click(add_btn)
+            await self._random_delay(0.8, 1.5)
+            if await dlg.locator(textarea_sel).count() > 0:
+                return True
+            logger.debug("addButton clicked but new textarea not found")
+        except Exception:
+            logger.debug("addButton not visible in dialog")
+
+        # Strategy 2: page-wide selector (button may live outside the dialog)
+        add_btn_page = self.page.locator('[data-testid="addButton"]')
+        try:
+            await add_btn_page.wait_for(state="visible", timeout=3_000)
+            await self._force_click(add_btn_page)
+            await self._random_delay(0.8, 1.5)
+            if await dlg.locator(textarea_sel).count() > 0:
+                return True
+            logger.debug("Page-level addButton clicked but new textarea not found")
+        except Exception:
+            logger.debug("addButton not visible on page either")
+
+        # Strategy 3: Tab navigation to reach the add button and press Enter.
+        # In X's compose dialog the add-thread button is an SVG icon button
+        # reachable by tabbing forward from the tweet textarea.
+        logger.info("Trying Tab-navigation to reach add-tweet button")
+        tab_count = 7 if expected_idx == 1 else 6
+        for _ in range(tab_count):
+            await self.page.keyboard.press("Tab")
+            await self._random_delay(0.05, 0.15)
+        await self.page.keyboard.press("Enter")
+        await self._random_delay(1.0, 2.0)
+
+        if await dlg.locator(textarea_sel).count() > 0:
+            return True
+
+        # Strategy 4: one more Tab count variant (X sometimes shifts focus order)
+        for extra in (5, 8, 4):
+            last_box = dlg.locator('div[data-testid^="tweetTextarea_"]').last
+            await last_box.click()
+            await self._random_delay(0.2, 0.4)
+            for _ in range(extra):
+                await self.page.keyboard.press("Tab")
+                await self._random_delay(0.05, 0.15)
+            await self.page.keyboard.press("Enter")
+            await self._random_delay(1.0, 2.0)
+            if await dlg.locator(textarea_sel).count() > 0:
+                return True
+
+        logger.error("All strategies to add tweet %d failed", expected_idx)
+        return False
 
     # ------------------------------------------------------------------
     # Screenshot for debugging
@@ -379,6 +439,31 @@ class StealthBrowser:
     # ------------------------------------------------------------------
     # Human-like behaviour primitives
     # ------------------------------------------------------------------
+
+    async def _force_click(self, locator: object) -> None:
+        """Click a button, bypassing overlay divs that intercept pointer events.
+
+        Twitter/X renders full-screen overlay divs (position: fixed; inset: 0)
+        that sit on top of buttons and block normal Playwright clicks.  We try
+        three strategies in order: normal click, force-click (skips
+        actionability checks), and a raw JS ``el.click()`` dispatch.
+        """
+        from playwright.async_api import Locator
+
+        loc: Locator = locator  # type: ignore[assignment]
+        try:
+            await loc.click(timeout=5_000)
+            return
+        except Exception:
+            logger.debug("Normal click intercepted, trying force click")
+
+        try:
+            await loc.click(force=True, timeout=5_000)
+            return
+        except Exception:
+            logger.debug("Force click failed, falling back to JS click")
+
+        await loc.evaluate("el => el.click()")
 
     async def _human_type(self, locator: object, text: str) -> None:
         """Type text character-by-character with realistic delays."""

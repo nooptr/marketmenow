@@ -52,6 +52,9 @@ Key components:
 - `AdapterRegistry` (`registry.py`) — holds `PlatformBundle` instances keyed by platform name
 - `ContentNormaliser` (`normaliser.py`) — converts any `BaseContent` variant into `NormalisedContent`
 - `build_registry()` (`core/registry_builder.py`) — auto-registers all adapters whose env vars are present
+- `PromptBuilder` (`core/prompt_builder.py`) — composable prompt assembly from persona + function + ICL blocks
+- `EmbeddingStore` (`core/embedding_store.py`) — Gemini text-embedding-004 wrapper with batch embed and cosine distance
+- `select_diverse_examples()` (`core/diversity_selector.py`) — farthest-point sampling for diverse ICL example selection
 
 ### Workflows (core/workflow.py, steps/, workflows/)
 
@@ -89,6 +92,15 @@ Modular, platform-agnostic cold outreach system. Discovers people on a platform,
 
 Platform-specific implementations live in adapter packages (e.g. `adapters/twitter/outreach/`). The core engine never imports adapters.
 
+### Prompt System (core/prompt_builder.py, prompts/, projects/)
+
+Composable prompt architecture that separates **persona** (who the account is) from **function** (what it's doing) and **ICL** (in-context learning examples).
+
+- `PromptBuilder` assembles prompts from three building blocks: persona template (project-scoped), function template (global), and optional ICL examples
+- Resolution order: `projects/{slug}/prompts/{platform}/{file}` -> `projects/{slug}/prompts/{file}` -> `prompts/{platform}/{file}`
+- Epsilon-greedy ICL: per reply, draw `random.random() < epsilon` to decide explore (no examples) vs exploit (diverse high-performing examples via farthest-point embedding sampling)
+- Falls back to legacy monolithic prompt files for backward compatibility
+
 ### Protocols (ports/)
 
 All defined as `typing.Protocol` with `@runtime_checkable`:
@@ -108,7 +120,7 @@ All defined as `typing.Protocol` with `@runtime_checkable`:
 
 | Adapter    | Modalities                                    | Key subsystems                                    |
 |------------|-----------------------------------------------|---------------------------------------------------|
-| instagram  | VIDEO, IMAGE                                  | Reels (TTS + Remotion), Carousels, Figma export   |
+| instagram  | VIDEO, IMAGE                                  | Reels (TTS + Remotion), Carousels                 |
 | twitter    | THREAD, REPLY, DIRECT_MESSAGE                 | Discovery, reply generation, engagement orchestrator, cold outreach (DM) |
 | linkedin   | TEXT_POST, IMAGE, VIDEO, DOCUMENT, ARTICLE, POLL | API + browser posting                            |
 | reddit     | REPLY, TEXT_POST                              | Two-phase engagement + subreddit post submission  |

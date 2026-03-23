@@ -1,6 +1,6 @@
 # How to Create a Reel Template for Your Product
 
-A reel template is a single YAML file that defines your entire video — the narrative structure, scenes, audio, transitions, and the content-generation pipeline. The existing `can_ai_grade_this.yaml` is built for Gradeasy (an AI grading tool). To make reels for **your** product, you need a different template with a different story.
+A reel template is a single YAML file that defines your entire video — the narrative structure, scenes, audio, transitions, and the content-generation pipeline. To make reels for **your** product, you create a template with your own story and scenes.
 
 This guide explains the template schema so you can build one by hand, or you can skip to the [meta-prompt](#meta-prompt) at the bottom and paste it into ChatGPT / Claude to generate one automatically.
 
@@ -123,7 +123,7 @@ Each beat references a scene component. Here's every scene and what visual props
 | `panel_background` | string | `#0A0A0A` | |
 | `frame_background` | string | `#E0E0E0` | |
 
-### `GradeasyResponseScene` — Brand logo + text response
+### `GradeasyResponseScene` — Brand logo + text response (generic, works for any product)
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `text_overlay` | string | `"I gotchu bro"` | |
@@ -476,8 +476,8 @@ FILE 2: The companion prompt YAML (goes in prompts/instagram/)
 ─── EXAMPLE (for reference only, DO NOT copy this concept) ───
 
 Here's a simplified example of how the pieces fit together. This is the
-Gradeasy "Can AI Grade This" template. YOUR template should have a
-COMPLETELY DIFFERENT concept appropriate for YOUR product:
+existing "Can AI Grade This" template (built for a specific product).
+YOUR template should have a COMPLETELY DIFFERENT concept for YOUR product:
 
 ```yaml
 id: can_ai_grade_this
@@ -488,15 +488,15 @@ composition_id: ReelFromTemplate
 
 default_visual:
   brand_color: "#4A8DF8"
-  brand_name: "Gradeasy"
+  brand_name: "YourBrand"
   brand_suffix: ".ai"
 
 caption_template: |
   Can our AI grade this?
   {{ result_comment }}
-  Try Gradeasy now at gradeasy.ai
+  Try {{ brand_name }} now at yourbrand.com
 
-hashtags: [AIGrading, EdTech, Gradeasy]
+hashtags: [YourIndustry, YourProduct, RelevantTag]
 
 hook_lines:
   - "can you grade my assignment twin?"
@@ -576,6 +576,6 @@ separate code blocks, clearly labeled.
 - **Start simple.** A 6-beat reel with one `llm` pipeline step is enough. You can always add complexity later.
 - **Use `CustomScene` for unique layouts.** If none of the built-in scenes fit your concept, `CustomScene` lets you define arbitrary layers of images, text, and boxes with per-layer animations.
 - **Test with `--dry-run` first.** Check that the pipeline produces all required variables before doing a full render.
-- **Reuse scenes creatively.** `GradeasyResponseScene` works for any "product speaks" moment — it just shows brand logo + text. `SegmentationScene` works for any "product is processing" moment.
+- **Reuse scenes creatively.** `GradeasyResponseScene` works for any "product speaks" moment — it just shows brand logo + text (despite the name, it's generic). `SegmentationScene` works for any "product is processing" moment.
 - **Add your own SFX.** Drop `.mp3` files into `assets/sfx/` and reference them in beats.
 - **Multiple templates.** You can have as many templates as you want. Use `--template your_id` to pick one at render time.

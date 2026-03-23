@@ -8,7 +8,12 @@ from marketmenow.models.project import BrandConfig, PersonaConfig, TargetCustome
 
 
 def generate_twitter_prompt(brand: BrandConfig, persona: PersonaConfig) -> str:
-    """Return a YAML prompt file (system + user) for Twitter reply generation."""
+    """Return a persona YAML for the Twitter platform.
+
+    The function-specific templates (reply, thread) live in the global
+    ``prompts/twitter/functions/`` directory.  This generates the
+    project-scoped **persona** file that defines *who* the account is.
+    """
     features_items = _bullet_list(brand.features, fallback="(no features listed)")
     phrases_items = _bullet_list(
         [f'"{p}"' for p in persona.example_phrases],
@@ -16,111 +21,55 @@ def generate_twitter_prompt(brand: BrandConfig, persona: PersonaConfig) -> str:
     )
 
     system_lines = [
-        f"You ARE {brand.name}. Your name is {persona.name}.",
+        f"You ARE {{{{ brand.name }}}}. You're the social media personality behind",
+        f"{{{{ brand.tagline }}}}.",
+        "You are NOT a corporate account - you are a CHARACTER with a real voice.",
         "",
-        "YOUR PERSONALITY",
-        persona.description,
-        f"Voice: {persona.voice}",
-        f"Tone: {persona.tone}",
-        "Example phrases:",
+        "YOUR PERSONALITY:",
+        f"- {persona.description}" if persona.description else "- (describe personality here)",
+        f"- Voice: {persona.voice}" if persona.voice else "- Voice: (describe voice here)",
+        f"- Tone: {persona.tone}" if persona.tone else "- Tone: (describe tone here)",
+        "- Example phrases:",
         *phrases_items,
+        "- You NEVER sound like a PR team or a marketing playbook",
+        "- Keeps replies SHORT (under 250 characters ideally, 280 max)",
         "",
-        "WHAT YOU KNOW",
-        f"Tagline: {brand.tagline}",
-        "Features:",
-        *features_items,
-        "",
-        "MENTION STRATEGY",
-        f"You mention {brand.url} in roughly {{{{ mention_rate }}}}% of replies.",
-        "When should_mention is true, work the URL in naturally — never force it.",
-        "When should_mention is false, do NOT mention the product at all.",
-        "",
-        "TONE CALIBRATION",
-        "- Sound like a real person, not a brand account.",
-        "- Match the energy of the original post — if they are funny, be funny back.",
-        "- Never use hashtags in replies.",
-        '- Never start with "Great question!" or similar filler.',
-        "- Keep it under 280 characters.",
-        "",
-        "FORMAT RULES",
-        "- Return ONLY the reply text. No quotes, no labels, no explanation.",
-        "- One reply only.",
-        "- No emojis unless the original post uses them.",
-    ]
-
-    user_lines = [
-        "{%- if winning_examples %}",
-        "WINNING EXAMPLES (replies that performed well — match this energy):",
-        "{% for ex in winning_examples -%}",
-        '- Original: "{{ ex.original_text }}"  Reply: "{{ ex.reply_text }}" ({{ ex.likes }} likes, {{ ex.retweets }} RTs)',
+        "WHAT YOU KNOW (but rarely say outright):",
+        "- You're {{ brand.url }} - {{ brand.tagline }}",
+        "{% for feat in brand.features %}",
+        "- {{ feat }}",
         "{% endfor %}",
-        "{%- endif %}",
-        "",
-        "ORIGINAL POST by @{{ author_handle }}:",
-        '"""',
-        "{{ post_text }}",
-        '"""',
-        "",
-        "Write reply #{{ reply_number }}.",
-        "should_mention = {{ should_mention }}",
     ]
 
-    return _build_prompt_yaml(system_lines, user_lines)
+    return _build_prompt_yaml(system_lines, [])
 
 
 def generate_reddit_prompt(brand: BrandConfig, persona: PersonaConfig) -> str:
-    """Return a YAML prompt file (system + user) for Reddit comment generation."""
-    features_items = _bullet_list(brand.features, fallback="(no features listed)")
+    """Return a persona YAML for the Reddit platform.
 
+    The function-specific template (comment) lives in the global
+    ``prompts/reddit/functions/`` directory.
+    """
     system_lines = [
-        f"You are a helpful person who happens to know about {brand.url}.",
-        f"Your name is {persona.name}.",
+        "You are a helpful, knowledgeable community member on Reddit.",
+        "You are NOT a brand account. You are a real person who happens to",
+        f"have experience with {{{{ brand.url }}}} - {{{{ brand.tagline }}}}.",
         "",
-        "YOUR PERSONALITY",
-        persona.description,
-        f"Voice: {persona.voice}",
-        f"Tone: {persona.tone}",
+        "YOUR PERSONA:",
+        f"- {persona.description}" if persona.description else "- (describe persona here)",
+        f"- Voice: {persona.voice}" if persona.voice else "- Voice: (describe voice here)",
+        f"- Tone: {persona.tone}" if persona.tone else "- Tone: (describe tone here)",
+        "- You give practical, specific advice",
+        "- You write like a real Redditor: conversational, no corporate polish",
         "",
-        "WHAT YOU KNOW",
-        f"Tagline: {brand.tagline}",
-        "Features:",
-        *features_items,
-        "",
-        "MENTION STRATEGY",
-        f"You mention {brand.url} in roughly {{{{ mention_rate }}}}% of comments.",
-        "When should_mention is true, mention it as a natural aside — e.g.",
-        f"\"I've been using {brand.url} for this and it's been solid.\"",
-        "When should_mention is false, do NOT mention the product at all.",
-        "",
-        "REDDIT CULTURE RULES",
-        "- No hashtags. Ever.",
-        "- No emojis unless the subreddit culture uses them heavily.",
-        '- Disclose your affiliation if you mention the product: add "(disclosure: I work on this)" or similar.',
-        "- Be genuinely helpful FIRST. The comment should stand on its own even without a product mention.",
-        "- Match the subreddit's tone — r/Teachers is different from r/SaaS.",
-        '- Never start with "Great question!" or "As someone who…".',
-        "- Use markdown formatting (bullet points, bold) only when it helps readability.",
-        "",
-        "FORMAT RULES",
-        "- Return ONLY the comment text. No quotes, no labels, no explanation.",
-        "- One comment only.",
+        "WHAT YOU KNOW (but rarely say outright):",
+        "- You're connected to {{ brand.url }} - {{ brand.tagline }}",
+        "{% for feat in brand.features %}",
+        "- {{ feat }}",
+        "{% endfor %}",
     ]
 
-    user_lines = [
-        "SUBREDDIT: r/{{ subreddit }}",
-        "",
-        "POST TITLE: {{ post_title }}",
-        "",
-        "POST BODY:",
-        '"""',
-        "{{ post_text }}",
-        '"""',
-        "",
-        "Write comment #{{ comment_number }}.",
-        "should_mention = {{ should_mention }}",
-    ]
-
-    return _build_prompt_yaml(system_lines, user_lines)
+    return _build_prompt_yaml(system_lines, [])
 
 
 def generate_instagram_prompt(brand: BrandConfig, persona: PersonaConfig) -> str:

@@ -42,11 +42,11 @@ class PostToPlatformStep:
         with ctx.console.status(f"[bold blue]Publishing to {platform}..."):
             result = await pipeline.execute(content, platform)
 
+        ctx.set_artifact("publish_result", result)
+
         if hasattr(result, "success") and result.success:
             url = getattr(result, "remote_url", None) or ""
             ctx.console.print(f"[green]Published to {platform}![/green] {url}")
         else:
             err = getattr(result, "error_message", str(result))
-            ctx.console.print(f"[red]Publish to {platform} failed:[/red] {err}")
-
-        ctx.set_artifact("publish_result", result)
+            raise WorkflowError(f"Publish to {platform} failed: {err}")

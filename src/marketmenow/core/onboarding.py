@@ -285,8 +285,8 @@ def _phase_prompts(
     _phase_header(console, 8, "Platform Prompts")
 
     generators: dict[str, tuple[str, object]] = {
-        "twitter": ("prompts/twitter/reply_generation.yaml", generate_twitter_prompt),
-        "reddit": ("prompts/reddit/comment_generation.yaml", generate_reddit_prompt),
+        "twitter": ("prompts/twitter/persona.yaml", generate_twitter_prompt),
+        "reddit": ("prompts/reddit/persona.yaml", generate_reddit_prompt),
         "instagram": ("prompts/instagram/script_generation.yaml", generate_instagram_prompt),
     }
 

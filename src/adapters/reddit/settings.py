@@ -13,7 +13,7 @@ class RedditSettings(BaseSettings):
     # Auth (cookie-based) ------------------------------------------------
     reddit_session: str = ""
     reddit_username: str = ""
-    reddit_user_agent: str = "marketmenow:v0.1 (by u/GradeasyBot)"
+    reddit_user_agent: str = "marketmenow:v0.1 (by u/MarketMeNowBot)"
 
     # Vertex AI / Gemini --------------------------------------------------
     google_application_credentials: Path | None = None

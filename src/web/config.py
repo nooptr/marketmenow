@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    batch_email_template: Path = Path("templates/sharegradeasy.html")
-    batch_email_csv: Path = Path("vault/teachers.csv")
+    batch_email_template: Path = Path("templates/email_template.html")
+    batch_email_csv: Path = Path("vault/contacts.csv")
     batch_email_size: int = 100
 
     model_config = {"env_prefix": "MMN_WEB_", "env_file": ".env", "extra": "ignore"}

@@ -51,6 +51,9 @@ uv run mmn-web                       # Web dashboard (localhost:8000)
 | `src/marketmenow/core/onboarding.py`      | 10-phase interactive project onboarding wizard |
 | `src/marketmenow/core/project_templates.py`| Generate starter prompts, targets, campaigns |
 | `projects/`                                | Per-product marketing material directories |
+| `src/marketmenow/core/prompt_builder.py`   | `PromptBuilder` — composable prompt assembly (persona + function + ICL) |
+| `src/marketmenow/core/embedding_store.py`  | `EmbeddingStore` — Gemini text-embedding-004 wrapper |
+| `src/marketmenow/core/diversity_selector.py` | `select_diverse_examples()` — farthest-point ICL diversity sampling |
 | `src/marketmenow/normaliser.py`         | `NormalisedContent` + `ContentNormaliser`  |
 | `src/marketmenow/cli.py`               | Main CLI entry point (+ hidden adapter CLI aliases for web frontend) |
 | `campaigns/*.yaml`                     | YAML campaign config files (e.g. reddit-launch) |

@@ -20,15 +20,13 @@ _INITIAL_BACKOFF_S = 5.0
 
 
 class ProductContext(BaseModel, frozen=True):
-    name: str = "Gradeasy"
-    url: str = "gradeasy.ai"
-    tagline: str = "AI-powered grading assistant for K-12 teachers"
+    name: str = "YourProduct"
+    url: str = "yourproduct.com"
+    tagline: str = "Describe your product here"
     features: list[str] = [
-        "Grades assignments against rubrics in seconds",
-        "Supports images, PDFs, and handwritten work",
-        "Saves teachers 8-15 hours per week",
-        "Teachers keep full control over final grades",
-        "Free to try",
+        "Feature 1",
+        "Feature 2",
+        "Feature 3",
     ]
 
 

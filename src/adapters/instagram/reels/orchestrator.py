@@ -68,7 +68,7 @@ class ReelOrchestrator:
         kokoro_pitch_shift: dict[str, float] | None = None
         if settings.tts_provider == "kokoro":
             kokoro_voice_overrides = {
-                "gradeasy": settings.kokoro_gradeasy_voice,
+                "brand": settings.kokoro_brand_voice,
                 "kid": settings.kokoro_child_voice,
             }
             kokoro_pitch_shift = {
@@ -158,14 +158,14 @@ class ReelOrchestrator:
         )
 
         if self._settings.tts_provider == "kokoro":
-            variables["gradeasy_voice_id"] = "gradeasy"
+            variables["brand_voice_id"] = "brand"
             variables["kid_voice_id"] = "kid"
         elif self._settings.tts_provider == "local":
-            variables["gradeasy_voice_id"] = self._settings.local_tts_gradeasy_voice
+            variables["brand_voice_id"] = self._settings.local_tts_brand_voice
             variables["kid_voice_id"] = self._settings.local_tts_kid_voice
         else:
-            variables["gradeasy_voice_id"] = (
-                self._settings.elevenlabs_gradeasy_voice_id or self._settings.elevenlabs_voice_id
+            variables["brand_voice_id"] = (
+                self._settings.elevenlabs_brand_voice_id or self._settings.elevenlabs_voice_id
             )
             variables["kid_voice_id"] = self._settings.elevenlabs_voice_id
 
@@ -211,23 +211,15 @@ class ReelOrchestrator:
                 final_caption = template.caption_template
 
         if not final_caption:
-            final_caption = (
-                "Can our AI grade this?\n"
-                "\n"
-                "Drop your assignments in the comments and we'll grade them too\n"
-                "\n"
-                "Try Gradeasy now at gradeasy.ai"
-            )
+            final_caption = "Check out this reel!"
 
         final_hashtags = (
             hashtags
             or template.hashtags
             or [
-                "AIGrading",
-                "EdTech",
-                "Gradeasy",
                 "AI",
-                "SchoolHacks",
+                "MarketMeNow",
+                "ContentCreation",
             ]
         )
 
