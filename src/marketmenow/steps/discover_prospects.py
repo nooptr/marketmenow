@@ -46,12 +46,20 @@ class DiscoverProspectsStep:
         ctx.set_artifact("customer_profile", customer_profile)
 
         ctx.console.print(f"[dim]Profile loaded: {profile_path.name}[/dim]")
-        ctx.console.print(f"[dim]Product: {customer_profile.product.name} — {customer_profile.product.tagline}[/dim]")
-        ctx.console.print(f"[dim]Vectors: {len(customer_profile.discovery_vectors)} configured[/dim]")
+        ctx.console.print(
+            f"[dim]Product: {customer_profile.product.name} — {customer_profile.product.tagline}[/dim]"
+        )
+        ctx.console.print(
+            f"[dim]Vectors: {len(customer_profile.discovery_vectors)} configured[/dim]"
+        )
         if customer_profile.ideal_customer.bio_blocklist:
-            ctx.console.print(f"[dim]Bio blocklist: {len(customer_profile.ideal_customer.bio_blocklist)} terms[/dim]")
+            ctx.console.print(
+                f"[dim]Bio blocklist: {len(customer_profile.ideal_customer.bio_blocklist)} terms[/dim]"
+            )
         if customer_profile.ideal_customer.bio_require_any:
-            ctx.console.print(f"[dim]Bio require: {len(customer_profile.ideal_customer.bio_require_any)} keywords[/dim]")
+            ctx.console.print(
+                f"[dim]Bio require: {len(customer_profile.ideal_customer.bio_require_any)} keywords[/dim]"
+            )
 
         history_path = None
         if ctx.project:

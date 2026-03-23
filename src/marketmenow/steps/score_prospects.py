@@ -45,9 +45,7 @@ class ScoreProspectsStep:
                 result = await scorer.score(profile, customer_profile)
                 scored.append(result)
                 if result.disqualify_reason:
-                    ctx.console.print(
-                        f"    [red]Disqualified: {result.disqualify_reason}[/red]"
-                    )
+                    ctx.console.print(f"    [red]Disqualified: {result.disqualify_reason}[/red]")
                 else:
                     ctx.console.print(
                         f"    [green]Score: {result.total_score}/{result.max_score}[/green] — {result.dm_angle[:70]}"

@@ -245,6 +245,46 @@ def generate_reel_meta_prompt(brand: BrandConfig, customer: TargetCustomer) -> s
     return content
 
 
+def generate_default_generation_config(platforms: list[str]) -> str:
+    """Return a default generation_config.yaml based on selected platforms."""
+    items = []
+
+    if "instagram" in platforms:
+        items.append({"platform": "instagram", "command_type": "reel", "count": 2})
+        items.append({"platform": "instagram", "command_type": "carousel", "count": 2})
+        # If Instagram is present, assume YouTube Shorts as well
+        if "youtube" not in platforms:
+            platforms.append("youtube")
+
+    if "twitter" in platforms:
+        items.append({"platform": "twitter", "command_type": "thread"})
+        items.append({"platform": "twitter", "command_type": "engage"})
+        items.append(
+            {
+                "platform": "twitter",
+                "command_type": "outreach",
+                "params": {"profile": "campaigns/twitter-outreach.yaml"},
+            }
+        )
+
+    if "linkedin" in platforms:
+        items.append({"platform": "linkedin", "command_type": "post"})
+
+    if "facebook" in platforms:
+        items.append({"platform": "facebook", "command_type": "post"})
+
+    if "reddit" in platforms:
+        items.append({"platform": "reddit", "command_type": "engage"})
+
+    if "youtube" in platforms:
+        items.append({"platform": "youtube", "command_type": "short", "count": 2})
+
+    if "email" in platforms:
+        items.append({"platform": "email", "command_type": "send"})
+
+    return yaml.dump({"items": items}, default_flow_style=False, sort_keys=False)
+
+
 # ── internal helpers ──────────────────────────────────────────────────
 
 

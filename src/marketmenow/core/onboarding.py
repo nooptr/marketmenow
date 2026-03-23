@@ -10,6 +10,7 @@ from rich.panel import Panel
 
 from marketmenow.core.project_manager import ProjectManager
 from marketmenow.core.project_templates import (
+    generate_default_generation_config,
     generate_instagram_prompt,
     generate_outreach_campaign,
     generate_reddit_prompt,
@@ -525,6 +526,11 @@ def run_onboarding(
     # Phase 9 — Reel templates
     if "instagram" in customer.platforms:
         result.reel_templates = _phase_reel_templates(console, pm, slug, brand, customer, files)
+
+    # Generation Config
+    gen_config_content = generate_default_generation_config(customer.platforms)
+    gen_config_path = pm.save_file(slug, "generation_config.yaml", content=gen_config_content)
+    files.append(gen_config_path)
 
     # Phase 10 — Summary & activation
     _phase_summary(console, pm, slug, result)

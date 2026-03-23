@@ -36,6 +36,21 @@ class PersonaConfig(BaseModel, frozen=True):
     platform_overrides: dict[str, dict[str, str]] = Field(default_factory=dict)
 
 
+class GenerationItemConfig(BaseModel, frozen=True):
+    """A single batch generation item."""
+
+    platform: str
+    command_type: str
+    count: int = 1
+    params: dict[str, str] = Field(default_factory=dict)
+
+
+class GenerationConfig(BaseModel, frozen=True):
+    """Project-level generation config loaded from ``generation_config.yaml``."""
+
+    items: list[GenerationItemConfig]
+
+
 class ProjectConfig(BaseModel, frozen=True):
     """Top-level project config loaded from ``project.yaml``."""
 

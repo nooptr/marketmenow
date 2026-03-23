@@ -72,6 +72,7 @@ Built-in workflows: `instagram-reel`, `instagram-carousel`, `twitter-thread`, `t
 Per-product packaging of all marketing material. A project directory under `projects/` contains everything needed to market a specific product: brand config, target customer, personas, platform prompts, engagement targets, campaign profiles, reel templates, and generated output.
 
 - `ProjectConfig` — slug, brand, target customer, default persona, env overrides
+- `GenerationConfig` — project-scoped batch generation settings (`generation_config.yaml`)
 - `BrandConfig` — name, url, tagline, color, logo, features
 - `TargetCustomer` — ICP description, pain points, keywords, target platforms
 - `PersonaConfig` — voice, tone, example phrases, platform overrides

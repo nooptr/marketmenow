@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
+from marketmenow.core.project_manager import ProjectManager
 from web import db
 from web.cli_runner import (
     PLATFORM_META,
@@ -166,6 +167,7 @@ class _BatchEntry:
     key: str
     item_id: uuid.UUID
     platform: str
+    command_type: str
     modality: str
     output_dir: str
     generate_cmd: list[str]
@@ -184,16 +186,55 @@ def _write_email_offset(offset: int) -> None:
     _EMAIL_OFFSET_FILE.write_text(str(offset))
 
 
+def _get_batch_items() -> list[dict[str, object]]:
+    pm = ProjectManager()
+    slug = pm.get_active_project()
+    if slug:
+        try:
+            config = pm.load_generation_config(slug)
+            items = []
+            for item in config.items:
+                for i in range(item.count):
+                    key = f"{item.command_type}_{i}" if item.count > 1 else item.command_type
+                    title_suffix = f" {i + 1}" if item.count > 1 else ""
+                    meta = get_meta(item.platform, item.command_type)
+                    title = meta["label"] if meta else f"{item.platform} {item.command_type}"
+
+                    params = dict(item.params)
+                    for k, v in params.items():
+                        if isinstance(v, str) and (v.endswith((".yaml", ".yml")) or "/" in v):
+                            path = pm.project_dir(slug) / v
+                            if path.exists():
+                                params[k] = str(path)
+
+                    items.append(
+                        {
+                            "platform": item.platform,
+                            "command_type": item.command_type,
+                            "title": f"{title}{title_suffix}",
+                            "key": key,
+                            "params": params,
+                        }
+                    )
+            return items
+        except FileNotFoundError:
+            pass
+
+    return BATCH_ITEMS
+
+
 @router.post("/all", response_class=HTMLResponse)
 async def generate_all(request: Request) -> HTMLResponse:
     """Create all platform content items and kick off the batch pipeline."""
     batch_id = uuid.uuid4().hex[:8]
     entries: list[_BatchEntry] = []
 
-    for spec in BATCH_ITEMS:
-        platform = spec["platform"]
-        command_type = spec["command_type"]
-        key = spec["key"]
+    items_to_run = _get_batch_items()
+
+    for spec in items_to_run:
+        platform = str(spec["platform"])
+        command_type = str(spec["command_type"])
+        key = str(spec["key"])
 
         meta = get_meta(platform, command_type)
         builders = get_builders(platform, command_type)
@@ -206,8 +247,8 @@ async def generate_all(request: Request) -> HTMLResponse:
         output_dir = str(settings.output_dir.resolve() / platform / run_id)
         os.makedirs(output_dir, exist_ok=True)
 
-        params: dict[str, str] = {}
-        if key == "email":
+        params: dict[str, str] = spec.get("params", {})  # type: ignore
+        if command_type == "send" and platform == "email":
             email_offset = _read_email_offset()
             batch_size = settings.batch_email_size
             csv_path = str(settings.batch_email_csv.resolve())
@@ -217,7 +258,7 @@ async def generate_all(request: Request) -> HTMLResponse:
         generate_cmd = build_generate(params, output_dir)
         publish_cmd = build_publish(params, output_dir)
 
-        if key == "email":
+        if command_type == "send" and platform == "email":
             email_offset = _read_email_offset()
             batch_size = settings.batch_email_size
             end_row = email_offset + batch_size
@@ -238,6 +279,7 @@ async def generate_all(request: Request) -> HTMLResponse:
                 key=key,
                 item_id=item_id,
                 platform=platform,
+                command_type=command_type,
                 modality=meta["modality"],
                 output_dir=output_dir,
                 generate_cmd=generate_cmd,
@@ -262,16 +304,28 @@ async def generate_all(request: Request) -> HTMLResponse:
     return HTMLResponse(cards_html)
 
 
+def _get_index(key: str) -> int:
+    parts = key.split("_")
+    if parts[-1].isdigit():
+        return int(parts[-1])
+    return 0
+
+
 async def _run_batch(entries: list[_BatchEntry]) -> None:
     """Run all batch items in parallel, coordinating dependencies."""
-    reel_output_path: str | None = None
-    reel_done = asyncio.Event()
+    reel_outputs: dict[int, str] = {}
+    reel_dones: dict[int, asyncio.Event] = {}
+
+    for e in entries:
+        if e.command_type == "reel":
+            idx = _get_index(e.key)
+            reel_dones[idx] = asyncio.Event()
 
     async def _run_one(entry: _BatchEntry) -> None:
-        nonlocal reel_output_path
+        idx = _get_index(entry.key)
 
         try:
-            if entry.key == "youtube":
+            if entry.command_type == "short":
                 hub.publish(
                     entry.item_id,
                     ProgressEvent(
@@ -280,7 +334,22 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
                         phase="waiting",
                     ),
                 )
-                await reel_done.wait()
+                if not reel_dones:
+                    await db.update_content_status(
+                        entry.item_id,
+                        "failed",
+                        error_message="No reels in batch for YouTube upload",
+                    )
+                    hub.publish(
+                        entry.item_id,
+                        ProgressEvent(event_type="error", message="No reels in batch"),
+                    )
+                    return
+
+                target_idx = idx if idx in reel_dones else max(reel_dones.keys())
+                await reel_dones[target_idx].wait()
+
+                reel_output_path = reel_outputs.get(target_idx)
                 if reel_output_path:
                     entry.publish_cmd = _patch_youtube_cmd(entry.publish_cmd, reel_output_path)
                     hub.publish(
@@ -302,20 +371,20 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
                     )
                     return
 
-            if entry.key == "reddit":
+            if entry.command_type == "engage" and entry.platform == "reddit":
                 await _run_reddit_two_step(entry)
                 return
 
             result = await _run_single_command(entry)
 
-            if entry.key == "reel":
+            if entry.command_type == "reel":
                 for f in result.output_files:
                     if f.endswith(".mp4"):
-                        reel_output_path = f
+                        reel_outputs[idx] = f
                         break
-                reel_done.set()
+                reel_dones[idx].set()
 
-            if entry.key == "email":
+            if entry.command_type == "send" and entry.platform == "email":
                 email_offset = _read_email_offset()
                 _write_email_offset(email_offset + settings.batch_email_size)
 
@@ -323,8 +392,8 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
             logger.exception("Batch item %s failed", entry.key)
             await db.update_content_status(entry.item_id, "failed", error_message=str(exc)[:1000])
             hub.publish(entry.item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))
-            if entry.key == "reel":
-                reel_done.set()
+            if entry.command_type == "reel":
+                reel_dones[idx].set()
 
     await asyncio.gather(*[_run_one(e) for e in entries], return_exceptions=True)
 

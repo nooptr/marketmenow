@@ -537,6 +537,31 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                 },
             ],
         },
+        "outreach": {
+            "label": "Twitter Cold DM",
+            "modality": "direct_message",
+            "params": [
+                {
+                    "name": "profile",
+                    "type": "text",
+                    "required": True,
+                    "help": "Path to customer profile YAML",
+                },
+                {
+                    "name": "max_messages",
+                    "type": "number",
+                    "required": False,
+                    "help": "Max messages to send",
+                },
+                {
+                    "name": "dry_run",
+                    "type": "select",
+                    "required": False,
+                    "options": ["true", "false"],
+                    "help": "Dry run (do not send)",
+                },
+            ],
+        },
     },
     "reddit": {
         "engage": {
@@ -810,6 +835,26 @@ def _build_twitter_engage_publish(_params: dict, output_dir: str) -> list[str]:
     return ["mmn", "twitter", "reply", "-f", os.path.join(output_dir, "replies.csv")]
 
 
+def _build_twitter_outreach_generate(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "twitter-outreach", "--dry-run"]
+    if params.get("profile"):
+        cmd.extend(["--profile", params["profile"]])
+    if params.get("max_messages"):
+        cmd.extend(["--max-messages", str(params["max_messages"])])
+    return cmd
+
+
+def _build_twitter_outreach_publish(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "twitter-outreach"]
+    if params.get("profile"):
+        cmd.extend(["--profile", params["profile"]])
+    if params.get("max_messages"):
+        cmd.extend(["--max-messages", str(params["max_messages"])])
+    if params.get("dry_run") == "true":
+        cmd.append("--dry-run")
+    return cmd
+
+
 def _build_reddit_engage_generate(params: dict, output_dir: str) -> list[str]:
     cmd = ["mmn", "reddit", "engage", "-o", os.path.join(output_dir, "comments.csv")]
     if params.get("max_comments"):
@@ -943,6 +988,7 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
         "all": (_build_twitter_all_generate, _build_twitter_all_publish),
         "thread": (_build_twitter_thread_generate, _build_twitter_thread_publish),
         "engage": (_build_twitter_engage_generate, _build_twitter_engage_publish),
+        "outreach": (_build_twitter_outreach_generate, _build_twitter_outreach_publish),
     },
     "reddit": {
         "engage": (_build_reddit_engage_generate, _build_reddit_engage_publish),

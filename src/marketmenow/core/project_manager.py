@@ -7,6 +7,7 @@ import yaml
 
 from marketmenow.models.project import (
     BrandConfig,
+    GenerationConfig,
     PersonaConfig,
     ProjectConfig,
     TargetCustomer,
@@ -97,6 +98,14 @@ class ProjectManager:
 
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         return ProjectConfig(**raw)
+
+    def load_generation_config(self, slug: str) -> GenerationConfig:
+        path = self.project_dir(slug) / "generation_config.yaml"
+        if not path.exists():
+            raise FileNotFoundError(f"Generation config not found at {path}")
+
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return GenerationConfig(**raw)
 
     def list_projects(self) -> list[ProjectConfig]:
         if not self._root.is_dir():

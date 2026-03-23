@@ -52,7 +52,7 @@ Background `asyncio.Task` started in the lifespan. Polls the database queue ever
 
 ### Batch Generation (`generate_all`)
 
-Parallel generation across platforms. YouTube Shorts depend on Instagram Reel (reuses the mp4). Reddit and Email have special flows (discover + generate, CSV-based).
+Parallel generation across platforms driven by a project-scoped `generation_config.yaml`. Items with `count > 1` are expanded into multiple batch entries. YouTube Shorts depend on Instagram Reels by index pairing (short #0 reuses reel #0's mp4). Reddit and Email have special flows (discover + generate, CSV-based).
 
 ## Database
 

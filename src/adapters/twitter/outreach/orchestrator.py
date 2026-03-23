@@ -158,7 +158,12 @@ class TwitterOutreachOrchestrator:
 
                 block_reason = self._check_bio_filter(profile.bio, icp)
                 if block_reason:
-                    logger.info("  @%s — filtered out: %s  |  bio: %s", handle, block_reason, profile.bio[:120])
+                    logger.info(
+                        "  @%s — filtered out: %s  |  bio: %s",
+                        handle,
+                        block_reason,
+                        profile.bio[:120],
+                    )
                     skipped_bio += 1
                     continue
 
@@ -166,7 +171,10 @@ class TwitterOutreachOrchestrator:
                 dm_tag = "DM open" if profile.dm_possible else "DM closed"
                 logger.info(
                     "  @%s — %s  |  %d followers  |  bio: %s",
-                    handle, dm_tag, profile.follower_count, profile.bio[:100],
+                    handle,
+                    dm_tag,
+                    profile.follower_count,
+                    profile.bio[:100],
                 )
             except Exception:
                 logger.exception("Failed to enrich profile @%s", handle)
@@ -187,9 +195,7 @@ class TwitterOutreachOrchestrator:
         for term in icp.bio_blocklist:
             if term.lower() in bio_lower:
                 return f"blocklist hit: '{term}'"
-        if icp.bio_require_any and not any(
-            kw.lower() in bio_lower for kw in icp.bio_require_any
-        ):
+        if icp.bio_require_any and not any(kw.lower() in bio_lower for kw in icp.bio_require_any):
             return "no required keyword found in bio"
         return ""
 
@@ -209,7 +215,9 @@ class TwitterOutreachOrchestrator:
             if result.success:
                 logger.info("  DM to @%s: sent successfully", msg.recipient_handle)
             else:
-                logger.warning("  DM to @%s: FAILED — %s", msg.recipient_handle, result.error_message)
+                logger.warning(
+                    "  DM to @%s: FAILED — %s", msg.recipient_handle, result.error_message
+                )
 
             self._history.record(
                 platform="twitter",
