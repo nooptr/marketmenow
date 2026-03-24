@@ -24,6 +24,8 @@ class EmailSettings(BaseSettings):
     smtp_from_name: str = ""
     smtp_use_tls: bool = False
     smtp_use_ssl: bool = True
+    smtp_send_delay: float = 2.0
+    smtp_reconnect_every: int = 25
 
     @property
     def sender_address(self) -> str:

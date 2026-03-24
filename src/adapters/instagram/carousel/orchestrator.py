@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from google.genai import types as genai_types
@@ -14,6 +15,9 @@ from marketmenow.models.content import ImagePost, MediaAsset
 from ..prompts import load_prompt
 from ..settings import InstagramSettings
 from .renderer import SlideRenderer
+
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
 
 _MAX_IMAGE_RETRIES = 3
 _INITIAL_BACKOFF_S = 2.0
@@ -31,10 +35,20 @@ class CarouselOrchestrator:
     GEMINI_MODEL = "gemini-2.5-flash"
     IMAGEN_MODEL = "imagen-3.0-generate-002"
 
-    def __init__(self, settings: InstagramSettings) -> None:
+    def __init__(
+        self,
+        settings: InstagramSettings,
+        *,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
+    ) -> None:
         self._settings = settings
         self._output_dir = settings.output_dir / "carousel"
         self._output_dir.mkdir(parents=True, exist_ok=True)
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
 
         _ensure_vertex_credentials(settings)
 
@@ -82,18 +96,18 @@ class CarouselOrchestrator:
         )
 
     async def _generate_content(self) -> dict[str, object]:
-        prompt = load_prompt("carousel_top5")
+        system_prompt, user_prompt = self._build_prompt()
 
         response = await self._client.aio.models.generate_content(
             model=self.GEMINI_MODEL,
             contents=[
                 genai_types.Content(
                     role="user",
-                    parts=[genai_types.Part.from_text(text=prompt["user"])],
+                    parts=[genai_types.Part.from_text(text=user_prompt)],
                 ),
             ],
             config=genai_types.GenerateContentConfig(
-                system_instruction=prompt["system"],
+                system_instruction=system_prompt,
                 response_mime_type="application/json",
                 temperature=1.0,
             ),
@@ -108,6 +122,38 @@ class CarouselOrchestrator:
             f"Expected 5 items, got: {data.get('items')}"
         )
         return data
+
+    def _build_prompt(self) -> tuple[str, str]:
+        """Build the carousel prompt, rendering Jinja2 variables with project context."""
+        if self._persona and self._brand:
+            from marketmenow.core.prompt_builder import PromptBuilder
+
+            built = PromptBuilder().build(
+                platform="instagram",
+                function="carousel_top5",
+                persona=self._persona,
+                brand=self._brand,
+                template_vars={},
+                project_slug=self._project_slug,
+            )
+            return built.system, built.user
+
+        raw = load_prompt("carousel_top5", project_slug=self._project_slug)
+        from jinja2 import Template
+
+        variables: dict[str, object] = {}
+        if self._brand:
+            variables["brand"] = self._brand.model_dump()
+        if self._persona:
+            overrides = self._persona.platform_overrides.get("instagram", {})
+            persona_dict = self._persona.model_dump()
+            if overrides:
+                persona_dict.update(overrides)
+            variables["persona"] = persona_dict
+
+        system = Template(raw["system"]).render(**variables)
+        user = Template(raw["user"]).render(**variables)
+        return system, user
 
     async def _generate_all_images(self, content: dict[str, object]) -> tuple[bytes, list[bytes]]:
         cover_task = self._generate_image(content["cover_image_prompt"])

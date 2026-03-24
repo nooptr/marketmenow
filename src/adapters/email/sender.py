@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import csv
 import logging
 import re
@@ -215,45 +217,79 @@ async def send_batch(
             )
         return results
 
-    async with aiosmtplib.SMTP(
-        hostname=settings.smtp_host,
-        port=settings.smtp_port,
-        use_tls=settings.smtp_use_ssl,
-        start_tls=settings.smtp_use_tls,
-    ) as smtp:
-        await smtp.login(settings.smtp_username, settings.smtp_password)
+    delay = settings.smtp_send_delay
+    reconnect_every = settings.smtp_reconnect_every
 
+    async def _connect() -> aiosmtplib.SMTP:
+        smtp = aiosmtplib.SMTP(
+            hostname=settings.smtp_host,
+            port=settings.smtp_port,
+            use_tls=settings.smtp_use_ssl,
+            start_tls=settings.smtp_use_tls,
+        )
+        await smtp.connect()
+        await smtp.login(settings.smtp_username, settings.smtp_password)
+        return smtp
+
+    smtp = await _connect()
+    try:
         for i, ((row_idx, contact), template_html) in enumerate(
             zip(contacts, html_variants, strict=True),
             1,
         ):
-            try:
-                subject, html = render_email(
-                    template_html,
-                    subject_template,
-                    contact.template_vars,
-                )
-                msg = _build_message(
-                    sender=sender,
-                    to=contact.email,
-                    subject=subject,
-                    html_body=html,
-                    bcc=sender,
-                )
-                await smtp.send_message(msg)
-                result = SendResult(row_index=row_idx, email=contact.email, success=True)
-                logger.info("Row %d → %s  ✓", row_idx, contact.email)
-            except Exception as exc:
-                result = SendResult(
-                    row_index=row_idx,
-                    email=contact.email,
-                    success=False,
-                    error=str(exc),
-                )
-                logger.error("Row %d → %s  ✗ %s", row_idx, contact.email, exc)
+            if reconnect_every > 0 and i > 1 and (i - 1) % reconnect_every == 0:
+                with contextlib.suppress(Exception):
+                    await smtp.quit()
+                smtp = await _connect()
+                logger.info("Reconnected SMTP after %d emails", i - 1)
+
+            subject, html = render_email(
+                template_html,
+                subject_template,
+                contact.template_vars,
+            )
+            msg = _build_message(
+                sender=sender,
+                to=contact.email,
+                subject=subject,
+                html_body=html,
+                bcc=sender,
+            )
+
+            result: SendResult | None = None
+            for attempt in range(3):
+                try:
+                    await smtp.send_message(msg)
+                    result = SendResult(row_index=row_idx, email=contact.email, success=True)
+                    logger.info("Row %d → %s  ✓", row_idx, contact.email)
+                    break
+                except Exception as exc:
+                    if "421" in str(exc) and attempt < 2:
+                        logger.warning("Row %d → %s  421 rate limit, reconnecting in 5s…", row_idx, contact.email)
+                        await asyncio.sleep(5)
+                        with contextlib.suppress(Exception):
+                            await smtp.quit()
+                        smtp = await _connect()
+                    else:
+                        result = SendResult(
+                            row_index=row_idx,
+                            email=contact.email,
+                            success=False,
+                            error=str(exc),
+                        )
+                        logger.error("Row %d → %s  ✗ %s", row_idx, contact.email, exc)
+                        break
+            if result is None:
+                result = SendResult(row_index=row_idx, email=contact.email, success=False, error="max retries")
 
             results.append(result)
             if on_progress:
                 on_progress(i, total, contact.email, result.success, result.error)
+
+            if delay > 0 and i < total:
+                await asyncio.sleep(delay)
+    finally:
+        with contextlib.suppress(Exception):
+            await smtp.quit()
 
     return results

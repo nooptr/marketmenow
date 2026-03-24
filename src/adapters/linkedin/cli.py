@@ -725,8 +725,25 @@ def batch_post(
             from adapters.instagram.carousel.orchestrator import CarouselOrchestrator
             from adapters.instagram.settings import InstagramSettings
 
+            from marketmenow.core.project_manager import ProjectManager
+
+            ig_settings = InstagramSettings()
+            pm = ProjectManager()
+            slug = pm.get_active_project()
+            persona_cfg = None
+            brand_cfg = None
+            if slug:
+                proj = pm.load_config(slug)
+                brand_cfg = proj.brand
+                persona_cfg = pm.load_persona(slug, proj.default_persona)
+
             console.print("[bold blue]Generating carousel (Gemini + Imagen)...[/bold blue]")
-            orch = CarouselOrchestrator(InstagramSettings())
+            orch = CarouselOrchestrator(
+                ig_settings,
+                persona=persona_cfg,
+                brand=brand_cfg,
+                project_slug=slug,
+            )
             carousel_post = await orch.create_carousel()
             console.print(
                 f"[green]Carousel ready:[/green] {len(carousel_post.images)} slides — "

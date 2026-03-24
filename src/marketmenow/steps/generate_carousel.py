@@ -26,7 +26,12 @@ class GenerateCarouselStep:
         if output_dir:
             settings = settings.model_copy(update={"output_dir": Path(str(output_dir))})
 
-        orch = CarouselOrchestrator(settings)
+        orch = CarouselOrchestrator(
+            settings,
+            persona=ctx.persona,
+            brand=ctx.project.brand if ctx.project else None,
+            project_slug=ctx.project.slug if ctx.project else None,
+        )
 
         with ctx.console.status("[bold green]Generating carousel (Gemini + Imagen)..."):
             carousel = await orch.create_carousel()

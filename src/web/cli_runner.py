@@ -796,16 +796,14 @@ def _build_facebook_page_post_publish(params: dict, _output_dir: str) -> list[st
 
 
 def _build_twitter_thread_generate(params: dict, _output_dir: str) -> list[str]:
-    cmd = ["mmn", "twitter", "thread"]
+    cmd = ["mmn", "run", "twitter-thread"]
     if params.get("topic"):
         cmd.extend(["--topic", params["topic"]])
     return cmd
 
 
 def _build_twitter_thread_publish(params: dict, _output_dir: str) -> list[str]:
-    cmd = _build_twitter_thread_generate(params, _output_dir)
-    cmd.append("--post")
-    return cmd
+    return _build_twitter_thread_generate(params, _output_dir)
 
 
 def _build_twitter_all_generate(params: dict, output_dir: str) -> list[str]:
@@ -824,15 +822,15 @@ def _build_twitter_all_publish(params: dict, _output_dir: str) -> list[str]:
     return cmd
 
 
-def _build_twitter_engage_generate(params: dict, output_dir: str) -> list[str]:
-    cmd = ["mmn", "twitter", "engage", "-o", os.path.join(output_dir, "replies.csv")]
+def _build_twitter_engage_generate(params: dict, _output_dir: str) -> list[str]:
+    cmd = ["mmn", "run", "twitter-engage"]
     if params.get("max_replies"):
         cmd.extend(["--max-replies", str(params["max_replies"])])
     return cmd
 
 
-def _build_twitter_engage_publish(_params: dict, output_dir: str) -> list[str]:
-    return ["mmn", "twitter", "reply", "-f", os.path.join(output_dir, "replies.csv")]
+def _build_twitter_engage_publish(params: dict, _output_dir: str) -> list[str]:
+    return _build_twitter_engage_generate(params, _output_dir)
 
 
 def _build_twitter_outreach_generate(params: dict, _output_dir: str) -> list[str]:

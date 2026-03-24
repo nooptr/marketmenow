@@ -33,3 +33,6 @@ items:
 
   - platform: email
     command_type: send
+    params:
+      template: templates/email/sharegradeasy.html
+      file: vault/teachers.csv

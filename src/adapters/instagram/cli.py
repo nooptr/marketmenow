@@ -209,7 +209,23 @@ async def _carousel_generate_async(
 
     from .carousel.orchestrator import CarouselOrchestrator
 
-    orch = CarouselOrchestrator(settings)
+    from marketmenow.core.project_manager import ProjectManager
+
+    pm = ProjectManager()
+    slug = pm.get_active_project()
+    persona_cfg = None
+    brand_cfg = None
+    if slug:
+        proj = pm.load_config(slug)
+        brand_cfg = proj.brand
+        persona_cfg = pm.load_persona(slug, proj.default_persona)
+
+    orch = CarouselOrchestrator(
+        settings,
+        persona=persona_cfg,
+        brand=brand_cfg,
+        project_slug=slug,
+    )
 
     with console.status("[bold green]Generating carousel (Gemini + Imagen)..."):
         carousel = await orch.create_carousel()

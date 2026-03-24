@@ -121,13 +121,13 @@ class TestLinkedInBuilders:
 class TestTwitterBuilders:
     def test_thread_generate(self) -> None:
         cmd = _build_twitter_thread_generate({"topic": "AI"}, "/tmp/out")
-        assert "thread" in cmd
+        assert cmd[:3] == ["mmn", "run", "twitter-thread"]
         assert "--topic" in cmd
         assert "AI" in cmd
 
-    def test_thread_publish_has_post(self) -> None:
+    def test_thread_publish(self) -> None:
         cmd = _build_twitter_thread_publish({"topic": "AI"}, "/tmp/out")
-        assert "--post" in cmd
+        assert cmd[:3] == ["mmn", "run", "twitter-thread"]
 
     def test_all_generate_headless(self) -> None:
         cmd = _build_twitter_all_generate({}, "/tmp/out")
@@ -142,13 +142,11 @@ class TestTwitterBuilders:
 
     def test_engage_generate(self) -> None:
         cmd = _build_twitter_engage_generate({}, "/tmp/out")
-        assert "engage" in cmd
-        assert "replies.csv" in cmd[-1]
+        assert cmd[:3] == ["mmn", "run", "twitter-engage"]
 
     def test_engage_publish(self) -> None:
         cmd = _build_twitter_engage_publish({}, "/tmp/out")
-        assert "reply" in cmd
-        assert "replies.csv" in cmd[-1]
+        assert cmd[:3] == ["mmn", "run", "twitter-engage"]
 
 
 # ---------------------------------------------------------------------------

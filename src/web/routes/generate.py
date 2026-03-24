@@ -29,7 +29,12 @@ logger = logging.getLogger(__name__)
 
 _background_tasks: set[asyncio.Task] = set()
 
-_EMAIL_OFFSET_FILE = Path("projects/gradeasy/vault/.email_offset")
+def _email_offset_file() -> Path:
+    pm = ProjectManager()
+    slug = pm.get_active_project()
+    if slug:
+        return pm.project_dir(slug) / "vault" / ".email_offset"
+    return Path("projects/gradeasy/vault/.email_offset")
 
 
 @router.get("", response_class=HTMLResponse)
@@ -176,14 +181,15 @@ class _BatchEntry:
 
 def _read_email_offset() -> int:
     try:
-        return int(_EMAIL_OFFSET_FILE.read_text().strip())
+        return int(_email_offset_file().read_text().strip())
     except (FileNotFoundError, ValueError):
         return 0
 
 
 def _write_email_offset(offset: int) -> None:
-    _EMAIL_OFFSET_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _EMAIL_OFFSET_FILE.write_text(str(offset))
+    f = _email_offset_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(str(offset))
 
 
 def _get_batch_items() -> list[dict[str, object]]:
@@ -247,13 +253,22 @@ async def generate_all(request: Request) -> HTMLResponse:
         output_dir = str(settings.output_dir.resolve() / platform / run_id)
         os.makedirs(output_dir, exist_ok=True)
 
-        params: dict[str, str] = spec.get("params", {})  # type: ignore
-        if command_type == "send" and platform == "email":
-            email_offset = _read_email_offset()
-            batch_size = settings.batch_email_size
+        params: dict[str, str] = dict(spec.get("params", {}))  # type: ignore
+        if command_type == "send" and platform == "email" and not params.get("template"):
+            pm = ProjectManager()
+            slug = pm.get_active_project()
             csv_path = str(settings.batch_email_csv.resolve())
             template_path = str(settings.batch_email_template.resolve())
-            params = {"template": template_path, "file": csv_path}
+            if slug:
+                proj_csv = pm.project_dir(slug) / "vault" / "teachers.csv"
+                if proj_csv.exists():
+                    csv_path = str(proj_csv)
+                for tmpl in pm.project_dir(slug).glob("templates/email/*.html"):
+                    template_path = str(tmpl)
+                    break
+            params["template"] = template_path
+            if not params.get("file"):
+                params["file"] = csv_path
 
         generate_cmd = build_generate(params, output_dir)
         publish_cmd = build_publish(params, output_dir)

@@ -26,6 +26,7 @@ credentials.yaml
 
 # ── Outreach / contact history (any location) ─────────
 **/.outreach_history.json
+.outreach_debug/
 
 # ── ML model weights ───────────────────────────────────
 models/
