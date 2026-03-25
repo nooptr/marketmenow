@@ -1,6 +1,6 @@
 # MarketMeNow — Agent Guide
 
-MarketMeNow is a cross-platform marketing automation framework (Python 3.12+, async, ports-and-adapters architecture). It generates and publishes content across Instagram, Twitter/X, Reddit, LinkedIn, YouTube, and Email via a CLI (`mmn`) and a FastAPI web dashboard.
+MarketMeNow is a cross-platform marketing automation framework (Python 3.12+, async, ports-and-adapters architecture). It generates and publishes content across Instagram, Twitter/X, Reddit, LinkedIn, YouTube, TikTok, and Email via a CLI (`mmn`) and a FastAPI web dashboard.
 
 ## Quick Reference
 

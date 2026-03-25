@@ -674,6 +674,38 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
             ],
         },
     },
+    "tiktok": {
+        "upload": {
+            "label": "TikTok Video",
+            "modality": "video",
+            "params": [
+                {
+                    "name": "title",
+                    "type": "text",
+                    "required": False,
+                    "help": "Video caption",
+                },
+                {
+                    "name": "hashtags",
+                    "type": "text",
+                    "required": False,
+                    "help": "Comma-separated hashtags",
+                },
+                {
+                    "name": "privacy",
+                    "type": "select",
+                    "required": False,
+                    "options": [
+                        "PUBLIC_TO_EVERYONE",
+                        "FOLLOWER_OF_CREATOR",
+                        "MUTUAL_FOLLOW_FRIENDS",
+                        "SELF_ONLY",
+                    ],
+                    "help": "Privacy level (API mode only)",
+                },
+            ],
+        },
+    },
 }
 
 # ── Command builders (not serializable, used server-side only) ───────
@@ -948,6 +980,31 @@ def _build_youtube_short_publish(params: dict, output_dir: str) -> list[str]:
     return cmd
 
 
+def _build_tiktok_upload_generate(params: dict, output_dir: str) -> list[str]:
+    """Preview: placeholder command (TikTok reuses the reel MP4)."""
+    cmd = ["mmn", "tiktok", "upload", os.path.join(output_dir, "*.mp4")]
+    if params.get("title"):
+        cmd.extend(["--title", params["title"]])
+    if params.get("hashtags"):
+        cmd.extend(["--hashtags", params["hashtags"]])
+    if params.get("privacy"):
+        cmd.extend(["--privacy", params["privacy"]])
+    return cmd
+
+
+def _build_tiktok_upload_publish(params: dict, output_dir: str) -> list[str]:
+    cmd = ["mmn", "tiktok", "upload"]
+    latest_mp4 = os.path.join(output_dir, "latest.mp4")
+    cmd.append(latest_mp4)
+    if params.get("title"):
+        cmd.extend(["--title", params["title"]])
+    if params.get("hashtags"):
+        cmd.extend(["--hashtags", params["hashtags"]])
+    if params.get("privacy"):
+        cmd.extend(["--privacy", params["privacy"]])
+    return cmd
+
+
 def _build_email_generate(params: dict, _output_dir: str) -> list[str]:
     cmd = ["mmn", "email", "send", "--dry-run", "--paraphrase"]
     if params.get("template"):
@@ -997,6 +1054,9 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
     },
     "youtube": {
         "short": (_build_youtube_short_generate, _build_youtube_short_publish),
+    },
+    "tiktok": {
+        "upload": (_build_tiktok_upload_generate, _build_tiktok_upload_publish),
     },
 }
 

@@ -16,6 +16,7 @@ from adapters.instagram.cli import app as instagram_app
 from adapters.instagram.cli import carousel_app, reel_app
 from adapters.linkedin.cli import app as linkedin_app
 from adapters.reddit.cli import app as reddit_app
+from adapters.tiktok.cli import app as tiktok_app
 from adapters.twitter.cli import app as twitter_app
 from adapters.youtube.cli import app as youtube_app
 
@@ -77,6 +78,12 @@ app.add_typer(
     youtube_app,
     name="youtube",
     help="YouTube Shorts uploading and publishing.",
+    rich_help_panel="Platforms",
+)
+app.add_typer(
+    tiktok_app,
+    name="tiktok",
+    help="TikTok video publishing.",
     rich_help_panel="Platforms",
 )
 
@@ -686,6 +693,18 @@ def auth_youtube() -> None:
     youtube_auth()
 
 
+@auth_app.command("tiktok")
+def auth_tiktok() -> None:
+    """Run the TikTok OAuth 2.0 flow for access and refresh tokens.
+
+    Requires TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in .env.
+    Opens a browser for consent, then prints the tokens.
+    """
+    from adapters.tiktok.cli import tiktok_auth
+
+    tiktok_auth()
+
+
 # ── mmn distribute ────────────────────────────────────────────────────
 
 
@@ -1036,6 +1055,7 @@ app.add_typer(linkedin_app, name="linkedin", hidden=True)
 app.add_typer(reddit_app, name="reddit", hidden=True)
 app.add_typer(email_app, name="email", hidden=True)
 app.add_typer(youtube_app, name="youtube", hidden=True)
+app.add_typer(tiktok_app, name="tiktok", hidden=True)
 app.add_typer(reel_app, name="reel", hidden=True)
 app.add_typer(carousel_app, name="carousel", hidden=True)
 

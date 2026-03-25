@@ -11,6 +11,7 @@ Platform-specific implementations. Each adapter package is independent and must 
 | `linkedin/`  | TEXT_POST, IMAGE, VIDEO, DOCUMENT, ARTICLE, POLL | `create_linkedin_bundle()`     |
 | `reddit/`    | REPLY, TEXT_POST                               | `create_reddit_bundle()`         |
 | `youtube/`   | VIDEO                                          | `create_youtube_bundle()`        |
+| `tiktok/`    | VIDEO                                          | `create_tiktok_bundle()`         |
 | `email/`     | DIRECT_MESSAGE                                 | `create_email_bundle()`          |
 | `facebook/`  | (planned)                                      | `create_facebook_bundle()`       |
 

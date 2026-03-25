@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Open-source framework that generates and publishes marketing content across 6 platforms from a single command.
+  Open-source framework that generates and publishes marketing content across 7 platforms from a single command.
 </p>
 
 ---
@@ -35,6 +35,7 @@
 | **Reddit** | Comments, Posts | ✅ | ✅ | - |
 | **LinkedIn** | Posts, Images, Videos, Docs | ✅ | 🚧 WIP | - |
 | **YouTube** | Shorts | ✅ | ✅ | - |
+| **TikTok** | Videos | ✅ | ✅ | - |
 | **Email** | Bulk outreach | ✅ | ✅ | - |
 
 <br/>
@@ -135,6 +136,7 @@ You only need credentials for the platforms you use:
 | Reddit | `REDDIT_SESSION` cookie, `REDDIT_USERNAME` |
 | LinkedIn | `LINKEDIN_ACCESS_TOKEN` (or `LINKEDIN_LI_AT` cookie) |
 | YouTube | Google OAuth 2.0 (`mmn auth youtube`) |
+| TikTok | `TIKTOK_SESSION_ID` cookie (or OAuth 2.0 via `mmn auth tiktok`) |
 | Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` |
 | AI (all) | AI Studio: `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) **or** Vertex: `GOOGLE_APPLICATION_CREDENTIALS`, `VERTEX_AI_PROJECT` |
 
@@ -170,6 +172,12 @@ mmn linkedin post --text "Hello!"
 # YouTube
 mmn youtube auth
 mmn youtube upload video.mp4
+
+# TikTok
+mmn tiktok login --cookies         # inject sessionid from .env
+mmn tiktok login                   # manual browser login
+mmn tiktok auth                    # OAuth 2.0 (requires developer app)
+mmn tiktok upload video.mp4 --title "caption" --hashtags "fyp,viral"
 
 # Email
 mmn email send -f contacts.csv -t template.html -r 0-100
@@ -245,6 +253,7 @@ graph LR
         RD["Reddit"]
         LI["LinkedIn"]
         YT["YouTube"]
+        TT["TikTok"]
         EM["Email / SMTP"]
     end
 
@@ -257,6 +266,7 @@ graph LR
     RD -.-> Adapter
     LI -.-> Adapter
     YT -.-> Adapter
+    TT -.-> Adapter
     EM -.-> Adapter
 ```
 
@@ -274,7 +284,7 @@ Checked items are shipped. Unchecked items are planned or in progress.
 
 ### Done
 
-- [x] **6-platform content engine** - Instagram Reels & Carousels, Twitter replies & threads, Reddit comments, LinkedIn posts, YouTube Shorts, bulk email - generate and publish from one CLI or web dashboard
+- [x] **7-platform content engine** - Instagram Reels & Carousels, Twitter replies & threads, Reddit comments, LinkedIn posts, YouTube Shorts, TikTok videos, bulk email - generate and publish from one CLI or web dashboard
 - [x] **In-context learning & brand templates** - learns from top-performing posts to match your voice; YAML-driven brand identity (prompts, visuals, mention strategy) with Figma MCP integration
 - [x] **Ports-and-adapters core** - modular pipeline (normalise → render → upload → publish), campaign orchestrator, scheduler, and `AdapterRegistry` - add a platform with zero changes to core
 - [x] **Personas** - bundle brand voice, visual identity, prompts, and platform credentials into switchable "personas" so you can manage multiple brands or collaborate with a team from one install

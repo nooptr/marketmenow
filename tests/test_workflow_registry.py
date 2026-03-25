@@ -77,6 +77,7 @@ class TestBuildWorkflowRegistry:
             "linkedin-post",
             "email-outreach",
             "youtube-short",
+            "tiktok-reel",
         }
         assert expected == names
 

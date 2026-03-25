@@ -22,6 +22,7 @@ def build_registry() -> AdapterRegistry:
     _try_reddit(registry)
     _try_facebook(registry)
     _try_youtube(registry)
+    _try_tiktok(registry)
 
     return registry
 
@@ -102,3 +103,16 @@ def _try_youtube(registry: AdapterRegistry) -> None:
         logger.debug("Registered youtube adapter")
     except Exception as exc:
         logger.debug("Skipping youtube adapter: %s", exc)
+
+
+def _try_tiktok(registry: AdapterRegistry) -> None:
+    try:
+        from adapters.tiktok import create_tiktok_bundle
+        from adapters.tiktok.settings import TikTokSettings
+
+        settings = TikTokSettings()
+        bundle = create_tiktok_bundle(settings)
+        registry.register(bundle)
+        logger.debug("Registered tiktok adapter")
+    except Exception as exc:
+        logger.debug("Skipping tiktok adapter: %s", exc)

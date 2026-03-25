@@ -1,6 +1,6 @@
 # MarketMeNow
 
-Cross-platform marketing automation framework. Generates and publishes content across Instagram, Twitter/X, Reddit, LinkedIn, YouTube, and Email from a single CLI or web dashboard.
+Cross-platform marketing automation framework. Generates and publishes content across Instagram, Twitter/X, Reddit, LinkedIn, YouTube, TikTok, and Email from a single CLI or web dashboard.
 
 ## Project Layout
 
@@ -8,7 +8,7 @@ Cross-platform marketing automation framework. Generates and publishes content a
 src/marketmenow/          # Platform-agnostic core (models, ports, pipeline, registry, workflows)
 src/marketmenow/steps/    # Reusable workflow steps (generate, post, discover, etc.)
 src/marketmenow/workflows/# Built-in workflow definitions (instagram-reel, twitter-engage, etc.)
-src/adapters/             # Platform-specific adapters (instagram, twitter, linkedin, reddit, email, facebook, youtube)
+src/adapters/             # Platform-specific adapters (instagram, twitter, linkedin, reddit, email, facebook, youtube, tiktok)
 src/web/                  # FastAPI web dashboard
 tests/                    # pytest + pytest-asyncio test suite
 prompts/                  # YAML prompt templates per platform
@@ -65,7 +65,7 @@ Higher-level composable marketing workflows. A `Workflow` is a named sequence of
 - `Workflow` — frozen dataclass with `name`, `description`, `steps`, `params` (ParamDef schema)
 - `WorkflowRegistry` (`core/workflow_registry.py`) — holds registered workflows, `build_workflow_registry()` auto-discovers all built-in workflows
 
-Built-in workflows: `instagram-reel`, `instagram-carousel`, `twitter-thread`, `twitter-engage`, `twitter-outreach`, `reddit-engage`, `reddit-launch`, `linkedin-post`, `email-outreach`, `youtube-short`
+Built-in workflows: `instagram-reel`, `instagram-carousel`, `twitter-thread`, `twitter-engage`, `twitter-outreach`, `reddit-engage`, `reddit-launch`, `linkedin-post`, `email-outreach`, `youtube-short`, `tiktok-reel`
 
 ### Projects (models/project.py, core/project_manager.py, core/onboarding.py)
 
@@ -126,6 +126,7 @@ All defined as `typing.Protocol` with `@runtime_checkable`:
 | linkedin   | TEXT_POST, IMAGE, VIDEO, DOCUMENT, ARTICLE, POLL | API + browser posting                            |
 | reddit     | REPLY, TEXT_POST                              | Two-phase engagement + subreddit post submission  |
 | youtube    | VIDEO                                         | Shorts upload via Data API v3                     |
+| tiktok     | VIDEO                                         | Content Posting API (Direct Post) + browser posting (cookie login) |
 | email      | DIRECT_MESSAGE                                | CSV + Jinja2 templates, Gemini paraphrasing       |
 | facebook   | (planned)                                     | Browser-based posting                             |
 

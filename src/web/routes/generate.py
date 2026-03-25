@@ -163,6 +163,7 @@ BATCH_ITEMS: list[dict[str, str]] = [
     },
     {"platform": "reddit", "command_type": "engage", "title": "Reddit Comments", "key": "reddit"},
     {"platform": "youtube", "command_type": "short", "title": "YouTube Short", "key": "youtube"},
+    {"platform": "tiktok", "command_type": "upload", "title": "TikTok Video", "key": "tiktok"},
     {"platform": "email", "command_type": "send", "title": "Email Outreach", "key": "email"},
 ]
 
@@ -340,7 +341,12 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
         idx = _get_index(entry.key)
 
         try:
-            if entry.command_type == "short":
+            _reel_dependent = (
+                (entry.command_type == "short" and entry.platform == "youtube")
+                or (entry.command_type == "upload" and entry.platform == "tiktok")
+            )
+            if _reel_dependent:
+                platform_label = "YouTube" if entry.platform == "youtube" else "TikTok"
                 hub.publish(
                     entry.item_id,
                     ProgressEvent(
@@ -353,7 +359,7 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
                     await db.update_content_status(
                         entry.item_id,
                         "failed",
-                        error_message="No reels in batch for YouTube upload",
+                        error_message=f"No reels in batch for {platform_label} upload",
                     )
                     hub.publish(
                         entry.item_id,
@@ -366,7 +372,7 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
 
                 reel_output_path = reel_outputs.get(target_idx)
                 if reel_output_path:
-                    entry.publish_cmd = _patch_youtube_cmd(entry.publish_cmd, reel_output_path)
+                    entry.publish_cmd = _patch_video_cmd(entry.publish_cmd, reel_output_path)
                     hub.publish(
                         entry.item_id,
                         ProgressEvent(
@@ -378,7 +384,7 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
                     await db.update_content_status(
                         entry.item_id,
                         "failed",
-                        error_message="No reel MP4 available for YouTube upload",
+                        error_message=f"No reel MP4 available for {platform_label} upload",
                     )
                     hub.publish(
                         entry.item_id,
@@ -557,8 +563,8 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
         )
 
 
-def _patch_youtube_cmd(cmd: list[str], mp4_path: str) -> list[str]:
-    """Replace the placeholder MP4 path in the YouTube upload command."""
+def _patch_video_cmd(cmd: list[str], mp4_path: str) -> list[str]:
+    """Replace the placeholder MP4 path in a video upload command (YouTube/TikTok)."""
     patched: list[str] = []
     for arg in cmd:
         if arg.endswith(("*.mp4", "latest.mp4")):
