@@ -732,7 +732,7 @@ def batch_post(
             persona_cfg = None
             brand_cfg = None
             if slug:
-                proj = pm.load_config(slug)
+                proj = pm.load_project(slug)
                 brand_cfg = proj.brand
                 persona_cfg = pm.load_persona(slug, proj.default_persona)
 
