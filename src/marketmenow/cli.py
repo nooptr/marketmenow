@@ -1034,16 +1034,40 @@ def heal(
     if not typer.confirm("Fix remaining issues with Cursor agent?"):
         raise typer.Exit(1)
 
-    prompt = (
-        "The pre-push checks found issues that need fixing. "
-        "Fix the source code (not the tests). "
-        "Do not weaken or delete any test assertions.\n\n" + "\n---\n".join(problems)
-    )
+    prompt = _build_heal_prompt(problems, project_root)
 
     console.print()
     console.print("[bold]Handing off to Cursor agent...[/bold]\n")
 
     subprocess.run(["agent", prompt], cwd=project_root)
+
+
+def _build_heal_prompt(problems: list[str], project_root: Path) -> str:
+    """Construct the prompt sent to the Cursor agent for auto-healing."""
+    problem_block = "\n---\n".join(problems)
+
+    return (
+        "You are fixing failing pre-push checks for the MarketMeNow project.\n\n"
+        "## Context\n"
+        f"Project root: {project_root}\n"
+        "Read CLAUDE.md and AGENTS.md for architecture rules before making changes.\n"
+        "Key invariants: ports-and-adapters architecture, frozen Pydantic models, "
+        "structural subtyping (typing.Protocol), async-first adapters.\n\n"
+        "## Problems found\n\n"
+        f"{problem_block}\n\n"
+        "## Instructions\n\n"
+        "1. Diagnose each failure — determine whether the bug is in source code, "
+        "tests, or both. Fixing tests is fine when the test expectation is wrong "
+        "(e.g. a new workflow was added but the expected-set was not updated). "
+        "Do NOT weaken assertions or delete tests to hide real bugs.\n"
+        "2. Fix all issues.\n"
+        "3. Run `uv run --extra dev pytest --tb=short -q` to verify the fix.\n"
+        "4. If tests still fail, diagnose the new failures and repeat from step 1. "
+        "Keep iterating until the full test suite passes.\n"
+        "5. Run `uv run ruff check src/ tests/` and `uv run ruff format --check src/ tests/` "
+        "to confirm lint and formatting are clean. Fix any issues.\n"
+        "6. Once everything is green, stop.\n"
+    )
 
 
 # ── Hidden adapter CLI groups (used by web frontend subprocess calls) ──
