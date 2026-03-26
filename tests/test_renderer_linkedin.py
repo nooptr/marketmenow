@@ -56,19 +56,13 @@ class TestLinkedInRenderer:
         assert len(result.hashtags) <= 50  # trimmed if over budget
 
     async def test_image_media_capped_at_20(self) -> None:
-        assets = [
-            MediaAsset(uri=f"img{i}.png", mime_type="image/png") for i in range(25)
-        ]
-        content = _normalised(
-            ["carousel"], modality=ContentModality.IMAGE, media_assets=assets
-        )
+        assets = [MediaAsset(uri=f"img{i}.png", mime_type="image/png") for i in range(25)]
+        content = _normalised(["carousel"], modality=ContentModality.IMAGE, media_assets=assets)
         result = await renderer.render(content)
         assert len(result.media_assets) == 20
 
     async def test_non_image_media_not_capped(self) -> None:
-        assets = [
-            MediaAsset(uri=f"vid{i}.mp4", mime_type="video/mp4") for i in range(25)
-        ]
+        assets = [MediaAsset(uri=f"vid{i}.mp4", mime_type="video/mp4") for i in range(25)]
         content = _normalised(
             ["videos"],
             modality=ContentModality.VIDEO,

@@ -173,9 +173,7 @@ class InstagramAdapter:
         """For IGAA tokens, resolve the app-scoped user ID from ``/me``."""
         if not self._token.startswith("IGAA"):
             return
-        resp = await self._client.get(
-            "/me", params=self._params({"fields": "id,username,user_id"})
-        )
+        resp = await self._client.get("/me", params=self._params({"fields": "id,username,user_id"}))
         _raise_for_status(resp)
         data = resp.json()
         app_scoped_id = data["id"]
@@ -218,9 +216,7 @@ class InstagramAdapter:
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(
             platform="instagram",
-            recipient_handle=(
-                content.recipient_handles[0] if content.recipient_handles else ""
-            ),
+            recipient_handle=(content.recipient_handles[0] if content.recipient_handles else ""),
             success=False,
             error_message="Instagram DMs via Graph API are not supported in this adapter",
         )

@@ -32,9 +32,7 @@ def has_genai_credentials(vertex_project: str = "", api_key: str | None = None) 
 def configure_google_application_credentials(credentials_path: Path | None) -> None:
     """Export GOOGLE_APPLICATION_CREDENTIALS when a service-account file exists."""
     if credentials_path and credentials_path.exists():
-        os.environ.setdefault(
-            "GOOGLE_APPLICATION_CREDENTIALS", str(credentials_path.resolve())
-        )
+        os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(credentials_path.resolve()))
 
 
 def create_genai_client(

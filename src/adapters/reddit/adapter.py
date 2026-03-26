@@ -141,9 +141,7 @@ class RedditAdapter:
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(
             platform="reddit",
-            recipient_handle=(
-                content.recipient_handles[0] if content.recipient_handles else ""
-            ),
+            recipient_handle=(content.recipient_handles[0] if content.recipient_handles else ""),
             success=False,
             error_message="Reddit DMs are not supported in this adapter",
         )

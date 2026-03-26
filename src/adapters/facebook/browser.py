@@ -213,17 +213,13 @@ class FacebookBrowser:
     async def is_logged_in(self) -> bool:
         page = self.page
         try:
-            await page.goto(
-                _FACEBOOK_HOME, wait_until="domcontentloaded", timeout=30_000
-            )
+            await page.goto(_FACEBOOK_HOME, wait_until="domcontentloaded", timeout=30_000)
             await self._random_delay(3.0, 5.0)
             url = page.url
             if "/login" in url or "/checkpoint" in url:
                 return False
             # Look for logged-in indicators
-            home_link = page.locator(
-                'a[aria-label="Home"], a[aria-label="Facebook"]'
-            ).first
+            home_link = page.locator('a[aria-label="Home"], a[aria-label="Facebook"]').first
             try:
                 await home_link.wait_for(state="visible", timeout=10_000)
                 return True
@@ -494,9 +490,7 @@ class FacebookBrowser:
             ).first
             await placeholder.click()
             await self._random_delay(0.5, 1.0)
-            comment_box = page.locator(
-                'div[contenteditable="true"][role="textbox"]'
-            ).first
+            comment_box = page.locator('div[contenteditable="true"][role="textbox"]').first
             await comment_box.wait_for(state="visible", timeout=10_000)
 
         await comment_box.click()
@@ -550,9 +544,7 @@ class FacebookBrowser:
                 if parsed:
                     results.append(parsed)
             except Exception:
-                logger.debug(
-                    "Failed to parse article %d in %s", i, group_url, exc_info=True
-                )
+                logger.debug("Failed to parse article %d in %s", i, group_url, exc_info=True)
                 continue
 
         logger.info("Scraped %d posts from %s", len(results), group_url)
@@ -620,9 +612,7 @@ class FacebookBrowser:
             pass
 
         comments_count = "0"
-        comment_link = article.locator(
-            'span:has-text("comment"), span:has-text("Comment")'
-        ).first
+        comment_link = article.locator('span:has-text("comment"), span:has-text("Comment")').first
         try:
             c_text = (await comment_link.inner_text()).strip()
             nums = "".join(c for c in c_text if c.isdigit())

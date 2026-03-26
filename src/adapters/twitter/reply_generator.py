@@ -200,9 +200,7 @@ class ReplyGenerator:
         if post.card_text:
             parts.append(f"[Link preview / card]: {post.card_text}")
         if not parts and post.media_screenshot:
-            parts.append(
-                "[A screenshot of the tweet (including any images/media) is attached]"
-            )
+            parts.append("[A screenshot of the tweet (including any images/media) is attached]")
         return "\n".join(parts)
 
     @staticmethod

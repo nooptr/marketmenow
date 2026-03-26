@@ -54,11 +54,7 @@ async def generate_content(
     command_type: str = Form(...),
 ) -> HTMLResponse:
     form_data = await request.form()
-    params = {
-        k: v
-        for k, v in form_data.items()
-        if k not in ("platform", "command_type") and v
-    }
+    params = {k: v for k, v in form_data.items() if k not in ("platform", "command_type") and v}
 
     meta = get_meta(platform, command_type)
     builders = get_builders(platform, command_type)
@@ -95,9 +91,7 @@ async def generate_content(
         publish_command=publish_cmd,
     )
 
-    task = asyncio.create_task(
-        _run_generation(item_id, generate_cmd, publish_cmd, output_dir)
-    )
+    task = asyncio.create_task(_run_generation(item_id, generate_cmd, publish_cmd, output_dir))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
@@ -118,13 +112,9 @@ async def _run_generation(
     try:
         hub.publish(
             item_id,
-            ProgressEvent(
-                event_type="phase", message="Generation started", phase="generation"
-            ),
+            ProgressEvent(event_type="phase", message="Generation started", phase="generation"),
         )
-        result = await run_cli_streaming(
-            generate_cmd, item_id=item_id, output_dir=output_dir
-        )
+        result = await run_cli_streaming(generate_cmd, item_id=item_id, output_dir=output_dir)
 
         if result.exit_code == 0:
             preview: dict = {
@@ -141,9 +131,7 @@ async def _run_generation(
             )
             hub.publish(
                 item_id,
-                ProgressEvent(
-                    event_type="done", message="Generation complete — ready for review"
-                ),
+                ProgressEvent(event_type="done", message="Generation complete — ready for review"),
             )
         else:
             await db.update_content_status(
@@ -155,9 +143,7 @@ async def _run_generation(
                     "stderr": result.stderr[:3000],
                 },
             )
-            hub.publish(
-                item_id, ProgressEvent(event_type="error", message="Generation failed")
-            )
+            hub.publish(item_id, ProgressEvent(event_type="error", message="Generation failed"))
     except Exception as exc:
         await db.update_content_status(item_id, "failed", error_message=str(exc)[:1000])
         hub.publish(item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))
@@ -264,16 +250,12 @@ def _get_batch_items() -> list[dict[str, object]]:
 
                     meta = get_meta(item.platform, item.command_type)
                     title = meta["label"] if meta else f"{item.platform} {ct}"
-                    title_suffix = (
-                        f" {idx + 1}" if key_counters[ct] > 1 or idx > 0 else ""
-                    )
+                    title_suffix = f" {idx + 1}" if key_counters[ct] > 1 or idx > 0 else ""
                     key = f"{ct}_{idx}" if idx > 0 else ct
 
                     params = dict(item.params)
                     for k, v in params.items():
-                        if isinstance(v, str) and (
-                            v.endswith((".yaml", ".yml")) or "/" in v
-                        ):
+                        if isinstance(v, str) and (v.endswith((".yaml", ".yml")) or "/" in v):
                             path = pm.project_dir(slug) / v
                             if path.exists():
                                 params[k] = str(path)
@@ -322,9 +304,7 @@ async def generate_all(request: Request) -> HTMLResponse:
         meta = get_meta(platform, command_type)
         builders = get_builders(platform, command_type)
         if not meta or not builders:
-            logger.warning(
-                "Skipping %s/%s — no meta or builders", platform, command_type
-            )
+            logger.warning("Skipping %s/%s — no meta or builders", platform, command_type)
             continue
 
         build_generate, build_publish = builders
@@ -333,11 +313,7 @@ async def generate_all(request: Request) -> HTMLResponse:
         os.makedirs(output_dir, exist_ok=True)
 
         params: dict[str, str] = dict(spec.get("params", {}))  # type: ignore
-        if (
-            command_type == "send"
-            and platform == "email"
-            and not params.get("template")
-        ):
+        if command_type == "send" and platform == "email" and not params.get("template"):
             pm = ProjectManager()
             slug = pm.get_active_project()
             csv_path = str(settings.batch_email_csv.resolve())
@@ -424,9 +400,9 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
         idx = _get_index(entry.key)
 
         try:
-            _reel_dependent = (
-                entry.command_type == "short" and entry.platform == "youtube"
-            ) or (entry.command_type == "upload" and entry.platform == "tiktok")
+            _reel_dependent = (entry.command_type == "short" and entry.platform == "youtube") or (
+                entry.command_type == "upload" and entry.platform == "tiktok"
+            )
             if _reel_dependent:
                 platform_label = "YouTube" if entry.platform == "youtube" else "TikTok"
                 hub.publish(
@@ -454,9 +430,7 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
 
                 reel_output_path = reel_outputs.get(target_idx)
                 if reel_output_path:
-                    entry.publish_cmd = _patch_video_cmd(
-                        entry.publish_cmd, reel_output_path
-                    )
+                    entry.publish_cmd = _patch_video_cmd(entry.publish_cmd, reel_output_path)
                     hub.publish(
                         entry.item_id,
                         ProgressEvent(
@@ -472,9 +446,7 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
                     )
                     hub.publish(
                         entry.item_id,
-                        ProgressEvent(
-                            event_type="error", message="No reel MP4 available"
-                        ),
+                        ProgressEvent(event_type="error", message="No reel MP4 available"),
                     )
                     return
 
@@ -497,12 +469,8 @@ async def _run_batch(entries: list[_BatchEntry]) -> None:
 
         except Exception as exc:
             logger.exception("Batch item %s failed", entry.key)
-            await db.update_content_status(
-                entry.item_id, "failed", error_message=str(exc)[:1000]
-            )
-            hub.publish(
-                entry.item_id, ProgressEvent(event_type="error", message=str(exc)[:200])
-            )
+            await db.update_content_status(entry.item_id, "failed", error_message=str(exc)[:1000])
+            hub.publish(entry.item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))
             if entry.command_type == "reel":
                 reel_dones[idx].set()
 
@@ -559,9 +527,7 @@ async def _run_single_command(entry: _BatchEntry) -> CliResult:
         )
         hub.publish(
             entry.item_id,
-            ProgressEvent(
-                event_type="done", message=f"{entry.platform} posted successfully"
-            ),
+            ProgressEvent(event_type="done", message=f"{entry.platform} posted successfully"),
         )
     else:
         error = _extract_error(result.stderr, result.stdout, result.exit_code)
@@ -601,9 +567,7 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
     )
 
     if gen_result.exit_code != 0:
-        error = _extract_error(
-            gen_result.stderr, gen_result.stdout, gen_result.exit_code
-        )
+        error = _extract_error(gen_result.stderr, gen_result.stdout, gen_result.exit_code)
         await db.update_content_status(
             entry.item_id,
             "failed",
@@ -615,9 +579,7 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
         )
         hub.publish(
             entry.item_id,
-            ProgressEvent(
-                event_type="error", message=f"Discovery failed: {error[:200]}"
-            ),
+            ProgressEvent(event_type="error", message=f"Discovery failed: {error[:200]}"),
         )
         return
 
@@ -633,17 +595,13 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
                 "files": gen_result.output_files,
             },
         )
-        hub.publish(
-            entry.item_id, ProgressEvent(event_type="error", message=error[:200])
-        )
+        hub.publish(entry.item_id, ProgressEvent(event_type="error", message=error[:200]))
         return
 
     await db.update_content_status(entry.item_id, "posting")
     hub.publish(
         entry.item_id,
-        ProgressEvent(
-            event_type="phase", message="Posting comments...", phase="posting"
-        ),
+        ProgressEvent(event_type="phase", message="Posting comments...", phase="posting"),
     )
 
     pub_result = await run_cli_streaming(
@@ -663,9 +621,7 @@ async def _run_reddit_two_step(entry: _BatchEntry) -> None:
             ProgressEvent(event_type="done", message="Reddit comments posted"),
         )
     else:
-        error = _extract_error(
-            pub_result.stderr, pub_result.stdout, pub_result.exit_code
-        )
+        error = _extract_error(pub_result.stderr, pub_result.stdout, pub_result.exit_code)
         await db.update_content_status(
             entry.item_id,
             "failed",

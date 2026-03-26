@@ -12,15 +12,11 @@ class Scheduler:
 
     def __init__(self, orchestrator: Orchestrator) -> None:
         self._orchestrator = orchestrator
-        self._queue: asyncio.PriorityQueue[tuple[datetime, Campaign]] = (
-            asyncio.PriorityQueue()
-        )
+        self._queue: asyncio.PriorityQueue[tuple[datetime, Campaign]] = asyncio.PriorityQueue()
 
     async def schedule(self, campaign: Campaign) -> None:
         publish_times = [
-            t.schedule.publish_at
-            for t in campaign.targets
-            if t.schedule.publish_at is not None
+            t.schedule.publish_at for t in campaign.targets if t.schedule.publish_at is not None
         ]
         first_time = min(publish_times) if publish_times else datetime.now(UTC)
         await self._queue.put((first_time, campaign))

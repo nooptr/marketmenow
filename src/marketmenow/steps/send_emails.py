@@ -38,9 +38,7 @@ class SendEmailsStep:
 
             creds = settings.google_application_credentials
             if creds and creds.exists():
-                os.environ.setdefault(
-                    "GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve())
-                )
+                os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve()))
             paraphraser = EmailParaphraser(
                 vertex_project=settings.vertex_ai_project,
                 vertex_location=settings.vertex_ai_location,
@@ -89,7 +87,5 @@ class SendEmailsStep:
         succeeded = sum(1 for r in results if r.success)
         failed = len(results) - succeeded
         mode = "DRY RUN" if dry_run else "sent"
-        ctx.console.print(
-            f"[green]{succeeded} {mode}[/green], [red]{failed} failed[/red]"
-        )
+        ctx.console.print(f"[green]{succeeded} {mode}[/green], [red]{failed} failed[/red]")
         ctx.set_artifact("send_results", results)

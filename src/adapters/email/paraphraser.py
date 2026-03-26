@@ -86,9 +86,7 @@ class EmailParaphraser:
                     )
                     await asyncio.sleep(backoff)
 
-        raise RuntimeError(
-            f"All {_MAX_RETRIES} paraphrase attempts failed"
-        ) from last_exc
+        raise RuntimeError(f"All {_MAX_RETRIES} paraphrase attempts failed") from last_exc
 
     async def paraphrase_many(
         self,

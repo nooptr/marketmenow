@@ -47,9 +47,7 @@ def _clean_llm_text(text: str) -> str:
 
 _JINJA_ENV = Environment()
 
-StepFunc = Callable[
-    ["PipelineContext", dict[str, object]], Coroutine[None, None, object]
-]
+StepFunc = Callable[["PipelineContext", dict[str, object]], Coroutine[None, None, object]]
 
 
 @dataclass
@@ -156,9 +154,7 @@ async def _load_product_step(ctx: PipelineContext, inputs: dict[str, object]) ->
 
     project_slug = ctx.services.get("project_slug", "")
     if not project_slug:
-        raise ValueError(
-            "load_product step requires 'project_slug' in pipeline services"
-        )
+        raise ValueError("load_product step requires 'project_slug' in pipeline services")
 
     pm = ProjectManager()
     project_dir = pm.project_dir(str(project_slug))
@@ -177,18 +173,14 @@ async def _load_product_step(ctx: PipelineContext, inputs: dict[str, object]) ->
 
     bg_dir = project_dir / "assets" / "backgrounds"
     if bg_dir.is_dir():
-        videos = [
-            f for f in bg_dir.iterdir() if f.suffix.lower() in {".mp4", ".webm", ".mov"}
-        ]
+        videos = [f for f in bg_dir.iterdir() if f.suffix.lower() in {".mp4", ".webm", ".mov"}]
         if videos:
             result["background_video"] = str(random.choice(videos).resolve())
 
     music_dir = project_dir / "assets" / "music"
     if music_dir.is_dir():
         tracks = [
-            f
-            for f in music_dir.iterdir()
-            if f.suffix.lower() in {".mp3", ".wav", ".m4a", ".ogg"}
+            f for f in music_dir.iterdir() if f.suffix.lower() in {".mp3", ".wav", ".m4a", ".ogg"}
         ]
         if tracks:
             result["background_music"] = str(random.choice(tracks).resolve())
@@ -259,9 +251,7 @@ async def _llm_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
         data = data[0]
 
     if isinstance(data, dict):
-        data = {
-            k: _clean_llm_text(v) if isinstance(v, str) else v for k, v in data.items()
-        }
+        data = {k: _clean_llm_text(v) if isinstance(v, str) else v for k, v in data.items()}
 
     if isinstance(output_fields, list) and output_fields:
         return {k: data.get(k, "") for k in output_fields}

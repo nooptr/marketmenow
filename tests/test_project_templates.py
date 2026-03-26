@@ -74,9 +74,7 @@ class TestGenerateRedditPrompt:
 
 class TestGenerateTargets:
     def test_twitter_targets_valid_yaml(self):
-        result = generate_twitter_targets(
-            ["@user1", "@user2"], ["#hash1"], ["@company1"]
-        )
+        result = generate_twitter_targets(["@user1", "@user2"], ["#hash1"], ["@company1"])
         data = yaml.safe_load(result)
         assert "influencers" in data
         assert "@user1" in data["influencers"]

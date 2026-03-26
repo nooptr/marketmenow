@@ -95,13 +95,9 @@ class ProgressCallback(Protocol):
     def on_hashtag_done(self, hashtag: str, posts_found: int) -> None: ...
     def on_discovery_end(self, total_posts: int, candidates: int) -> None: ...
     def on_generating(self, current: int, total: int, handle: str) -> None: ...
-    def on_generated(
-        self, current: int, total: int, handle: str, reply_text: str
-    ) -> None: ...
+    def on_generated(self, current: int, total: int, handle: str, reply_text: str) -> None: ...
     def on_generate_failed(self, current: int, total: int, handle: str) -> None: ...
-    def on_reply_posted(
-        self, current: int, total: int, handle: str, success: bool
-    ) -> None: ...
+    def on_reply_posted(self, current: int, total: int, handle: str, success: bool) -> None: ...
     def on_reply_wait(self, seconds: int) -> None: ...
     def on_complete(self, stats: EngagementStats) -> None: ...
 
@@ -124,17 +120,13 @@ class _NullProgress:
     def on_generating(self, current: int, total: int, handle: str) -> None:
         pass
 
-    def on_generated(
-        self, current: int, total: int, handle: str, reply_text: str
-    ) -> None:
+    def on_generated(self, current: int, total: int, handle: str, reply_text: str) -> None:
         pass
 
     def on_generate_failed(self, current: int, total: int, handle: str) -> None:
         pass
 
-    def on_reply_posted(
-        self, current: int, total: int, handle: str, success: bool
-    ) -> None:
+    def on_reply_posted(self, current: int, total: int, handle: str, success: bool) -> None:
         pass
 
     def on_reply_wait(self, seconds: int) -> None:
@@ -183,9 +175,7 @@ class EngagementOrchestrator:
 
         async with browser:
             if not await browser.is_logged_in():
-                logger.error(
-                    "Not logged in. Run `mmn-x login` first to create a session."
-                )
+                logger.error("Not logged in. Run `mmn-x login` first to create a session.")
                 return stats
 
             await self._maybe_collect_examples(browser)
@@ -255,9 +245,7 @@ class EngagementOrchestrator:
                 prog.on_generating(i, len(candidates), post.author_handle)
 
                 try:
-                    reply_text, _exploring = await generator.generate_reply(
-                        post, reply_number=i
-                    )
+                    reply_text, _exploring = await generator.generate_reply(post, reply_number=i)
                 except Exception:
                     logger.exception("Failed to generate reply for %s", post.post_url)
                     stats.total_failed += 1
@@ -294,9 +282,7 @@ class EngagementOrchestrator:
                         )
                     )
                     stats.total_succeeded += 1
-                    prog.on_reply_posted(
-                        i, len(candidates), post.author_handle, success=True
-                    )
+                    prog.on_reply_posted(i, len(candidates), post.author_handle, success=True)
                     continue
 
                 reply_content = Reply(
@@ -320,14 +306,10 @@ class EngagementOrchestrator:
                 if result.success:
                     stats.total_succeeded += 1
                     discoverer.mark_replied(post.post_url)
-                    prog.on_reply_posted(
-                        i, len(candidates), post.author_handle, success=True
-                    )
+                    prog.on_reply_posted(i, len(candidates), post.author_handle, success=True)
                 else:
                     stats.total_failed += 1
-                    prog.on_reply_posted(
-                        i, len(candidates), post.author_handle, success=False
-                    )
+                    prog.on_reply_posted(i, len(candidates), post.author_handle, success=False)
 
                     if self._looks_like_captcha(result.error_message or ""):
                         logger.error(
@@ -429,9 +411,7 @@ class EngagementOrchestrator:
                 prog.on_generating(i, len(candidates), post.author_handle)
 
                 try:
-                    reply_text, _exploring = await generator.generate_reply(
-                        post, reply_number=i
-                    )
+                    reply_text, _exploring = await generator.generate_reply(post, reply_number=i)
                 except Exception:
                     logger.exception("Failed to generate reply for %s", post.post_url)
                     prog.on_generate_failed(i, len(candidates), post.author_handle)
@@ -521,14 +501,10 @@ class EngagementOrchestrator:
                 if result.success:
                     stats.total_succeeded += 1
                     discoverer.mark_replied(row.post_url)
-                    prog.on_reply_posted(
-                        i, len(replies), row.author_handle, success=True
-                    )
+                    prog.on_reply_posted(i, len(replies), row.author_handle, success=True)
                 else:
                     stats.total_failed += 1
-                    prog.on_reply_posted(
-                        i, len(replies), row.author_handle, success=False
-                    )
+                    prog.on_reply_posted(i, len(replies), row.author_handle, success=False)
 
                     if self._looks_like_captcha(result.error_message or ""):
                         logger.error(
@@ -605,9 +581,7 @@ class EngagementOrchestrator:
                 logger.error("post_thread returned False")
                 return None
 
-            logger.info(
-                "Thread posted: %s (%d tweets)", thread.topic, len(thread.tweets)
-            )
+            logger.info("Thread posted: %s (%d tweets)", thread.topic, len(thread.tweets))
             return thread
 
     async def _discover_handles(
@@ -671,9 +645,7 @@ class EngagementOrchestrator:
             discoverer = PostDiscoverer(browser, self._settings.reply_history_path)
             targets = self._load_targets()
 
-            handles = targets.get("influencers", []) + targets.get(
-                "company_accounts", []
-            )
+            handles = targets.get("influencers", []) + targets.get("company_accounts", [])
             random.shuffle(handles)
             hashtags = list(targets.get("hashtags", []))
             random.shuffle(hashtags)
@@ -717,9 +689,7 @@ class EngagementOrchestrator:
         try:
             await tracker.collect()
         except Exception:
-            logger.exception(
-                "Failed to collect top-performing examples, continuing anyway"
-            )
+            logger.exception("Failed to collect top-performing examples, continuing anyway")
 
     # ------------------------------------------------------------------
     # Helpers

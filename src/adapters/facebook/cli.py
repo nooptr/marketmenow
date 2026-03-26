@@ -150,11 +150,7 @@ def status() -> None:
     table.add_row("Session file", str(settings.facebook_session_path))
     table.add_row(
         "Session exists",
-        (
-            "[green]yes[/green]"
-            if settings.facebook_session_path.exists()
-            else "[red]no[/red]"
-        ),
+        ("[green]yes[/green]" if settings.facebook_session_path.exists() else "[red]no[/red]"),
     )
     table.add_row(
         "c_user in .env",
@@ -166,11 +162,7 @@ def status() -> None:
     )
     table.add_row(
         "Group IDs",
-        (
-            settings.facebook_group_ids
-            if settings.facebook_group_ids
-            else "[dim]none[/dim]"
-        ),
+        (settings.facebook_group_ids if settings.facebook_group_ids else "[dim]none[/dim]"),
     )
     table.add_row(
         "Page IDs",
@@ -359,9 +351,7 @@ def group_post(
                     raise typer.Exit(1)
 
             image_paths = [p.resolve() for p in image] if image else None
-            success = await browser.create_group_post(
-                group_url, full_text, image_paths=image_paths
-            )
+            success = await browser.create_group_post(group_url, full_text, image_paths=image_paths)
 
             if success:
                 console.print()
@@ -464,9 +454,7 @@ def page_post(
                     raise typer.Exit(1)
 
             image_paths = [p.resolve() for p in image] if image else None
-            success = await browser.create_page_post(
-                page_url, full_text, image_paths=image_paths
-            )
+            success = await browser.create_page_post(page_url, full_text, image_paths=image_paths)
 
             if success:
                 console.print()
@@ -605,9 +593,7 @@ def engage(
 
             orchestrator = EngagementOrchestrator(settings, browser)
 
-            console.print(
-                "[bold cyan]Discovering posts in Facebook groups...[/bold cyan]"
-            )
+            console.print("[bold cyan]Discovering posts in Facebook groups...[/bold cyan]")
             comments = await orchestrator.generate_only()
 
             if not comments:

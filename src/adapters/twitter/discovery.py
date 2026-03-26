@@ -79,9 +79,7 @@ class PostDiscoverer:
             handle_clean = handle.lstrip("@")
             profile_url = f"https://x.com/{handle_clean}"
             try:
-                found = await self._scrape_profile(
-                    profile_url, handle_clean, max_per_handle
-                )
+                found = await self._scrape_profile(profile_url, handle_clean, max_per_handle)
                 posts.extend(found)
             except Exception:
                 logger.exception("Failed to scrape profile %s", handle_clean)
@@ -193,9 +191,7 @@ class PostDiscoverer:
             link_el = time_el.locator("xpath=ancestor::a")
             href = await link_el.get_attribute("href", timeout=3_000)
             post_url = (
-                f"https://x.com{href}"
-                if href and not href.startswith("http")
-                else (href or "")
+                f"https://x.com{href}" if href and not href.startswith("http") else (href or "")
             )
         except Exception:
             return None
@@ -218,9 +214,7 @@ class PostDiscoverer:
                 'div[data-testid="User-Name"] a[role="link"][tabindex="-1"]'
             )
             handle_href = await handle_el.get_attribute("href", timeout=2_000)
-            author = (
-                handle_href.strip("/").split("/")[-1] if handle_href else source_label
-            )
+            author = handle_href.strip("/").split("/")[-1] if handle_href else source_label
         except Exception:
             author = source_label
 

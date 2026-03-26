@@ -209,9 +209,7 @@ def _render_with_pillow(content: dict[str, object], output_dir: Path) -> Path:
         title_font = ImageFont.truetype("Helvetica", title_size)
     except OSError:
         try:
-            title_font = ImageFont.truetype(
-                "/System/Library/Fonts/Helvetica.ttc", title_size
-            )
+            title_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", title_size)
         except OSError:
             title_font = ImageFont.load_default(size=title_size)
 
@@ -219,9 +217,7 @@ def _render_with_pillow(content: dict[str, object], output_dir: Path) -> Path:
         heading_font = ImageFont.truetype("Helvetica-Bold", heading_size)
     except OSError:
         try:
-            heading_font = ImageFont.truetype(
-                "/System/Library/Fonts/Helvetica.ttc", heading_size
-            )
+            heading_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", heading_size)
         except OSError:
             heading_font = ImageFont.load_default(size=heading_size)
 
@@ -229,9 +225,7 @@ def _render_with_pillow(content: dict[str, object], output_dir: Path) -> Path:
         body_font = ImageFont.truetype("Helvetica", body_size)
     except OSError:
         try:
-            body_font = ImageFont.truetype(
-                "/System/Library/Fonts/Helvetica.ttc", body_size
-            )
+            body_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", body_size)
         except OSError:
             body_font = ImageFont.load_default(size=body_size)
 
@@ -239,9 +233,7 @@ def _render_with_pillow(content: dict[str, object], output_dir: Path) -> Path:
         small_font = ImageFont.truetype("Helvetica", small_size)
     except OSError:
         try:
-            small_font = ImageFont.truetype(
-                "/System/Library/Fonts/Helvetica.ttc", small_size
-            )
+            small_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", small_size)
         except OSError:
             small_font = ImageFont.load_default(size=small_size)
 
@@ -408,11 +400,7 @@ async def fill_worksheet_with_gemini(
     for candidate in getattr(response, "candidates", []):
         for part in getattr(candidate.content, "parts", []):
             inline = getattr(part, "inline_data", None)
-            if (
-                inline
-                and hasattr(inline, "mime_type")
-                and inline.mime_type.startswith("image/")
-            ):
+            if inline and hasattr(inline, "mime_type") and inline.mime_type.startswith("image/"):
                 img_data = inline.data
                 if isinstance(img_data, str):
                     img_data = base64.b64decode(img_data)
@@ -422,9 +410,7 @@ async def fill_worksheet_with_gemini(
                 out_path.write_bytes(img_data)
                 return out_path
 
-    raise RuntimeError(
-        "Gemini image model returned no image output for worksheet filling"
-    )
+    raise RuntimeError("Gemini image model returned no image output for worksheet filling")
 
 
 # ---------------------------------------------------------------------------
@@ -469,9 +455,7 @@ async def _worksheet_step(ctx: PipelineContext, inputs: dict[str, object]) -> ob
     }
 
 
-async def _fill_worksheet_step(
-    ctx: PipelineContext, inputs: dict[str, object]
-) -> object:
+async def _fill_worksheet_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
     """Fill a clean worksheet with funny wrong answers using Gemini image editing."""
     client = ctx.services.get("genai_client")
     if client is None:

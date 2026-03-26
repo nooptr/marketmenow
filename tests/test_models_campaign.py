@@ -29,9 +29,7 @@ class TestScheduleRule:
 
     def test_custom_values(self) -> None:
         dt = datetime(2026, 6, 1, 12, 0, tzinfo=UTC)
-        rule = ScheduleRule(
-            publish_at=dt, timezone="US/Eastern", repeat_cron="0 9 * * 1"
-        )
+        rule = ScheduleRule(publish_at=dt, timezone="US/Eastern", repeat_cron="0 9 * * 1")
         assert rule.publish_at == dt
         assert rule.timezone == "US/Eastern"
 

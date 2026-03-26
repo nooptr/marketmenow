@@ -79,9 +79,7 @@ class TestGetPlatformSets:
 
 class TestGetEnvOverrides:
     def test_returns_env_dict(self) -> None:
-        save_credential_set(
-            "test", "reddit", {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"}
-        )
+        save_credential_set("test", "reddit", {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"})
         overrides = get_env_overrides("test")
         assert overrides == {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"}
 

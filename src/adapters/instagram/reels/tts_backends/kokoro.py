@@ -76,9 +76,7 @@ class KokoroTTS:
         loop = asyncio.get_event_loop()
         samples, sample_rate = await loop.run_in_executor(
             None,
-            lambda: self._kokoro.create(
-                text, voice=voice, speed=self._speed, lang=self._lang
-            ),
+            lambda: self._kokoro.create(text, voice=voice, speed=self._speed, lang=self._lang),
         )
 
         pitch_semitones = self._pitch_shift_semitones.get(voice, 0.0)

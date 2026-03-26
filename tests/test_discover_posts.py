@@ -93,9 +93,7 @@ class TestRejectDefaultTargets:
         targets_file.write_text("groups: []")
 
         with pytest.raises(WorkflowError, match="facebook"):
-            _reject_default_targets(
-                targets_file, str(settings_file), "facebook", "myproj"
-            )
+            _reject_default_targets(targets_file, str(settings_file), "facebook", "myproj")
 
     def test_error_message_includes_project_slug(self, tmp_path: Path) -> None:
         adapter_dir = tmp_path / "adapters" / "twitter"
@@ -105,12 +103,8 @@ class TestRejectDefaultTargets:
         targets_file = adapter_dir / "targets.yaml"
         targets_file.write_text("hashtags: []")
 
-        with pytest.raises(
-            WorkflowError, match=r"projects/gradeasy/targets/twitter\.yaml"
-        ):
-            _reject_default_targets(
-                targets_file, str(settings_file), "twitter", "gradeasy"
-            )
+        with pytest.raises(WorkflowError, match=r"projects/gradeasy/targets/twitter\.yaml"):
+            _reject_default_targets(targets_file, str(settings_file), "twitter", "gradeasy")
 
     def test_no_error_on_custom_path(self, tmp_path: Path) -> None:
         adapter_dir = tmp_path / "adapters" / "twitter"
@@ -139,9 +133,7 @@ class TestDiscoverTwitterDefaultTargets:
         with pytest.raises(WorkflowError, match="default placeholder targets"):
             await step.execute(ctx)
 
-    async def test_raises_when_project_has_no_targets_file(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_raises_when_project_has_no_targets_file(self, tmp_path: Path) -> None:
         """Project set but no targets/twitter.yaml in project dir → WorkflowError."""
         step = DiscoverPostsStep(platform="twitter")
         project = _make_project("noproj")
@@ -160,9 +152,7 @@ class TestDiscoverTwitterDefaultTargets:
         project_dir = Path("projects/_test_discover_targets")
         targets_file = project_dir / "targets" / "twitter.yaml"
         targets_file.parent.mkdir(parents=True, exist_ok=True)
-        targets_file.write_text(
-            "influencers:\n  - '@edtech_guru'\nhashtags:\n  - '#edtech'\n"
-        )
+        targets_file.write_text("influencers:\n  - '@edtech_guru'\nhashtags:\n  - '#edtech'\n")
 
         project = _make_project("_test_discover_targets")
         ctx = WorkflowContext(params={}, project=project)

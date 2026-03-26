@@ -38,9 +38,7 @@ class LinkedInPostStep:
 
         generator = LinkedInContentGenerator(settings)
 
-        with ctx.console.status(
-            "[bold blue]Generating LinkedIn content with Gemini..."
-        ):
+        with ctx.console.status("[bold blue]Generating LinkedIn content with Gemini..."):
             posts = await generator.generate_batch(count)
 
         ctx.console.print(f"[green]Generated {len(posts)} posts[/green]")
@@ -67,9 +65,7 @@ class LinkedInPostStep:
                         result = await bundle.adapter.publish(rendered)
                         if result.success:
                             successes += 1
-                            ctx.console.print(
-                                f"  [green]Post {i}/{len(posts)} published[/green]"
-                            )
+                            ctx.console.print(f"  [green]Post {i}/{len(posts)} published[/green]")
                         else:
                             ctx.console.print(
                                 f"  [red]Post {i} failed: {result.error_message}[/red]"
@@ -113,9 +109,7 @@ class LinkedInPostStep:
             return successes
 
         successes = await _open_and_post()
-        ctx.console.print(
-            f"[green]{successes}/{len(posts)} posts published to LinkedIn[/green]"
-        )
+        ctx.console.print(f"[green]{successes}/{len(posts)} posts published to LinkedIn[/green]")
         ctx.set_artifact("generated_posts", posts)
 
 

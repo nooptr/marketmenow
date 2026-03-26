@@ -95,9 +95,7 @@ def _chars_to_words(
     for ch, s, e in zip(chars, starts, ends):
         if ch == " " and current_word:
             words.append(
-                WordTiming(
-                    text=current_word, start_seconds=word_start, end_seconds=word_end
-                )
+                WordTiming(text=current_word, start_seconds=word_start, end_seconds=word_end)
             )
             current_word = ""
         elif ch != " ":
@@ -107,10 +105,6 @@ def _chars_to_words(
             word_end = e
 
     if current_word:
-        words.append(
-            WordTiming(
-                text=current_word, start_seconds=word_start, end_seconds=word_end
-            )
-        )
+        words.append(WordTiming(text=current_word, start_seconds=word_start, end_seconds=word_end))
 
     return words

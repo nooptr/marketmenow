@@ -143,15 +143,11 @@ class Workflow:
         project: ProjectConfig | None = None,
         persona: PersonaConfig | None = None,
     ) -> WorkflowResult:
-        ctx = WorkflowContext(
-            raw_params, console=console, project=project, persona=persona
-        )
+        ctx = WorkflowContext(raw_params, console=console, project=project, persona=persona)
         result = WorkflowResult(workflow_name=self.name)
 
         for step in self.steps:
-            ctx.console.print(
-                f"  [bold cyan]>[/bold cyan] {step.name}: {step.description}"
-            )
+            ctx.console.print(f"  [bold cyan]>[/bold cyan] {step.name}: {step.description}")
             try:
                 await step.execute(ctx)
                 result.outcomes.append(StepOutcome(step_name=step.name, success=True))

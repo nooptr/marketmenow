@@ -67,16 +67,10 @@ class PostToSubredditsStep:
                         text=post.body,
                     )
                     json_data = resp.get("json", {})
-                    errors = (
-                        json_data.get("errors", [])
-                        if isinstance(json_data, dict)
-                        else []
-                    )
+                    errors = json_data.get("errors", []) if isinstance(json_data, dict) else []
 
                     if errors:
-                        ctx.console.print(
-                            f"  [red]r/{post.subreddit} failed: {errors}[/red]"
-                        )
+                        ctx.console.print(f"  [red]r/{post.subreddit} failed: {errors}[/red]")
                         results.append(
                             {
                                 "subreddit": post.subreddit,
@@ -85,15 +79,9 @@ class PostToSubredditsStep:
                             }
                         )
                     else:
-                        data = (
-                            json_data.get("data", {})
-                            if isinstance(json_data, dict)
-                            else {}
-                        )
+                        data = json_data.get("data", {}) if isinstance(json_data, dict) else {}
                         url = data.get("url", "") if isinstance(data, dict) else ""
-                        ctx.console.print(
-                            f"  [green]r/{post.subreddit} posted![/green] {url}"
-                        )
+                        ctx.console.print(f"  [green]r/{post.subreddit} posted![/green] {url}")
                         results.append(
                             {
                                 "subreddit": post.subreddit,
@@ -115,13 +103,9 @@ class PostToSubredditsStep:
                     delay = random.uniform(min_delay, max_delay)
                     mins = int(delay) // 60
                     secs = int(delay) % 60
-                    ctx.console.print(
-                        f"  [dim]Waiting {mins}m {secs}s before next post...[/dim]"
-                    )
+                    ctx.console.print(f"  [dim]Waiting {mins}m {secs}s before next post...[/dim]")
                     await asyncio.sleep(delay)
 
         succeeded = sum(1 for r in results if r["success"])
-        ctx.console.print(
-            f"\n[green]{succeeded}/{len(results)} posts published to Reddit[/green]"
-        )
+        ctx.console.print(f"\n[green]{succeeded}/{len(results)} posts published to Reddit[/green]")
         ctx.set_artifact("post_results", results)

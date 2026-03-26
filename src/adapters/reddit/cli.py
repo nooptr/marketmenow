@@ -134,9 +134,7 @@ class _RichProgress:
             )
 
         total_found = sum(c for _, c in self._subs_done)
-        progress_str = (
-            f"Subreddits {len(self._subs_done)}/{self._total_subs}  Posts {total_found}"
-        )
+        progress_str = f"Subreddits {len(self._subs_done)}/{self._total_subs}  Posts {total_found}"
 
         return Panel(
             tbl,
@@ -199,9 +197,7 @@ class _RichProgress:
                     f"{counter}  r/{entry.subreddit}  [red]generate failed[/red]",
                 )
 
-        title_label = (
-            "Generating" if self._phase in ("generating", "commenting") else "Done"
-        )
+        title_label = "Generating" if self._phase in ("generating", "commenting") else "Done"
         border = "yellow" if self._phase in ("generating", "commenting") else "green"
 
         return Panel(
@@ -427,9 +423,7 @@ def engage(
         )
     orchestrator = EngagementOrchestrator(settings)
 
-    csv_path = output or Path(
-        f"reddit_comments_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv"
-    )
+    csv_path = output or Path(f"reddit_comments_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv")
 
     async def _run() -> None:
         if verbose:
@@ -453,9 +447,7 @@ def engage(
 
         _write_csv(comments, csv_path)
         console.print()
-        console.print(
-            f"[bold green]Saved {len(comments)} comments to {csv_path}[/bold green]"
-        )
+        console.print(f"[bold green]Saved {len(comments)} comments to {csv_path}[/bold green]")
         console.print("[dim]Review/edit the CSV, then run:[/dim]")
         console.print(f"  mmn reddit reply -f {csv_path}")
 
@@ -580,9 +572,7 @@ def discover(
             all_posts.sort(key=lambda p: p.score, reverse=True)
 
             if not all_posts:
-                console.print(
-                    "[yellow]No posts discovered. Is your session cookie valid?[/yellow]"
-                )
+                console.print("[yellow]No posts discovered. Is your session cookie valid?[/yellow]")
                 return
 
             console.print(f"\nDiscovered [bold]{len(all_posts)}[/bold] posts:\n")
@@ -626,11 +616,7 @@ def test_comment(
                 console.print("[red]Reddit session cookie is invalid or expired.[/red]")
                 return
 
-            permalink = (
-                post_url.split("reddit.com")[-1]
-                if "reddit.com" in post_url
-                else post_url
-            )
+            permalink = post_url.split("reddit.com")[-1] if "reddit.com" in post_url else post_url
             if permalink.endswith("/"):
                 permalink = permalink[:-1]
 
@@ -672,9 +658,7 @@ def test_comment(
             with console.status("[bold cyan]Generating comment...[/bold cyan]"):
                 comment = await generator.generate_comment(post, comment_number=1)
 
-            console.print(
-                f"\n[bold green]Generated comment[/bold green] ({len(comment)} chars):\n"
-            )
+            console.print(f"\n[bold green]Generated comment[/bold green] ({len(comment)} chars):\n")
             console.print(Panel(comment, border_style="green"))
 
     asyncio.run(_run())

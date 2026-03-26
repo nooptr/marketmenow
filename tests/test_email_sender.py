@@ -44,9 +44,7 @@ class TestParseTemplate:
 class TestReadContacts:
     def test_reads_range(self, tmp_path: Path) -> None:
         csv_file = tmp_path / "contacts.csv"
-        csv_file.write_text(
-            "email,name\nalice@e.com,Alice\nbob@e.com,Bob\ncharlie@e.com,Charlie\n"
-        )
+        csv_file.write_text("email,name\nalice@e.com,Alice\nbob@e.com,Bob\ncharlie@e.com,Charlie\n")
         contacts = read_contacts(csv_file, 0, 2)
         assert len(contacts) == 2
         assert contacts[0][1].email == "alice@e.com"

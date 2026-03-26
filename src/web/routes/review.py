@@ -65,9 +65,7 @@ async def regenerate_content(request: Request, item_id: UUID) -> HTMLResponse:
 
     await db.update_content_status(item_id, "generating", error_message="")
 
-    task = asyncio.create_task(
-        _run_regeneration(item_id, generate_cmd, publish_cmd, output_dir)
-    )
+    task = asyncio.create_task(_run_regeneration(item_id, generate_cmd, publish_cmd, output_dir))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
@@ -96,13 +94,9 @@ async def _run_regeneration(
     try:
         hub.publish(
             item_id,
-            ProgressEvent(
-                event_type="phase", message="Regeneration started", phase="generation"
-            ),
+            ProgressEvent(event_type="phase", message="Regeneration started", phase="generation"),
         )
-        result = await run_cli_streaming(
-            generate_cmd, item_id=item_id, output_dir=output_dir
-        )
+        result = await run_cli_streaming(generate_cmd, item_id=item_id, output_dir=output_dir)
 
         if result.exit_code == 0:
             preview: dict = {

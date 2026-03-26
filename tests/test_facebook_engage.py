@@ -176,9 +176,7 @@ class TestGeneratedComment:
     def test_frozen_model(self) -> None:
         comment = _make_generated_comment()
         assert comment.group_name == "Teachers"
-        assert (
-            comment.comment_text == "Have you tried batch grading in 25-minute sprints?"
-        )
+        assert comment.comment_text == "Have you tried batch grading in 25-minute sprints?"
         with pytest.raises(ValidationError, match="frozen"):
             comment.comment_text = "new text"  # type: ignore[misc]
 
@@ -189,9 +187,7 @@ class TestGeneratedComment:
 
 
 class TestEngagementOrchestrator:
-    async def test_generate_only_returns_comments(
-        self, fb_settings: FacebookSettings
-    ) -> None:
+    async def test_generate_only_returns_comments(self, fb_settings: FacebookSettings) -> None:
         mock_browser = AsyncMock()
         mock_browser.scrape_group_feed = AsyncMock(
             return_value=[
@@ -215,14 +211,9 @@ class TestEngagementOrchestrator:
             results = await orchestrator.generate_only()
 
         assert len(results) >= 1
-        assert (
-            results[0].comment_text
-            == "I totally feel this. When I was teaching 5 classes..."
-        )
+        assert results[0].comment_text == "I totally feel this. When I was teaching 5 classes..."
 
-    async def test_comment_from_list_posts_and_tracks(
-        self, fb_settings: FacebookSettings
-    ) -> None:
+    async def test_comment_from_list_posts_and_tracks(self, fb_settings: FacebookSettings) -> None:
         mock_browser = AsyncMock()
         mock_browser.comment_on_group_post = AsyncMock(return_value=True)
 
@@ -247,9 +238,7 @@ class TestEngagementOrchestrator:
 
         assert fb_settings.audit_log_path.exists()
 
-    async def test_comment_from_list_handles_failure(
-        self, fb_settings: FacebookSettings
-    ) -> None:
+    async def test_comment_from_list_handles_failure(self, fb_settings: FacebookSettings) -> None:
         mock_browser = AsyncMock()
         mock_browser.comment_on_group_post = AsyncMock(return_value=False)
 

@@ -57,9 +57,7 @@ class TestDistributionMap:
         yaml_path.write_text(yaml.dump(data))
 
         dmap = DistributionMap.from_yaml(yaml_path)
-        assert dmap.platforms_for(ContentModality.VIDEO) == frozenset(
-            {"instagram", "linkedin"}
-        )
+        assert dmap.platforms_for(ContentModality.VIDEO) == frozenset({"instagram", "linkedin"})
         assert dmap.platforms_for(ContentModality.TEXT_POST) == frozenset({"twitter"})
         assert dmap.platforms_for(ContentModality.POLL) == frozenset()
 

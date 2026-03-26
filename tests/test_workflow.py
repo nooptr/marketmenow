@@ -316,9 +316,7 @@ class TestWorkflowContextProject:
         assert ctx.project is None
         assert ctx.persona is None
 
-    def test_resolve_project_path_with_fallback_no_project(
-        self, tmp_path: Path
-    ) -> None:
+    def test_resolve_project_path_with_fallback_no_project(self, tmp_path: Path) -> None:
         fallback = tmp_path / "global"
         fallback.mkdir()
         (fallback / "file.txt").write_text("global")

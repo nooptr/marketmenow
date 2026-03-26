@@ -32,9 +32,7 @@ def create_linkedin_bundle(
         client = LinkedInAPIClient(settings)
         adapter: LinkedInAdapter | LinkedInAPIAdapter = LinkedInAPIAdapter(client)
     else:
-        logger.info(
-            "LinkedIn: using browser adapter (set LINKEDIN_ACCESS_TOKEN for API mode)"
-        )
+        logger.info("LinkedIn: using browser adapter (set LINKEDIN_ACCESS_TOKEN for API mode)")
         browser = LinkedInBrowser(
             session_path=settings.linkedin_session_path,
             user_data_dir=settings.linkedin_user_data_dir,

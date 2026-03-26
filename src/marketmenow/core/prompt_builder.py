@@ -42,9 +42,7 @@ class PromptBuilder:
     ) -> Path | None:
         """Walk the resolution chain and return the first path that exists."""
         if project_slug:
-            project_platform = (
-                _PROJECTS_DIR / project_slug / "prompts" / platform / filename
-            )
+            project_platform = _PROJECTS_DIR / project_slug / "prompts" / platform / filename
             if project_platform.exists():
                 return project_platform
 
@@ -69,9 +67,7 @@ class PromptBuilder:
     def _make_brand_dict(self, brand: BrandConfig) -> dict[str, object]:
         return brand.model_dump()
 
-    def _make_persona_dict(
-        self, persona: PersonaConfig, platform: str
-    ) -> dict[str, object]:
+    def _make_persona_dict(self, persona: PersonaConfig, platform: str) -> dict[str, object]:
         base = persona.model_dump()
         overrides = persona.platform_overrides.get(platform, {})
         if overrides:
@@ -102,9 +98,7 @@ class PromptBuilder:
         }
 
         persona_path = self._resolve_file("persona.yaml", platform, project_slug)
-        function_path = self._resolve_file(
-            f"functions/{function}.yaml", platform, project_slug
-        )
+        function_path = self._resolve_file(f"functions/{function}.yaml", platform, project_slug)
 
         if persona_path and function_path:
             return self._build_decomposed(
@@ -146,9 +140,7 @@ class PromptBuilder:
             variables,
         )
 
-        icl_text = self._render_icl_block(
-            platform, icl_examples, project_slug, variables
-        )
+        icl_text = self._render_icl_block(platform, icl_examples, project_slug, variables)
 
         user_vars = {**variables, "icl_block": icl_text}
         function_user = self._render_template(

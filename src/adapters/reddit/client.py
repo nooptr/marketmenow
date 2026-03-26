@@ -193,9 +193,7 @@ class RedditClient:
         remaining = resp.headers.get("x-ratelimit-remaining")
         reset = resp.headers.get("x-ratelimit-reset")
         if remaining is not None:
-            logger.debug(
-                "Reddit rate-limit remaining: %s, reset in %ss", remaining, reset
-            )
+            logger.debug("Reddit rate-limit remaining: %s, reset in %ss", remaining, reset)
             if float(remaining) < 2:
                 logger.warning(
                     "Reddit rate-limit nearly exhausted (%s left, resets in %ss)",

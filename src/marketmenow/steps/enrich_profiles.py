@@ -27,9 +27,7 @@ class EnrichProfilesStep:
         if self._platform == "twitter":
             await self._enrich_twitter(ctx, prospects, customer_profile)
         else:
-            raise WorkflowError(
-                f"Profile enrichment not implemented for {self._platform}"
-            )
+            raise WorkflowError(f"Profile enrichment not implemented for {self._platform}")
 
     async def _enrich_twitter(
         self,

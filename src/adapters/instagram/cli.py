@@ -194,9 +194,7 @@ def carousel_generate(
     ] = None,
 ) -> None:
     """Generate a fresh Top-5 carousel using AI (Gemini + Imagen)."""
-    asyncio.run(
-        _carousel_generate_async(output_dir, publish, linkedin, distribute, only)
-    )
+    asyncio.run(_carousel_generate_async(output_dir, publish, linkedin, distribute, only))
 
 
 async def _carousel_generate_async(
@@ -276,37 +274,27 @@ def reel_create(
             help="Path to assignment image (optional if template auto-generates)",
         ),
     ] = None,
-    template: Annotated[
-        str, typer.Option("--template", help="Template ID")
-    ] = "can_ai_grade_this",
+    template: Annotated[str, typer.Option("--template", help="Template ID")] = "can_ai_grade_this",
     rubric: Annotated[
         Path | None,
         typer.Option("--rubric", help="Path to rubric JSON/YAML file"),
     ] = None,
     caption: Annotated[str, typer.Option(help="Reel caption")] = "",
-    hashtags: Annotated[
-        str | None, typer.Option(help="Comma-separated hashtags")
-    ] = None,
+    hashtags: Annotated[str | None, typer.Option(help="Comma-separated hashtags")] = None,
     output_dir: Annotated[
         Path | None, typer.Option("--output-dir", help="Output directory")
     ] = None,
     tts: Annotated[
         str,
-        typer.Option(
-            "--tts", help="TTS provider: elevenlabs, openai, local, or kokoro"
-        ),
+        typer.Option("--tts", help="TTS provider: elevenlabs, openai, local, or kokoro"),
     ] = "",
     reaction_image: Annotated[
         Path | None,
-        typer.Option(
-            "--reaction-image", help="Path to reaction image (e.g. funny dog)"
-        ),
+        typer.Option("--reaction-image", help="Path to reaction image (e.g. funny dog)"),
     ] = None,
     comment_username: Annotated[
         str,
-        typer.Option(
-            "--comment-username", help="Username for the TikTok-style comment hook"
-        ),
+        typer.Option("--comment-username", help="Username for the TikTok-style comment hook"),
     ] = "",
     comment_avatar: Annotated[
         Path | None,
@@ -474,9 +462,7 @@ async def _reel_create_async(
 
 @reel_app.command("preview")
 def reel_preview(
-    template: Annotated[
-        str, typer.Option("--template", help="Template ID")
-    ] = "can_ai_grade_this",
+    template: Annotated[str, typer.Option("--template", help="Template ID")] = "can_ai_grade_this",
     props_file: Annotated[
         Path | None,
         typer.Option("--props-file", help="Pre-generated props JSON file"),
@@ -492,9 +478,7 @@ def reel_preview(
     if props_file:
         cmd.extend(["--props", str(props_file.resolve())])
 
-    console.print(
-        f"[bold blue]Opening Remotion Studio[/bold blue] (template={template})"
-    )
+    console.print(f"[bold blue]Opening Remotion Studio[/bold blue] (template={template})")
     console.print(f"  Working dir: {remotion_dir}")
     subprocess.run(cmd, cwd=str(remotion_dir), check=True)
 
@@ -563,21 +547,15 @@ def instagram_all(
         Path | None,
         typer.Option("--rubric", help="Path to rubric JSON/YAML file"),
     ] = None,
-    caption: Annotated[
-        str, typer.Option(help="Caption (applied to both reel and carousel)")
-    ] = "",
-    hashtags: Annotated[
-        str | None, typer.Option(help="Comma-separated hashtags")
-    ] = None,
+    caption: Annotated[str, typer.Option(help="Caption (applied to both reel and carousel)")] = "",
+    hashtags: Annotated[str | None, typer.Option(help="Comma-separated hashtags")] = None,
     output_dir: Annotated[
         Path | None,
         typer.Option("--output-dir", help="Output directory"),
     ] = None,
     tts: Annotated[
         str,
-        typer.Option(
-            "--tts", help="TTS provider: elevenlabs, openai, local, or kokoro"
-        ),
+        typer.Option("--tts", help="TTS provider: elevenlabs, openai, local, or kokoro"),
     ] = "",
     reaction_image: Annotated[
         Path | None,
@@ -585,9 +563,7 @@ def instagram_all(
     ] = None,
     comment_username: Annotated[
         str,
-        typer.Option(
-            "--comment-username", help="Username for the TikTok-style comment hook"
-        ),
+        typer.Option("--comment-username", help="Username for the TikTok-style comment hook"),
     ] = "",
     comment_avatar: Annotated[
         Path | None,
@@ -657,9 +633,7 @@ async def _instagram_all_async(
     distribute: bool,
     only: str | None,
 ) -> None:
-    console.print(
-        "[bold cyan]Running carousel + reel pipelines concurrently...[/bold cyan]"
-    )
+    console.print("[bold cyan]Running carousel + reel pipelines concurrently...[/bold cyan]")
 
     carousel_task = asyncio.create_task(
         _carousel_generate_async(output_dir, publish, False, distribute, only),

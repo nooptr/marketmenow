@@ -34,9 +34,7 @@ def sanitise_text(content: NormalisedContent) -> NormalisedContent:
     return content.model_copy(
         update={
             "text_segments": [_sanitise_str(s) for s in content.text_segments],
-            "subject": (
-                _sanitise_str(content.subject) if content.subject else content.subject
-            ),
+            "subject": (_sanitise_str(content.subject) if content.subject else content.subject),
             "hashtags": [_sanitise_str(h) for h in content.hashtags],
             "extra": _sanitise_extra(content.extra),
         },

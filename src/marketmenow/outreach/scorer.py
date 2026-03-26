@@ -143,9 +143,7 @@ class ProspectScorer:
                 )
             )
 
-        total_score = int(
-            data.get("total_score", sum(e.points_awarded for e in evaluations))
-        )
+        total_score = int(data.get("total_score", sum(e.points_awarded for e in evaluations)))
         dm_angle = str(data.get("dm_angle", ""))
         disqualify = data.get("disqualify_reason")
         disqualify_reason = str(disqualify) if disqualify else None

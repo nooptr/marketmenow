@@ -40,9 +40,7 @@ class TokenManager:
         data = resp.json()
         token = data["access_token"]
         expires_in = data.get("expires_in", "unknown")
-        logger.info(
-            "Exchanged for long-lived token (expires_in=%s seconds)", expires_in
-        )
+        logger.info("Exchanged for long-lived token (expires_in=%s seconds)", expires_in)
         return str(token)
 
     async def refresh(self, long_lived_token: str) -> str:
@@ -91,9 +89,7 @@ class TokenManager:
 
         import time
 
-        remaining = (
-            int(expires_at) - int(time.time()) if isinstance(expires_at, int) else 0
-        )
+        remaining = int(expires_at) - int(time.time()) if isinstance(expires_at, int) else 0
 
         if remaining < 3600:
             logger.info("Token expires in < 1 h -- exchanging for long-lived token")
@@ -104,7 +100,5 @@ class TokenManager:
             logger.info("Token expires in < 7 days -- refreshing")
             return await self.refresh(token)
 
-        logger.info(
-            "Token is valid for %d days -- no action needed", remaining // 86400
-        )
+        logger.info("Token is valid for %d days -- no action needed", remaining // 86400)
         return token

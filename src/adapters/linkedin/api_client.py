@@ -98,9 +98,7 @@ class LinkedInAPIClient:
 
         body = self._base_post_body(commentary)
         if len(images) == 1:
-            body["content"] = {
-                "media": {"id": images[0]["id"], "altText": images[0]["altText"]}
-            }
+            body["content"] = {"media": {"id": images[0]["id"], "altText": images[0]["altText"]}}
         else:
             body["content"] = {"multiImage": {"images": images}}
 

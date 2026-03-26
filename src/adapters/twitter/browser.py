@@ -198,9 +198,7 @@ class StealthBrowser:
     async def is_logged_in(self) -> bool:
         page = self.page
         try:
-            await page.goto(
-                _TWITTER_HOME, wait_until="domcontentloaded", timeout=30_000
-            )
+            await page.goto(_TWITTER_HOME, wait_until="domcontentloaded", timeout=30_000)
             await self._random_delay(3.0, 5.0)
             url = page.url
             if "/login" in url or "/i/flow" in url:

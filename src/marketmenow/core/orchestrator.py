@@ -32,9 +32,7 @@ class Orchestrator:
                 result.errors.append(
                     (
                         target,
-                        UnsupportedModalityError(
-                            target.platform, target.modality.value
-                        ),
+                        UnsupportedModalityError(target.platform, target.modality.value),
                     )
                 )
             else:

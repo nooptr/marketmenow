@@ -103,9 +103,7 @@ def _load_custom_workflows(registry: WorkflowRegistry) -> None:
                 params=tuple(params),
             )
             registry.register(wf)
-            logger.debug(
-                "Registered custom workflow: %s (from %s)", name, yaml_path.name
-            )
+            logger.debug("Registered custom workflow: %s (from %s)", name, yaml_path.name)
         except Exception as exc:
             logger.debug("Skipping custom workflow %s: %s", yaml_path.name, exc)
 

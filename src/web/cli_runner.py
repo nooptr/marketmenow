@@ -43,9 +43,7 @@ _PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], ProgressEvent]]
     ),
     # Generic "Generating" without counts
     (
-        re.compile(
-            r"[Gg]enerating\s+(reply|comment|thread|reel|carousel|post)", re.IGNORECASE
-        ),
+        re.compile(r"[Gg]enerating\s+(reply|comment|thread|reel|carousel|post)", re.IGNORECASE),
         lambda m: ProgressEvent(
             event_type="phase",
             message=m.group(0),
@@ -65,9 +63,7 @@ _PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], ProgressEvent]]
     ),
     # Generic posted
     (
-        re.compile(
-            r"[Pp]osted?\s+(?:reply|comment|content|thread|successfully)", re.IGNORECASE
-        ),
+        re.compile(r"[Pp]osted?\s+(?:reply|comment|content|thread|successfully)", re.IGNORECASE),
         lambda m: ProgressEvent(
             event_type="phase",
             message=m.group(0),
@@ -210,9 +206,7 @@ async def run_cli(
     )
 
     try:
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            proc.communicate(), timeout=timeout
-        )
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except TimeoutError:
         proc.kill()
         await proc.communicate()
@@ -226,9 +220,7 @@ async def run_cli(
     stderr = stderr_bytes.decode(errors="replace")
     exit_code = proc.returncode or 0
 
-    output_files = (
-        _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
-    )
+    output_files = _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
 
     logger.info(
         "Finished (exit=%d): %s | files=%s",
@@ -298,9 +290,7 @@ async def run_cli_streaming(
     logger.info("Running (streaming): %s", " ".join(full_cmd))
     hub.publish(
         item_id,
-        ProgressEvent(
-            event_type="phase", message="Starting: " + " ".join(command_parts)
-        ),
+        ProgressEvent(event_type="phase", message="Starting: " + " ".join(command_parts)),
     )
 
     full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
@@ -335,13 +325,9 @@ async def run_cli_streaming(
         await proc.communicate()
         hub.publish(
             item_id,
-            ProgressEvent(
-                event_type="error", message=f"Command timed out after {timeout}s"
-            ),
+            ProgressEvent(event_type="error", message=f"Command timed out after {timeout}s"),
         )
-        return CliResult(
-            exit_code=-1, stdout="", stderr=f"Command timed out after {timeout}s"
-        )
+        return CliResult(exit_code=-1, stdout="", stderr=f"Command timed out after {timeout}s")
     except asyncio.CancelledError:
         proc.kill()
         await proc.communicate()
@@ -357,9 +343,7 @@ async def run_cli_streaming(
     stderr = "\n".join(stderr_lines)
     exit_code = proc.returncode or 0
 
-    output_files = (
-        _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
-    )
+    output_files = _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
 
     if exit_code == 0:
         hub.publish(
@@ -993,7 +977,9 @@ _YT_TITLE_VARIANTS = [
     "POV: AI is now your teacher #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
 ]
 
-_YT_DEFAULT_DESCRIPTION = "AI-generated content from MarketMeNow.\n\n#shorts #shortvideo #ai #contentcreation #marketing"
+_YT_DEFAULT_DESCRIPTION = (
+    "AI-generated content from MarketMeNow.\n\n#shorts #shortvideo #ai #contentcreation #marketing"
+)
 
 
 def _pick_yt_title() -> str:
@@ -1041,9 +1027,7 @@ _TT_CAPTION_VARIANTS = [
     "Can our AI handle your homework? gradeasy.ai",
 ]
 
-_TT_DEFAULT_HASHTAGS = (
-    "AIGrading,EdTech,Gradeasy,TeacherHack,fyp,SchoolHacks,AI,gradeasy"
-)
+_TT_DEFAULT_HASHTAGS = "AIGrading,EdTech,Gradeasy,TeacherHack,fyp,SchoolHacks,AI,gradeasy"
 
 
 def _pick_tt_caption() -> str:
@@ -1136,9 +1120,7 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
 }
 
 
-def get_builders(
-    platform: str, command_type: str
-) -> tuple[CommandBuilder, CommandBuilder] | None:
+def get_builders(platform: str, command_type: str) -> tuple[CommandBuilder, CommandBuilder] | None:
     return BUILDERS.get(platform, {}).get(command_type)
 
 

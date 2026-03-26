@@ -72,13 +72,8 @@ class ConversationMining:
                 link_el = time_el.locator("xpath=ancestor::a")
                 href = await link_el.get_attribute("href", timeout=3_000)
                 if href:
-                    url = (
-                        f"https://x.com{href}" if not href.startswith("http") else href
-                    )
-                    if (
-                        f"/{handle}/" in url.lower()
-                        or f"/{handle.lower()}/" in url.lower()
-                    ):
+                    url = f"https://x.com{href}" if not href.startswith("http") else href
+                    if f"/{handle}/" in url.lower() or f"/{handle.lower()}/" in url.lower():
                         post_urls.append(url)
             except Exception:
                 continue

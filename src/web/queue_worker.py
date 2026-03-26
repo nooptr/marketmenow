@@ -47,9 +47,7 @@ async def _process_job(job: dict, limits: dict) -> None:
         await db.update_queue_status(
             queue_id, "failed", error_message="No publish command configured"
         )
-        await db.update_content_status(
-            content_id, "failed", error_message="No publish command"
-        )
+        await db.update_content_status(content_id, "failed", error_message="No publish command")
         hub.publish(
             content_id,
             ProgressEvent(event_type="error", message="No publish command configured"),
@@ -60,9 +58,7 @@ async def _process_job(job: dict, limits: dict) -> None:
     await db.update_content_status(content_id, "posting")
     hub.publish(
         content_id,
-        ProgressEvent(
-            event_type="phase", message=f"Publishing to {platform}...", phase="posting"
-        ),
+        ProgressEvent(event_type="phase", message=f"Publishing to {platform}...", phase="posting"),
     )
 
     result: CliResult = await run_cli_streaming(
@@ -77,9 +73,7 @@ async def _process_job(job: dict, limits: dict) -> None:
         await db.log_post(platform, content_id, success=True)
         hub.publish(
             content_id,
-            ProgressEvent(
-                event_type="done", message=f"Posted to {platform} successfully"
-            ),
+            ProgressEvent(event_type="done", message=f"Posted to {platform} successfully"),
         )
         logger.info("Posted content %s to %s", content_id, platform)
     else:

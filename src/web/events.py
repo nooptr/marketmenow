@@ -109,9 +109,7 @@ class EventHub:
 
                     await db.update_progress_data(item_id, snap)
                 except Exception:
-                    logger.debug(
-                        "Failed to flush progress for %s", item_id, exc_info=True
-                    )
+                    logger.debug("Failed to flush progress for %s", item_id, exc_info=True)
 
     def ensure_flusher_running(self) -> None:
         if self._flush_task is None or self._flush_task.done():

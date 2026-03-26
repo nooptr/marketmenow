@@ -83,9 +83,7 @@ class ReelScriptGenerator:
             )
         else:
             if assignment_image is None:
-                raise ValueError(
-                    "assignment_image is required for templates without a pipeline"
-                )
+                raise ValueError("assignment_image is required for templates without a pipeline")
             variables = await self._legacy_generate(
                 template,
                 assignment_image,
@@ -214,9 +212,7 @@ class ReelScriptGenerator:
             try:
                 system_text = Template(system_text).render(**jinja_vars)
             except Exception as exc:
-                logger.warning(
-                    "Failed to render script_generation system prompt: %s", exc
-                )
+                logger.warning("Failed to render script_generation system prompt: %s", exc)
 
         rubric_eval_text = "\n".join(
             f"  - {ev.rubric_item_name}: {ev.points_awarded}/{ev.max_points} -- {ev.feedback}"
@@ -234,9 +230,7 @@ class ReelScriptGenerator:
             try:
                 user_text = Template(user_text).render(**jinja_vars)
             except Exception as exc:
-                logger.warning(
-                    "Failed to render script_generation user prompt: %s", exc
-                )
+                logger.warning("Failed to render script_generation user prompt: %s", exc)
 
         response = await self._client.aio.models.generate_content(
             model=self._model,
@@ -332,9 +326,7 @@ def _render_template_value(text: str, variables: dict[str, object]) -> object:
     return _render_template_str(text, variables)
 
 
-def _resolve_dict(
-    d: dict[str, object], variables: dict[str, object]
-) -> dict[str, object]:
+def _resolve_dict(d: dict[str, object], variables: dict[str, object]) -> dict[str, object]:
     """Recursively resolve Jinja2 strings inside a dict."""
     out: dict[str, object] = {}
     for k, v in d.items():

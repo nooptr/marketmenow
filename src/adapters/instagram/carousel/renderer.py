@@ -244,9 +244,7 @@ class SlideRenderer:
             COVER_TEXT_MAX_W,
         )
         font_sub = _load_dm_sans(40)
-        wrapped_sub = (
-            _wrap_text(subtitle, font_sub, COVER_TEXT_MAX_W) if subtitle else ""
-        )
+        wrapped_sub = _wrap_text(subtitle, font_sub, COVER_TEXT_MAX_W) if subtitle else ""
 
         # Measure everything
         h_bbox = draw.textbbox((0, 0), heading, font=font_heading)
@@ -285,9 +283,7 @@ class SlideRenderer:
             font=font_heading,
             fill=WHITE,
         )
-        actual_h_bbox = draw.textbbox(
-            (COVER_PAD_X, block_top), heading, font=font_heading
-        )
+        actual_h_bbox = draw.textbbox((COVER_PAD_X, block_top), heading, font=font_heading)
 
         # Draw subtitle
         if wrapped_sub:
@@ -380,9 +376,7 @@ class SlideRenderer:
             font=font_heading,
             fill=WHITE,
         )
-        actual_h_bbox = draw.textbbox(
-            (ITEM_PAD_X, block_top), heading, font=font_heading
-        )
+        actual_h_bbox = draw.textbbox((ITEM_PAD_X, block_top), heading, font=font_heading)
 
         # Draw sub-heading
         sub_y = actual_h_bbox[3] + gap_h_s

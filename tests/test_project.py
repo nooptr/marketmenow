@@ -43,9 +43,7 @@ def _target_customer(**overrides: object) -> TargetCustomer:
     return TargetCustomer(**(defaults | overrides))
 
 
-def _create_project(
-    pm: ProjectManager, slug: str = "myapp", **kw: object
-) -> ProjectConfig:
+def _create_project(pm: ProjectManager, slug: str = "myapp", **kw: object) -> ProjectConfig:
     return pm.create_project(slug, _brand(), **kw)  # type: ignore[arg-type]
 
 
@@ -118,9 +116,7 @@ class TestProjectConfig:
         assert cfg.target_customer is None
 
     def test_env_overrides(self) -> None:
-        cfg = ProjectConfig(
-            slug="x", brand=_brand(), env_overrides={"TWITTER_USERNAME": "bot"}
-        )
+        cfg = ProjectConfig(slug="x", brand=_brand(), env_overrides={"TWITTER_USERNAME": "bot"})
         assert cfg.env_overrides["TWITTER_USERNAME"] == "bot"
 
     def test_yaml_roundtrip(self, tmp_path: Path) -> None:
@@ -316,9 +312,7 @@ class TestProjectManagerResolvePath:
         fallback_dir = tmp_path / "global_prompts"
         fallback_dir.mkdir()
         (fallback_dir / "reply.yaml").write_text("system: global\n", encoding="utf-8")
-        resolved = pm.resolve_path(
-            "myapp", "prompts", "reply.yaml", fallback=fallback_dir
-        )
+        resolved = pm.resolve_path("myapp", "prompts", "reply.yaml", fallback=fallback_dir)
         assert resolved == fallback_dir / "reply.yaml"
 
     def test_resolve_no_fallback_raises(self, tmp_path: Path) -> None:

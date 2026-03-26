@@ -260,9 +260,7 @@ async def send_batch(
             for attempt in range(3):
                 try:
                     await smtp.send_message(msg)
-                    result = SendResult(
-                        row_index=row_idx, email=contact.email, success=True
-                    )
+                    result = SendResult(row_index=row_idx, email=contact.email, success=True)
                     logger.info("Row %d → %s  ✓", row_idx, contact.email)
                     break
                 except Exception as exc:

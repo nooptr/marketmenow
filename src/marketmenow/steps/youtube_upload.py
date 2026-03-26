@@ -26,9 +26,7 @@ class YouTubeUploadStep:
 
         settings = YouTubeSettings()
         if not settings.youtube_refresh_token:
-            raise WorkflowError(
-                "YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first."
-            )
+            raise WorkflowError("YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first.")
 
         video_path = Path(str(ctx.require_param("video")))
         if not video_path.exists():

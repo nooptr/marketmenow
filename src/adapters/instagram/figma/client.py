@@ -72,10 +72,7 @@ class FigmaClient:
         resp.raise_for_status()
         images_map: dict[str, str | None] = resp.json().get("images", {})
 
-        return [
-            ExportedImage(node_id=nid, image_url=url or "")
-            for nid, url in images_map.items()
-        ]
+        return [ExportedImage(node_id=nid, image_url=url or "") for nid, url in images_map.items()]
 
     async def download_image(self, url: str, dest: Path) -> Path:
         """Download an image from a URL to a local path."""

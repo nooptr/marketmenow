@@ -32,9 +32,7 @@ class EmailAdapter:
     async def send_dm(self, content: NormalisedContent) -> CoreSendResult:
         return CoreSendResult(
             platform="email",
-            recipient_handle=(
-                content.recipient_handles[0] if content.recipient_handles else ""
-            ),
+            recipient_handle=(content.recipient_handles[0] if content.recipient_handles else ""),
             success=False,
             error_message="Use `mmn email send` for email outreach",
         )

@@ -56,9 +56,7 @@ class TestLinkedInContentGeneratorTemplateRendering:
     async def test_generate_batch_without_brand_raises(self) -> None:
         """Reproduces the 'brand' is undefined Jinja2 error."""
         with (
-            patch(
-                "adapters.linkedin.content_generator.configure_google_application_credentials"
-            ),
+            patch("adapters.linkedin.content_generator.configure_google_application_credentials"),
             patch("adapters.linkedin.content_generator.create_genai_client"),
         ):
             gen = LinkedInContentGenerator(_fake_settings())
@@ -71,17 +69,11 @@ class TestLinkedInContentGeneratorTemplateRendering:
         mock_response.text = _SAMPLE_RESPONSE
 
         with (
-            patch(
-                "adapters.linkedin.content_generator.configure_google_application_credentials"
-            ),
-            patch(
-                "adapters.linkedin.content_generator.create_genai_client"
-            ) as mock_client_factory,
+            patch("adapters.linkedin.content_generator.configure_google_application_credentials"),
+            patch("adapters.linkedin.content_generator.create_genai_client") as mock_client_factory,
         ):
             mock_client = MagicMock()
-            mock_client.aio.models.generate_content = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
             mock_client_factory.return_value = mock_client
             gen = LinkedInContentGenerator(_fake_settings())
 
@@ -103,17 +95,11 @@ class TestLinkedInContentGeneratorTemplateRendering:
         mock_response.text = _SAMPLE_RESPONSE
 
         with (
-            patch(
-                "adapters.linkedin.content_generator.configure_google_application_credentials"
-            ),
-            patch(
-                "adapters.linkedin.content_generator.create_genai_client"
-            ) as mock_client_factory,
+            patch("adapters.linkedin.content_generator.configure_google_application_credentials"),
+            patch("adapters.linkedin.content_generator.create_genai_client") as mock_client_factory,
         ):
             mock_client = MagicMock()
-            mock_client.aio.models.generate_content = AsyncMock(
-                return_value=mock_response
-            )
+            mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
             mock_client_factory.return_value = mock_client
             gen = LinkedInContentGenerator(_fake_settings())
 

@@ -38,20 +38,12 @@ def mock_db(monkeypatch: pytest.MonkeyPatch) -> dict:
     monkeypatch.setattr(db_module, "init_pool", AsyncMock(return_value=None))
     monkeypatch.setattr(db_module, "close_pool", AsyncMock(return_value=None))
     monkeypatch.setattr(db_module, "list_content_items", AsyncMock(return_value=[]))
-    monkeypatch.setattr(
-        db_module, "get_platform_activity_stats", AsyncMock(return_value=[])
-    )
+    monkeypatch.setattr(db_module, "get_platform_activity_stats", AsyncMock(return_value=[]))
     monkeypatch.setattr(db_module, "get_content_item", AsyncMock(return_value=sample))
-    monkeypatch.setattr(
-        db_module, "insert_content_item", AsyncMock(return_value=sample["id"])
-    )
-    monkeypatch.setattr(
-        db_module, "update_content_status", AsyncMock(return_value=None)
-    )
+    monkeypatch.setattr(db_module, "insert_content_item", AsyncMock(return_value=sample["id"]))
+    monkeypatch.setattr(db_module, "update_content_status", AsyncMock(return_value=None))
     monkeypatch.setattr(db_module, "update_progress_data", AsyncMock(return_value=None))
-    monkeypatch.setattr(
-        db_module, "enqueue_content", AsyncMock(return_value=uuid.uuid4())
-    )
+    monkeypatch.setattr(db_module, "enqueue_content", AsyncMock(return_value=uuid.uuid4()))
     monkeypatch.setattr(db_module, "list_queue_items", AsyncMock(return_value=[]))
     monkeypatch.setattr(db_module, "get_rate_limits", AsyncMock(return_value=[]))
     monkeypatch.setattr(db_module, "get_post_log", AsyncMock(return_value=[]))
@@ -62,9 +54,7 @@ def mock_db(monkeypatch: pytest.MonkeyPatch) -> dict:
 
 
 @pytest.fixture
-def client(
-    mock_db: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> TestClient:
+def client(mock_db: dict, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     from contextlib import asynccontextmanager
 
     from fastapi import FastAPI
@@ -122,9 +112,7 @@ class TestFlowEditor:
         assert "YAML" in resp.text
 
     def test_save_valid_yaml(self, client: TestClient) -> None:
-        yaml_content = (
-            "name: test-save\ndescription: test\nsteps:\n  - generate-thread\n"
-        )
+        yaml_content = "name: test-save\ndescription: test\nsteps:\n  - generate-thread\n"
         resp = client.post("/flows/save", data={"yaml_content": yaml_content})
         assert resp.status_code == 200
         assert "saved" in resp.text.lower()

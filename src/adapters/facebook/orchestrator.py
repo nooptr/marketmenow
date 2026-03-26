@@ -125,9 +125,7 @@ class EngagementOrchestrator:
         groups: list[dict[str, str]] = targets.get("groups", [])
 
         if not groups:
-            logger.warning(
-                "No groups configured in targets file: %s", self._settings.targets_path
-            )
+            logger.warning("No groups configured in targets file: %s", self._settings.targets_path)
             return []
 
         random.shuffle(groups)
