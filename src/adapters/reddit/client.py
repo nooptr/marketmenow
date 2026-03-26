@@ -193,7 +193,9 @@ class RedditClient:
         remaining = resp.headers.get("x-ratelimit-remaining")
         reset = resp.headers.get("x-ratelimit-reset")
         if remaining is not None:
-            logger.debug("Reddit rate-limit remaining: %s, reset in %ss", remaining, reset)
+            logger.debug(
+                "Reddit rate-limit remaining: %s, reset in %ss", remaining, reset
+            )
             if float(remaining) < 2:
                 logger.warning(
                     "Reddit rate-limit nearly exhausted (%s left, resets in %ss)",
@@ -202,7 +204,9 @@ class RedditClient:
                 )
 
     @staticmethod
-    def _extract_posts(resp: dict[str, object] | list[object]) -> list[dict[str, object]]:
+    def _extract_posts(
+        resp: dict[str, object] | list[object],
+    ) -> list[dict[str, object]]:
         if isinstance(resp, list):
             resp = resp[0] if resp else {}  # type: ignore[assignment]
         data = resp.get("data", {}) if isinstance(resp, dict) else {}  # type: ignore[union-attr]

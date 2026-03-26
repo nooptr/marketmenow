@@ -28,7 +28,10 @@ workflow = Workflow(
             help="Max delay between posts in seconds",
         ),
         ParamDef(
-            name="headless", type=ParamType.BOOL, default=False, help="Run browser in headless mode"
+            name="headless",
+            type=ParamType.BOOL,
+            default=False,
+            help="Run browser in headless mode",
         ),
         ParamDef(
             name="dry_run",

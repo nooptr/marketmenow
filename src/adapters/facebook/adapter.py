@@ -53,7 +53,9 @@ class FacebookAdapter:
                     success = await self._browser.create_text_post(commentary)
                 case ContentModality.IMAGE:
                     image_paths = [Path(a.uri) for a in content.media_assets]
-                    success = await self._browser.create_image_post(commentary, image_paths)
+                    success = await self._browser.create_image_post(
+                        commentary, image_paths
+                    )
                 case ContentModality.VIDEO:
                     if not content.media_assets:
                         return PublishResult(
@@ -62,7 +64,9 @@ class FacebookAdapter:
                             error_message="No video asset provided.",
                         )
                     video_path = Path(content.media_assets[0].uri)
-                    success = await self._browser.create_video_post(commentary, video_path)
+                    success = await self._browser.create_video_post(
+                        commentary, video_path
+                    )
                 case _:
                     return PublishResult(
                         platform="facebook",
@@ -76,7 +80,9 @@ class FacebookAdapter:
                 published_at=datetime.now(UTC),
             )
         except Exception as exc:
-            logger.exception("Facebook publish failed for modality %s", content.modality)
+            logger.exception(
+                "Facebook publish failed for modality %s", content.modality
+            )
             return PublishResult(
                 platform="facebook",
                 success=False,

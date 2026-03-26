@@ -210,7 +210,9 @@ class TikTokAdapter:
                 error_message=str(exc),
             )
 
-    async def _publish_via_browser(self, video_path: str, caption: str) -> PublishResult:
+    async def _publish_via_browser(
+        self, video_path: str, caption: str
+    ) -> PublishResult:
         """Publish using Playwright browser automation with session cookie."""
         try:
             from .browser import TikTokBrowser
@@ -254,7 +256,9 @@ class TikTokAdapter:
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(
             platform="tiktok",
-            recipient_handle=content.recipient_handles[0] if content.recipient_handles else "",
+            recipient_handle=(
+                content.recipient_handles[0] if content.recipient_handles else ""
+            ),
             success=False,
             error_message="TikTok does not support direct messages via API",
         )
@@ -312,9 +316,13 @@ class TikTokAdapter:
         upload_url: str = data.get("upload_url", "")
 
         if not upload_url:
-            raise TikTokAPIError(200, "missing_upload_url", "No upload_url in init response")
+            raise TikTokAPIError(
+                200, "missing_upload_url", "No upload_url in init response"
+            )
 
-        await self._upload_chunks(file_path, upload_url, video_size, chunk_size, total_chunks)
+        await self._upload_chunks(
+            file_path, upload_url, video_size, chunk_size, total_chunks
+        )
         return publish_id
 
     async def _init_post(

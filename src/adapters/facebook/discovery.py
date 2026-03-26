@@ -66,7 +66,9 @@ class GroupPostDiscoverer:
         group_name: str,
         max_posts: int = 5,
     ) -> list[DiscoveredGroupPost]:
-        raw_posts = await self._browser.scrape_group_feed(group_url, max_posts=max_posts * 2)
+        raw_posts = await self._browser.scrape_group_feed(
+            group_url, max_posts=max_posts * 2
+        )
         posts: list[DiscoveredGroupPost] = []
         for raw in raw_posts:
             post = DiscoveredGroupPost(
@@ -99,7 +101,9 @@ class GroupPostDiscoverer:
             url = group["url"]
             name = group.get("name", url)
             try:
-                posts = await self.discover_group_posts(url, name, max_posts=max_per_group)
+                posts = await self.discover_group_posts(
+                    url, name, max_posts=max_per_group
+                )
                 all_posts.extend(posts)
                 logger.info("Discovered %d posts in %s", len(posts), name)
             except Exception:

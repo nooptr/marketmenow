@@ -132,7 +132,9 @@ class DiscoverPostsStep:
         if not comments:
             raise WorkflowError("No comments generated for Reddit.")
 
-        ctx.console.print(f"[green]Generated {len(comments)} comments for Reddit[/green]")
+        ctx.console.print(
+            f"[green]Generated {len(comments)} comments for Reddit[/green]"
+        )
         ctx.set_artifact("generated_replies", comments)
         ctx.set_artifact("engagement_orchestrator", orchestrator)
         ctx.set_artifact("engagement_platform", "reddit")
@@ -150,7 +152,9 @@ class DiscoverPostsStep:
 
         max_comments = int(ctx.get_param("max_comments", 0) or 0)
         if max_comments > 0:
-            settings = settings.model_copy(update={"max_comments_per_day": max_comments})
+            settings = settings.model_copy(
+                update={"max_comments_per_day": max_comments}
+            )
 
         project_slug = ctx.project.slug if ctx.project else None
         if project_slug:
@@ -199,7 +203,9 @@ class DiscoverPostsStep:
         if not comments:
             raise WorkflowError("No comments generated for Facebook groups.")
 
-        ctx.console.print(f"[green]Generated {len(comments)} comments for Facebook groups[/green]")
+        ctx.console.print(
+            f"[green]Generated {len(comments)} comments for Facebook groups[/green]"
+        )
         ctx.set_artifact("generated_replies", comments)
         ctx.set_artifact("engagement_orchestrator", orchestrator)
         ctx.set_artifact("engagement_platform", "facebook")

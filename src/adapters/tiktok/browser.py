@@ -153,7 +153,9 @@ class TikTokBrowser:
         except Exception as exc:
             url = page.url
             if "/login" in url:
-                raise RuntimeError("Login was not completed within the timeout.") from exc
+                raise RuntimeError(
+                    "Login was not completed within the timeout."
+                ) from exc
             logger.warning("Could not detect logged-in indicator, checking URL.")
 
         await self.save_session()
@@ -239,7 +241,9 @@ class TikTokBrowser:
             await file_input.wait_for(state="attached", timeout=10_000)
         except Exception:
             logger.debug("File input not in main page, trying iframe")
-            file_input = iframe_locator.locator('input[type="file"][accept*="video"]').first
+            file_input = iframe_locator.locator(
+                'input[type="file"][accept*="video"]'
+            ).first
             await file_input.wait_for(state="attached", timeout=15_000)
 
         await file_input.set_input_files(str(video_path.resolve()))
@@ -337,7 +341,9 @@ class TikTokBrowser:
                 await editor.click(timeout=5_000)
                 break
             except Exception:
-                logger.debug("Caption click blocked (attempt %d), dismissing modals", attempt + 1)
+                logger.debug(
+                    "Caption click blocked (attempt %d), dismissing modals", attempt + 1
+                )
                 await self._dismiss_modals(page)
                 await self._random_delay(0.5, 1.0)
                 try:
@@ -361,7 +367,9 @@ class TikTokBrowser:
         """Click the Post/Publish button."""
         await self._dismiss_modals(page)
 
-        post_btn = page.locator('button:has-text("Post"), button:has-text("Publish")').first
+        post_btn = page.locator(
+            'button:has-text("Post"), button:has-text("Publish")'
+        ).first
 
         try:
             await post_btn.wait_for(state="visible", timeout=15_000)
@@ -373,7 +381,9 @@ class TikTokBrowser:
                 await post_btn.click(timeout=5_000)
                 break
             except Exception:
-                logger.debug("Post click blocked (attempt %d), dismissing modals", attempt + 1)
+                logger.debug(
+                    "Post click blocked (attempt %d), dismissing modals", attempt + 1
+                )
                 await self._dismiss_modals(page)
                 try:
                     await post_btn.click(force=True, timeout=5_000)

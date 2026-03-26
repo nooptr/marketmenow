@@ -36,6 +36,8 @@ class GenerateCarouselStep:
         with ctx.console.status("[bold green]Generating carousel (Gemini + Imagen)..."):
             carousel = await orch.create_carousel()
 
-        ctx.console.print(f"[green]Carousel created with {len(carousel.images)} slides[/green]")
+        ctx.console.print(
+            f"[green]Carousel created with {len(carousel.images)} slides[/green]"
+        )
         ctx.set_artifact("content", carousel)
         ctx.set_artifact("platform", "instagram")

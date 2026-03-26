@@ -322,7 +322,9 @@ def auth(
                 plain_id = voyager_resp.json().get("plainId")
                 if plain_id:
                     person_urn = f"urn:li:person:{plain_id}"
-                    console.print(f"[green]Person URN (via cookie):[/green] {person_urn}")
+                    console.print(
+                        f"[green]Person URN (via cookie):[/green] {person_urn}"
+                    )
         except Exception:
             pass
 
@@ -375,7 +377,11 @@ def status() -> None:
     )
     table.add_row(
         "Access token",
-        "[green]set[/green]" if settings.linkedin_access_token else "[dim]not set[/dim]",
+        (
+            "[green]set[/green]"
+            if settings.linkedin_access_token
+            else "[dim]not set[/dim]"
+        ),
     )
     table.add_row(
         "Author URN",
@@ -388,7 +394,11 @@ def status() -> None:
     table.add_row("Session file", str(settings.linkedin_session_path))
     table.add_row(
         "Session exists",
-        "[green]yes[/green]" if settings.linkedin_session_path.exists() else "[red]no[/red]",
+        (
+            "[green]yes[/green]"
+            if settings.linkedin_session_path.exists()
+            else "[red]no[/red]"
+        ),
     )
 
     console.print()
@@ -505,11 +515,15 @@ def post(
         and not article_url
         and not poll_question
     ):
-        console.print("[red]Provide at least --text or a media/article/poll option.[/red]")
+        console.print(
+            "[red]Provide at least --text or a media/article/poll option.[/red]"
+        )
         raise typer.Exit(1)
 
     if poll_question and not poll_options:
-        console.print("[red]--poll requires --poll-options (comma-separated, 2-4 choices).[/red]")
+        console.print(
+            "[red]--poll requires --poll-options (comma-separated, 2-4 choices).[/red]"
+        )
         raise typer.Exit(1)
 
     normaliser = ContentNormaliser()
@@ -600,7 +614,11 @@ def _build_plan_table(posts: list[GeneratedPost]) -> Table:
                     else f"\n[dim]{p.body}[/dim]"
                 )
         elif p.type == "article":
-            preview = f"[link]{p.article_url}[/link]\n{p.body[:100]}" if p.body else p.article_url
+            preview = (
+                f"[link]{p.article_url}[/link]\n{p.body[:100]}"
+                if p.body
+                else p.article_url
+            )
         else:
             preview = p.body[:120] + "..." if len(p.body) > 120 else p.body
 
@@ -726,7 +744,9 @@ def batch_post(
             persona_cfg = pm.load_persona(slug, proj.default_persona)
 
         generator = LinkedInContentGenerator(settings)
-        posts = await generator.generate_batch(count, brand=brand_cfg, persona=persona_cfg)
+        posts = await generator.generate_batch(
+            count, brand=brand_cfg, persona=persona_cfg
+        )
 
         console.print(_build_plan_table(posts))
         console.print()
@@ -747,7 +767,9 @@ def batch_post(
                 brand_cfg = proj.brand
                 persona_cfg = pm.load_persona(slug, proj.default_persona)
 
-            console.print("[bold blue]Generating carousel (Gemini + Imagen)...[/bold blue]")
+            console.print(
+                "[bold blue]Generating carousel (Gemini + Imagen)...[/bold blue]"
+            )
             orch = CarouselOrchestrator(
                 ig_settings,
                 persona=persona_cfg,
@@ -787,8 +809,12 @@ def batch_post(
                         console.print(f"  [green]Post {i} published.[/green]")
                         results.append((i, post, True, "Published"))
                     else:
-                        console.print(f"  [red]Post {i} failed: {result.error_message}[/red]")
-                        results.append((i, post, False, result.error_message or "Unknown error"))
+                        console.print(
+                            f"  [red]Post {i} failed: {result.error_message}[/red]"
+                        )
+                        results.append(
+                            (i, post, False, result.error_message or "Unknown error")
+                        )
                 except Exception as exc:
                     logger.exception("Post %d failed", i)
                     console.print(f"  [red]Post {i} error: {exc}[/red]")
@@ -811,7 +837,9 @@ def batch_post(
                     if result.success:
                         console.print("  [green]Carousel published.[/green]")
                     else:
-                        console.print(f"  [red]Carousel failed: {result.error_message}[/red]")
+                        console.print(
+                            f"  [red]Carousel failed: {result.error_message}[/red]"
+                        )
                 except Exception as exc:
                     logger.exception("Carousel publish failed")
                     console.print(f"  [red]Carousel error: {exc}[/red]")

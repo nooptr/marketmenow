@@ -150,7 +150,9 @@ class _RichProgress:
                 "",
             )
 
-        total_found = sum(c for _, c in self._handles_done) + sum(c for _, c in self._hashtags_done)
+        total_found = sum(c for _, c in self._handles_done) + sum(
+            c for _, c in self._hashtags_done
+        )
         progress_str = (
             f"Handles {h_done}/{self._total_handles}  "
             f"Hashtags {ht_done}/{self._total_hashtags}  "
@@ -165,7 +167,9 @@ class _RichProgress:
         )
 
     def _render_discovery_summary(self) -> Panel:
-        total_found = sum(c for _, c in self._handles_done) + sum(c for _, c in self._hashtags_done)
+        total_found = sum(c for _, c in self._handles_done) + sum(
+            c for _, c in self._hashtags_done
+        )
         txt = Text()
         txt.append(f"  {total_found}", style="bold green")
         txt.append(" posts from ")
@@ -214,7 +218,9 @@ class _RichProgress:
                     f"{counter}  @{entry.handle}  [red]generate failed[/red]",
                 )
 
-        title_label = "Generating" if self._phase in ("generating", "replying") else "Done"
+        title_label = (
+            "Generating" if self._phase in ("generating", "replying") else "Done"
+        )
         border = "yellow" if self._phase in ("generating", "replying") else "green"
 
         return Panel(
@@ -260,7 +266,9 @@ class _RichProgress:
         self._status_text = ""
         self._refresh()
 
-    def on_generated(self, current: int, total: int, handle: str, reply_text: str) -> None:
+    def on_generated(
+        self, current: int, total: int, handle: str, reply_text: str
+    ) -> None:
         entry = self._find_entry(current, handle)
         if entry:
             entry.status = "generated"
@@ -273,7 +281,9 @@ class _RichProgress:
             entry.status = "failed"
         self._refresh()
 
-    def on_reply_posted(self, current: int, total: int, handle: str, success: bool) -> None:
+    def on_reply_posted(
+        self, current: int, total: int, handle: str, success: bool
+    ) -> None:
         entry = self._find_entry(current, handle)
         if entry:
             entry.status = "posted" if success else "post_failed"
@@ -380,7 +390,13 @@ def _write_csv(replies: list[GeneratedReply], path: Path) -> None:
         )
         for r in replies:
             writer.writerow(
-                [r.post_url, r.author_handle, r.post_text, r.reply_text, r.engagement_score]
+                [
+                    r.post_url,
+                    r.author_handle,
+                    r.post_text,
+                    r.reply_text,
+                    r.engagement_score,
+                ]
             )
 
 
@@ -500,7 +516,9 @@ def engage(
     settings = _apply_overrides(_settings(), headless=headless, max_replies=max_replies)
     orchestrator = EngagementOrchestrator(settings)
 
-    csv_path = output or Path(f"replies_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv")
+    csv_path = output or Path(
+        f"replies_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.csv"
+    )
 
     async def _run() -> None:
         if verbose:
@@ -508,7 +526,9 @@ def engage(
         else:
             prev = _quiet_loggers()
             try:
-                with Live(console=console, refresh_per_second=8, transient=False) as live:
+                with Live(
+                    console=console, refresh_per_second=8, transient=False
+                ) as live:
                     progress = _RichProgress(live)
                     replies = await orchestrator.generate_only(progress=progress)
             finally:
@@ -520,9 +540,13 @@ def engage(
 
         _write_csv(replies, csv_path)
         console.print()
-        console.print(f"[bold green]Saved {len(replies)} replies to {csv_path}[/bold green]")
+        console.print(
+            f"[bold green]Saved {len(replies)} replies to {csv_path}[/bold green]"
+        )
         console.print("[dim]Review/edit the CSV, then run:[/dim]")
-        console.print(f"  mmn twitter reply -f {csv_path}" + (" --headless" if headless else ""))
+        console.print(
+            f"  mmn twitter reply -f {csv_path}" + (" --headless" if headless else "")
+        )
 
     asyncio.run(_run())
 
@@ -570,9 +594,13 @@ def reply_cmd(
         else:
             prev = _quiet_loggers()
             try:
-                with Live(console=console, refresh_per_second=8, transient=False) as live:
+                with Live(
+                    console=console, refresh_per_second=8, transient=False
+                ) as live:
                     progress = _RichProgress(live)
-                    return await orchestrator.reply_from_list(replies, progress=progress)
+                    return await orchestrator.reply_from_list(
+                        replies, progress=progress
+                    )
             finally:
                 _restore_loggers(prev)
 
@@ -599,7 +627,9 @@ def discover(
             return
         typer.echo(f"\nDiscovered {len(posts)} posts:\n")
         for i, post in enumerate(posts, start=1):
-            typer.echo(f"  {i}. @{post.author_handle} (engagement: {post.engagement_score})")
+            typer.echo(
+                f"  {i}. @{post.author_handle} (engagement: {post.engagement_score})"
+            )
             typer.echo(f"     {post.post_url}")
             typer.echo(f"     {post.post_text[:120]}...")
             typer.echo()
@@ -648,7 +678,9 @@ def collect(
 
         async with browser:
             if not await browser.is_logged_in():
-                console.print("[red]Not logged in. Run `mmn twitter login` first.[/red]")
+                console.print(
+                    "[red]Not logged in. Run `mmn twitter login` first.[/red]"
+                )
                 return
 
             tracker = PerformanceTracker(
@@ -657,7 +689,9 @@ def collect(
                 settings.top_examples_path,
             )
 
-            with console.status("[bold cyan]Collecting top-performing examples...[/bold cyan]"):
+            with console.status(
+                "[bold cyan]Collecting top-performing examples...[/bold cyan]"
+            ):
                 cache = await tracker.collect()
 
             console.print()
@@ -676,9 +710,9 @@ def collect(
                 tbl.add_column("RTs", justify="right", width=6)
                 tbl.add_column("Parent", max_width=40)
                 tbl.add_column("Our Reply", max_width=50)
-                for r in sorted(cache.replies, key=lambda x: x.likes + x.retweets, reverse=True)[
-                    :10
-                ]:
+                for r in sorted(
+                    cache.replies, key=lambda x: x.likes + x.retweets, reverse=True
+                )[:10]:
                     tbl.add_row(
                         str(r.likes),
                         str(r.retweets),
@@ -692,7 +726,9 @@ def collect(
                 tbl.add_column("Likes", justify="right", width=6)
                 tbl.add_column("RTs", justify="right", width=6)
                 tbl.add_column("Text", max_width=60)
-                for p in sorted(cache.posts, key=lambda x: x.likes + x.retweets, reverse=True)[:10]:
+                for p in sorted(
+                    cache.posts, key=lambda x: x.likes + x.retweets, reverse=True
+                )[:10]:
                     tbl.add_row(
                         str(p.likes),
                         str(p.retweets),
@@ -937,16 +973,22 @@ def all_cmd(
         else:
             prev = _quiet_loggers()
             try:
-                with Live(console=console, refresh_per_second=8, transient=False) as live:
+                with Live(
+                    console=console, refresh_per_second=8, transient=False
+                ) as live:
                     progress = _RichProgress(live)
                     replies = await orchestrator.generate_only(progress=progress)
                 if not replies:
                     console.print("[yellow]No replies generated.[/yellow]")
                     stats = EngagementStats()
                 else:
-                    with Live(console=console, refresh_per_second=8, transient=False) as live:
+                    with Live(
+                        console=console, refresh_per_second=8, transient=False
+                    ) as live:
                         progress = _RichProgress(live)
-                        stats = await orchestrator.reply_from_list(replies, progress=progress)
+                        stats = await orchestrator.reply_from_list(
+                            replies, progress=progress
+                        )
             finally:
                 _restore_loggers(prev)
 

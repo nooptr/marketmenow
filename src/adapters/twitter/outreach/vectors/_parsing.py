@@ -31,7 +31,11 @@ async def parse_tweet_article(
         time_el = article.locator("time").first  # type: ignore[attr-defined]
         link_el = time_el.locator("xpath=ancestor::a")
         href = await link_el.get_attribute("href", timeout=3_000)
-        post_url = f"https://x.com{href}" if href and not href.startswith("http") else (href or "")
+        post_url = (
+            f"https://x.com{href}"
+            if href and not href.startswith("http")
+            else (href or "")
+        )
     except Exception:
         return None
 

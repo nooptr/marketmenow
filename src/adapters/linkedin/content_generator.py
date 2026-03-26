@@ -108,7 +108,9 @@ class LinkedInContentGenerator:
         if isinstance(data, dict) and "posts" in data:
             data = data["posts"]
         if not isinstance(data, list):
-            raise ValueError(f"Expected JSON array from Gemini, got: {type(data).__name__}")
+            raise ValueError(
+                f"Expected JSON array from Gemini, got: {type(data).__name__}"
+            )
 
         posts = [GeneratedPost(**item) for item in data]
 

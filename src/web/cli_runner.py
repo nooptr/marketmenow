@@ -43,7 +43,9 @@ _PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], ProgressEvent]]
     ),
     # Generic "Generating" without counts
     (
-        re.compile(r"[Gg]enerating\s+(reply|comment|thread|reel|carousel|post)", re.IGNORECASE),
+        re.compile(
+            r"[Gg]enerating\s+(reply|comment|thread|reel|carousel|post)", re.IGNORECASE
+        ),
         lambda m: ProgressEvent(
             event_type="phase",
             message=m.group(0),
@@ -63,7 +65,9 @@ _PATTERNS: list[tuple[re.Pattern[str], Callable[[re.Match[str]], ProgressEvent]]
     ),
     # Generic posted
     (
-        re.compile(r"[Pp]osted?\s+(?:reply|comment|content|thread|successfully)", re.IGNORECASE),
+        re.compile(
+            r"[Pp]osted?\s+(?:reply|comment|content|thread|successfully)", re.IGNORECASE
+        ),
         lambda m: ProgressEvent(
             event_type="phase",
             message=m.group(0),
@@ -206,7 +210,9 @@ async def run_cli(
     )
 
     try:
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            proc.communicate(), timeout=timeout
+        )
     except TimeoutError:
         proc.kill()
         await proc.communicate()
@@ -220,7 +226,9 @@ async def run_cli(
     stderr = stderr_bytes.decode(errors="replace")
     exit_code = proc.returncode or 0
 
-    output_files = _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
+    output_files = (
+        _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
+    )
 
     logger.info(
         "Finished (exit=%d): %s | files=%s",
@@ -289,7 +297,10 @@ async def run_cli_streaming(
     full_cmd = [UV_BIN, "run", *command_parts]
     logger.info("Running (streaming): %s", " ".join(full_cmd))
     hub.publish(
-        item_id, ProgressEvent(event_type="phase", message="Starting: " + " ".join(command_parts))
+        item_id,
+        ProgressEvent(
+            event_type="phase", message="Starting: " + " ".join(command_parts)
+        ),
     )
 
     full_env = {**os.environ, **(env_overrides or {})} if env_overrides else None
@@ -324,9 +335,13 @@ async def run_cli_streaming(
         await proc.communicate()
         hub.publish(
             item_id,
-            ProgressEvent(event_type="error", message=f"Command timed out after {timeout}s"),
+            ProgressEvent(
+                event_type="error", message=f"Command timed out after {timeout}s"
+            ),
         )
-        return CliResult(exit_code=-1, stdout="", stderr=f"Command timed out after {timeout}s")
+        return CliResult(
+            exit_code=-1, stdout="", stderr=f"Command timed out after {timeout}s"
+        )
     except asyncio.CancelledError:
         proc.kill()
         await proc.communicate()
@@ -342,11 +357,14 @@ async def run_cli_streaming(
     stderr = "\n".join(stderr_lines)
     exit_code = proc.returncode or 0
 
-    output_files = _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
+    output_files = (
+        _find_output_files(stdout, stderr, output_dir) if exit_code == 0 else []
+    )
 
     if exit_code == 0:
         hub.publish(
-            item_id, ProgressEvent(event_type="done", message="Command completed successfully")
+            item_id,
+            ProgressEvent(event_type="done", message="Command completed successfully"),
         )
     else:
         hub.publish(
@@ -355,7 +373,10 @@ async def run_cli_streaming(
         )
 
     logger.info(
-        "Finished streaming (exit=%d): %s | files=%s", exit_code, " ".join(full_cmd), output_files
+        "Finished streaming (exit=%d): %s | files=%s",
+        exit_code,
+        " ".join(full_cmd),
+        output_files,
     )
 
     return CliResult(
@@ -386,8 +407,18 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                     "required": False,
                     "help": "Student assignment text",
                 },
-                {"name": "rubric", "type": "textarea", "required": False, "help": "Grading rubric"},
-                {"name": "caption", "type": "text", "required": False, "help": "Caption text"},
+                {
+                    "name": "rubric",
+                    "type": "textarea",
+                    "required": False,
+                    "help": "Grading rubric",
+                },
+                {
+                    "name": "caption",
+                    "type": "text",
+                    "required": False,
+                    "help": "Caption text",
+                },
                 {
                     "name": "hashtags",
                     "type": "text",
@@ -407,7 +438,12 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
             "label": "Instagram Carousel",
             "modality": "image",
             "params": [
-                {"name": "caption", "type": "text", "required": False, "help": "Caption text"},
+                {
+                    "name": "caption",
+                    "type": "text",
+                    "required": False,
+                    "help": "Caption text",
+                },
                 {
                     "name": "hashtags",
                     "type": "text",
@@ -434,7 +470,12 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                     "required": False,
                     "help": "Comma-separated hashtags",
                 },
-                {"name": "image", "type": "text", "required": False, "help": "Path to image file"},
+                {
+                    "name": "image",
+                    "type": "text",
+                    "required": False,
+                    "help": "Path to image file",
+                },
             ],
         },
     },
@@ -637,7 +678,12 @@ PLATFORM_META: dict[str, dict[str, dict]] = {
                     "required": True,
                     "help": "Path to recipients CSV",
                 },
-                {"name": "subject", "type": "text", "required": True, "help": "Email subject line"},
+                {
+                    "name": "subject",
+                    "type": "text",
+                    "required": True,
+                    "help": "Email subject line",
+                },
             ],
         },
     },
@@ -840,7 +886,14 @@ def _build_twitter_thread_publish(params: dict, _output_dir: str) -> list[str]:
 
 def _build_twitter_all_generate(params: dict, output_dir: str) -> list[str]:
     """Preview: generate replies to CSV so the user can review targets."""
-    cmd = ["mmn", "twitter", "engage", "-o", os.path.join(output_dir, "replies.csv"), "--headless"]
+    cmd = [
+        "mmn",
+        "twitter",
+        "engage",
+        "-o",
+        os.path.join(output_dir, "replies.csv"),
+        "--headless",
+    ]
     if params.get("max_replies"):
         cmd.extend(["--max-replies", str(params["max_replies"])])
     return cmd
@@ -940,9 +993,7 @@ _YT_TITLE_VARIANTS = [
     "POV: AI is now your teacher #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
 ]
 
-_YT_DEFAULT_DESCRIPTION = (
-    "AI-generated content from MarketMeNow.\n\n#shorts #shortvideo #ai #contentcreation #marketing"
-)
+_YT_DEFAULT_DESCRIPTION = "AI-generated content from MarketMeNow.\n\n#shorts #shortvideo #ai #contentcreation #marketing"
 
 
 def _pick_yt_title() -> str:
@@ -990,7 +1041,9 @@ _TT_CAPTION_VARIANTS = [
     "Can our AI handle your homework? gradeasy.ai",
 ]
 
-_TT_DEFAULT_HASHTAGS = "AIGrading,EdTech,Gradeasy,TeacherHack,fyp,SchoolHacks,AI,gradeasy"
+_TT_DEFAULT_HASHTAGS = (
+    "AIGrading,EdTech,Gradeasy,TeacherHack,fyp,SchoolHacks,AI,gradeasy"
+)
 
 
 def _pick_tt_caption() -> str:
@@ -1056,7 +1109,10 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
     },
     "facebook": {
         "post": (_build_facebook_generate, _build_facebook_publish),
-        "page_post": (_build_facebook_page_post_generate, _build_facebook_page_post_publish),
+        "page_post": (
+            _build_facebook_page_post_generate,
+            _build_facebook_page_post_publish,
+        ),
     },
     "twitter": {
         "all": (_build_twitter_all_generate, _build_twitter_all_publish),
@@ -1080,7 +1136,9 @@ BUILDERS: dict[str, dict[str, tuple[CommandBuilder, CommandBuilder]]] = {
 }
 
 
-def get_builders(platform: str, command_type: str) -> tuple[CommandBuilder, CommandBuilder] | None:
+def get_builders(
+    platform: str, command_type: str
+) -> tuple[CommandBuilder, CommandBuilder] | None:
     return BUILDERS.get(platform, {}).get(command_type)
 
 

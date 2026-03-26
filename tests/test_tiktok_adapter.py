@@ -202,7 +202,11 @@ class TestTikTokAdapter:
             media_assets=[video.video],
             extra={
                 "_media_refs": [
-                    MediaRef(platform="tiktok", remote_id="", remote_url="/nonexistent/video.mp4")
+                    MediaRef(
+                        platform="tiktok",
+                        remote_id="",
+                        remote_url="/nonexistent/video.mp4",
+                    )
                 ]
             },
         )

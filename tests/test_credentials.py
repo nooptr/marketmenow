@@ -33,7 +33,9 @@ class TestLoadEmpty:
 class TestSaveAndLoad:
     def test_save_then_load(self) -> None:
         save_credential_set(
-            "reddit-main", "reddit", {"REDDIT_SESSION": "abc", "REDDIT_USERNAME": "user1"}
+            "reddit-main",
+            "reddit",
+            {"REDDIT_SESSION": "abc", "REDDIT_USERNAME": "user1"},
         )
         sets = load_credential_sets()
         assert "reddit-main" in sets
@@ -77,7 +79,9 @@ class TestGetPlatformSets:
 
 class TestGetEnvOverrides:
     def test_returns_env_dict(self) -> None:
-        save_credential_set("test", "reddit", {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"})
+        save_credential_set(
+            "test", "reddit", {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"}
+        )
         overrides = get_env_overrides("test")
         assert overrides == {"REDDIT_SESSION": "cookie", "REDDIT_USERNAME": "me"}
 

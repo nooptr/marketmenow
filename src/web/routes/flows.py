@@ -22,7 +22,12 @@ logger = logging.getLogger(__name__)
 
 _background_tasks: set[asyncio.Task] = set()
 
-_CUSTOM_DIR = Path(__file__).resolve().parent.parent.parent / "marketmenow" / "workflows" / "custom"
+_CUSTOM_DIR = (
+    Path(__file__).resolve().parent.parent.parent
+    / "marketmenow"
+    / "workflows"
+    / "custom"
+)
 
 
 def _get_registry():  # type: ignore[no-untyped-def]
@@ -45,7 +50,9 @@ def _workflows_as_dicts() -> list[dict]:
             {
                 "name": wf.name,
                 "description": wf.description,
-                "steps": [{"name": s.name, "description": s.description} for s in wf.steps],
+                "steps": [
+                    {"name": s.name, "description": s.description} for s in wf.steps
+                ],
                 "params": [
                     {
                         "name": p.name,
@@ -141,7 +148,9 @@ async def _run_workflow(
     try:
         hub.publish(
             item_id,
-            ProgressEvent(event_type="phase", message="Workflow started", phase="generation"),
+            ProgressEvent(
+                event_type="phase", message="Workflow started", phase="generation"
+            ),
         )
         result = await run_cli_streaming(
             cmd,
@@ -151,7 +160,10 @@ async def _run_workflow(
         )
 
         if result.exit_code == 0:
-            preview: dict = {"stdout": result.stdout[:3000], "files": result.output_files}
+            preview: dict = {
+                "stdout": result.stdout[:3000],
+                "files": result.output_files,
+            }
             primary = result.output_files[0] if result.output_files else None
             await db.update_content_status(
                 item_id,
@@ -159,15 +171,22 @@ async def _run_workflow(
                 preview_data=preview,
                 output_path=primary,
             )
-            hub.publish(item_id, ProgressEvent(event_type="done", message="Workflow completed"))
+            hub.publish(
+                item_id, ProgressEvent(event_type="done", message="Workflow completed")
+            )
         else:
             await db.update_content_status(
                 item_id,
                 "failed",
                 error_message=result.stderr[:1000] or f"Exit code {result.exit_code}",
-                preview_data={"stdout": result.stdout[:3000], "stderr": result.stderr[:3000]},
+                preview_data={
+                    "stdout": result.stdout[:3000],
+                    "stderr": result.stderr[:3000],
+                },
             )
-            hub.publish(item_id, ProgressEvent(event_type="error", message="Workflow failed"))
+            hub.publish(
+                item_id, ProgressEvent(event_type="error", message="Workflow failed")
+            )
     except Exception as exc:
         await db.update_content_status(item_id, "failed", error_message=str(exc)[:1000])
         hub.publish(item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))

@@ -17,7 +17,8 @@ workflow = Workflow(
         ),
         ParamDef(name="to", help="Single recipient email address"),
         ParamDef(
-            name="vars", help="Template variables as key=value (comma-separated, used with --to)"
+            name="vars",
+            help="Template variables as key=value (comma-separated, used with --to)",
         ),
         ParamDef(
             name="csv_file",
@@ -25,7 +26,11 @@ workflow = Workflow(
             type=ParamType.PATH,
             help="CSV file with contacts (must have 'email' column)",
         ),
-        ParamDef(name="subject", short="-s", help="Email subject (supports Jinja2 placeholders)"),
+        ParamDef(
+            name="subject",
+            short="-s",
+            help="Email subject (supports Jinja2 placeholders)",
+        ),
         ParamDef(name="range", short="-r", help="Row range as START-END (0-indexed)"),
         ParamDef(
             name="paraphrase",
@@ -34,7 +39,10 @@ workflow = Workflow(
             help="Rewrite each email uniquely via Gemini",
         ),
         ParamDef(
-            name="dry_run", type=ParamType.BOOL, default=False, help="Render emails without sending"
+            name="dry_run",
+            type=ParamType.BOOL,
+            default=False,
+            help="Render emails without sending",
         ),
     ),
 )

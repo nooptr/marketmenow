@@ -34,7 +34,9 @@ def youtube_auth() -> None:
 
     settings = _get_settings()
     if not settings.youtube_client_id or not settings.youtube_client_secret:
-        console.print("[red]Set YOUTUBE_CLIENT_ID and YOUTUBE_CLIENT_SECRET in .env first.[/red]")
+        console.print(
+            "[red]Set YOUTUBE_CLIENT_ID and YOUTUBE_CLIENT_SECRET in .env first.[/red]"
+        )
         raise typer.Exit(code=1)
 
     client_config = {
@@ -52,7 +54,9 @@ def youtube_auth() -> None:
         scopes=["https://www.googleapis.com/auth/youtube.upload"],
     )
 
-    console.print("[bold blue]Opening browser for YouTube OAuth2 consent...[/bold blue]")
+    console.print(
+        "[bold blue]Opening browser for YouTube OAuth2 consent...[/bold blue]"
+    )
     creds = flow.run_local_server(port=8090, prompt="consent")
 
     console.print()
@@ -67,7 +71,9 @@ def youtube_upload(
     video: Annotated[Path, typer.Argument(help="Path to the video file (MP4)")],
     title: Annotated[str, typer.Option(help="Video title")] = "",
     description: Annotated[str, typer.Option(help="Video description")] = "",
-    hashtags: Annotated[str | None, typer.Option(help="Comma-separated hashtags")] = None,
+    hashtags: Annotated[
+        str | None, typer.Option(help="Comma-separated hashtags")
+    ] = None,
     privacy: Annotated[
         str,
         typer.Option(help="Privacy status: public, unlisted, or private"),
@@ -75,7 +81,9 @@ def youtube_upload(
     category: Annotated[str, typer.Option(help="YouTube category ID")] = "",
 ) -> None:
     """Upload a local video as a YouTube Short."""
-    asyncio.run(_youtube_upload_async(video, title, description, hashtags, privacy, category))
+    asyncio.run(
+        _youtube_upload_async(video, title, description, hashtags, privacy, category)
+    )
 
 
 async def _youtube_upload_async(
@@ -90,7 +98,9 @@ async def _youtube_upload_async(
 
     settings = _get_settings()
     if not settings.youtube_refresh_token:
-        console.print("[red]YOUTUBE_REFRESH_TOKEN not set. Run `mmn youtube auth` first.[/red]")
+        console.print(
+            "[red]YOUTUBE_REFRESH_TOKEN not set. Run `mmn youtube auth` first.[/red]"
+        )
         raise typer.Exit(code=1)
 
     if not video.exists():

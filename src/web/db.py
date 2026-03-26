@@ -89,7 +89,9 @@ async def init_pool(*, retries: int = 5, delay: float = 2.0) -> asyncpg.Pool:
     ssl_ctx: ssl.SSLContext | str = "require"
     if "sslmode=" in dsn:
         dsn_base = dsn.split("?")[0]
-        params = [p for p in dsn.split("?", 1)[1].split("&") if not p.startswith("sslmode=")]
+        params = [
+            p for p in dsn.split("?", 1)[1].split("&") if not p.startswith("sslmode=")
+        ]
         dsn = dsn_base + ("?" + "&".join(params) if params else "")
 
     for attempt in range(1, retries + 1):
@@ -243,7 +245,9 @@ async def list_content_items(
     )
 
 
-async def enqueue_content(content_item_id: UUID, platform: str, priority: int = 0) -> UUID:
+async def enqueue_content(
+    content_item_id: UUID, platform: str, priority: int = 0
+) -> UUID:
     row = await pool().fetchrow(
         """
         INSERT INTO platform_queues (content_item_id, platform, priority)
@@ -371,8 +375,7 @@ async def last_post_time(platform: str) -> datetime | None:
 
 async def get_platform_activity_stats() -> list[asyncpg.Record]:
     """Per-platform activity summary: posts today, last post, rate limits."""
-    return await pool().fetch(
-        """
+    return await pool().fetch("""
         SELECT
             rl.platform,
             rl.max_per_hour,
@@ -397,8 +400,7 @@ async def get_platform_activity_stats() -> list[asyncpg.Record]:
             WHERE platform = rl.platform AND success = true
         ) latest ON true
         ORDER BY rl.platform
-        """
-    )
+        """)
 
 
 async def list_queue_items(platform: str | None = None) -> list[asyncpg.Record]:
@@ -413,14 +415,12 @@ async def list_queue_items(platform: str | None = None) -> list[asyncpg.Record]:
             """,
             platform,
         )
-    return await pool().fetch(
-        """
+    return await pool().fetch("""
         SELECT pq.*, ci.title, ci.modality, ci.platform AS ci_platform
         FROM platform_queues pq
         JOIN content_items ci ON ci.id = pq.content_item_id
         ORDER BY pq.platform, pq.status ASC, pq.priority DESC, pq.created_at ASC
-        """
-    )
+        """)
 
 
 async def get_post_log(limit: int = 50) -> list[asyncpg.Record]:
@@ -444,7 +444,9 @@ async def clear_all_content() -> int:
     return count
 
 
-async def list_history_items(platform: str | None = None, limit: int = 100) -> list[asyncpg.Record]:
+async def list_history_items(
+    platform: str | None = None, limit: int = 100
+) -> list[asyncpg.Record]:
     """Return completed content items (posted or failed) ordered by most recent."""
     clauses = ["status IN ('posted', 'failed')"]
     params: list[Any] = []

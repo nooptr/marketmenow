@@ -36,7 +36,9 @@ class CarouselExporter:
         if len(frame_ids) < 2:
             raise ValueError("A carousel requires at least 2 frames")
 
-        exports = await self._figma.export_frames(file_key, frame_ids, fmt=fmt, scale=scale)
+        exports = await self._figma.export_frames(
+            file_key, frame_ids, fmt=fmt, scale=scale
+        )
 
         images: list[MediaAsset] = []
         for idx, export in enumerate(exports):
@@ -51,7 +53,9 @@ class CarouselExporter:
             )
 
         if len(images) < 2:
-            raise ValueError(f"Only {len(images)} images exported successfully; need at least 2")
+            raise ValueError(
+                f"Only {len(images)} images exported successfully; need at least 2"
+            )
 
         return ImagePost(
             images=images,

@@ -74,7 +74,9 @@ def mock_db(monkeypatch: pytest.MonkeyPatch):
         "insert_content_item",
         AsyncMock(return_value=sample_item["id"]),
     )
-    monkeypatch.setattr(db_module, "update_content_status", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        db_module, "update_content_status", AsyncMock(return_value=None)
+    )
     monkeypatch.setattr(db_module, "update_progress_data", AsyncMock(return_value=None))
     monkeypatch.setattr(
         db_module,
@@ -181,13 +183,17 @@ class TestProjectPage:
 
 
 class TestProjectSelect:
-    def test_select_sets_cookie(self, client: TestClient, tmp_path, monkeypatch) -> None:
+    def test_select_sets_cookie(
+        self, client: TestClient, tmp_path, monkeypatch
+    ) -> None:
         monkeypatch.chdir(tmp_path)
         from marketmenow.core.project_manager import ProjectManager
         from marketmenow.models.project import BrandConfig
 
         pm = ProjectManager()
-        pm.create_project("test", BrandConfig(name="Test", url="https://t.io", tagline="t"))
+        pm.create_project(
+            "test", BrandConfig(name="Test", url="https://t.io", tagline="t")
+        )
 
         with patch("web.routes.project._get_pm", return_value=pm):
             resp = client.post(

@@ -54,7 +54,9 @@ class LinkedInAdapter:
                     success = await self._browser.create_text_post(commentary)
                 case ContentModality.IMAGE:
                     image_paths = [Path(a.uri) for a in content.media_assets]
-                    success = await self._browser.create_image_post(commentary, image_paths)
+                    success = await self._browser.create_image_post(
+                        commentary, image_paths
+                    )
                 case ContentModality.VIDEO:
                     if not content.media_assets:
                         return PublishResult(
@@ -63,7 +65,9 @@ class LinkedInAdapter:
                             error_message="No video asset provided.",
                         )
                     video_path = Path(content.media_assets[0].uri)
-                    success = await self._browser.create_video_post(commentary, video_path)
+                    success = await self._browser.create_video_post(
+                        commentary, video_path
+                    )
                 case ContentModality.DOCUMENT:
                     if not content.media_assets:
                         return PublishResult(
@@ -86,7 +90,9 @@ class LinkedInAdapter:
                             success=False,
                             error_message="No article URL provided.",
                         )
-                    full_text = f"{commentary}\n\n{article_url}" if commentary else article_url
+                    full_text = (
+                        f"{commentary}\n\n{article_url}" if commentary else article_url
+                    )
                     success = await self._browser.create_text_post(full_text)
                 case ContentModality.POLL:
                     question = str(content.extra.get("poll_question", ""))
@@ -115,7 +121,9 @@ class LinkedInAdapter:
                 published_at=datetime.now(UTC),
             )
         except Exception as exc:
-            logger.exception("LinkedIn publish failed for modality %s", content.modality)
+            logger.exception(
+                "LinkedIn publish failed for modality %s", content.modality
+            )
             return PublishResult(
                 platform="linkedin",
                 success=False,
@@ -125,7 +133,9 @@ class LinkedInAdapter:
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(
             platform="linkedin",
-            recipient_handle=(content.recipient_handles[0] if content.recipient_handles else ""),
+            recipient_handle=(
+                content.recipient_handles[0] if content.recipient_handles else ""
+            ),
             success=False,
             error_message="LinkedIn DMs are not supported in this adapter.",
         )

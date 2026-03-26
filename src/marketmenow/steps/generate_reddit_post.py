@@ -53,7 +53,9 @@ class GenerateRedditPostStep:
 
         creds = settings.google_application_credentials
         if creds and creds.exists():
-            os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve()))
+            os.environ.setdefault(
+                "GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve())
+            )
 
         if not settings.vertex_ai_project:
             raise WorkflowError("VERTEX_AI_PROJECT not set in .env")
@@ -64,7 +66,9 @@ class GenerateRedditPostStep:
             cfg = _load_campaign_config(str(config_path))
             ctx.console.print(f"  [dim]Loaded config from {config_path}[/dim]")
 
-        product_cfg = cfg.get("product", {}) if isinstance(cfg.get("product"), dict) else {}
+        product_cfg = (
+            cfg.get("product", {}) if isinstance(cfg.get("product"), dict) else {}
+        )
 
         product_name = str(
             ctx.get_param("product_name") or product_cfg.get("name", "")  # type: ignore[union-attr]
@@ -77,10 +81,14 @@ class GenerateRedditPostStep:
         product_description = str(
             ctx.get_param("product_description") or product_cfg.get("description", "")  # type: ignore[union-attr]
         )
-        post_type = str(ctx.get_param("post_type") or cfg.get("post_type", "update") or "update")
+        post_type = str(
+            ctx.get_param("post_type") or cfg.get("post_type", "update") or "update"
+        )
 
         if not product_name:
-            raise WorkflowError("product_name is required (via --product-name or config YAML)")
+            raise WorkflowError(
+                "product_name is required (via --product-name or config YAML)"
+            )
         if not product_description:
             raise WorkflowError(
                 "product_description is required (via --product-description or config YAML)"
@@ -96,7 +104,9 @@ class GenerateRedditPostStep:
             subreddits = []
 
         if not subreddits:
-            raise WorkflowError("No subreddits specified (via --subreddits or config YAML)")
+            raise WorkflowError(
+                "No subreddits specified (via --subreddits or config YAML)"
+            )
 
         extra_context = str(ctx.get_param("context") or cfg.get("context", "") or "")
 
@@ -108,9 +118,13 @@ class GenerateRedditPostStep:
                 f"\n\nSOURCE MATERIAL (adapt this into a Reddit post, "
                 f'don\'t copy verbatim):\n"""\n{brief}\n"""'
             )
-            extra_context = extra_context + brief_block if extra_context else brief_block.strip()
+            extra_context = (
+                extra_context + brief_block if extra_context else brief_block.strip()
+            )
 
-        posting_cfg = cfg.get("posting", {}) if isinstance(cfg.get("posting"), dict) else {}
+        posting_cfg = (
+            cfg.get("posting", {}) if isinstance(cfg.get("posting"), dict) else {}
+        )
         if posting_cfg:
             if "min_delay" not in ctx.params and "min_delay" in posting_cfg:
                 ctx.params["min_delay"] = int(posting_cfg["min_delay"])  # type: ignore[arg-type]

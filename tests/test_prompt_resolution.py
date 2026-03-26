@@ -12,7 +12,9 @@ class TestPromptResolutionWithProject:
 
         pm = ProjectManager(tmp_path / "projects")
         pm.create_project("app", BrandConfig(name="App", url="app.io", tagline="t"))
-        prompt_path = pm.project_dir("app") / "prompts" / "twitter" / "reply_generation.yaml"
+        prompt_path = (
+            pm.project_dir("app") / "prompts" / "twitter" / "reply_generation.yaml"
+        )
         prompt_path.write_text(yaml.dump({"system": "project prompt", "user": "ask"}))
 
         from adapters.twitter.prompts import load_prompt

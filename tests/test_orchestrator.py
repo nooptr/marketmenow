@@ -15,7 +15,9 @@ from marketmenow.models.result import PublishResult
 from marketmenow.registry import AdapterRegistry, PlatformBundle
 
 
-def _target(platform: str, modality: ContentModality = ContentModality.TEXT_POST) -> CampaignTarget:
+def _target(
+    platform: str, modality: ContentModality = ContentModality.TEXT_POST
+) -> CampaignTarget:
     return CampaignTarget(platform=platform, modality=modality)
 
 
@@ -46,7 +48,9 @@ class TestRunCampaign:
             )
         )
         orch = Orchestrator(reg)
-        result = await orch.run_campaign(_campaign(_target("limited", ContentModality.POLL)))
+        result = await orch.run_campaign(
+            _campaign(_target("limited", ContentModality.POLL))
+        )
         assert len(result.results) == 0
         assert len(result.errors) == 1
         _, exc = result.errors[0]
@@ -54,7 +58,9 @@ class TestRunCampaign:
 
     async def test_mixed_supported_unsupported(self) -> None:
         reg = AdapterRegistry()
-        adapter = MockAdapter("partial", modalities=frozenset({ContentModality.TEXT_POST}))
+        adapter = MockAdapter(
+            "partial", modalities=frozenset({ContentModality.TEXT_POST})
+        )
         reg.register(
             PlatformBundle(
                 adapter=adapter,
@@ -93,7 +99,9 @@ class TestRunCampaign:
         result = await orch.run_campaign(campaign)
         assert result.campaign_id == campaign.id
 
-    async def test_multiple_targets_same_platform(self, registry: AdapterRegistry) -> None:
+    async def test_multiple_targets_same_platform(
+        self, registry: AdapterRegistry
+    ) -> None:
         orch = Orchestrator(registry)
         campaign = _campaign(
             _target("mock", ContentModality.TEXT_POST),

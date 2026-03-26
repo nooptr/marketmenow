@@ -40,12 +40,16 @@ class ScoreProspectsStep:
 
         scored: list[ScoredProspect] = []
         for i, profile in enumerate(profiles, start=1):
-            ctx.console.print(f"  [dim]Scoring {i}/{len(profiles)}:[/dim] @{profile.handle}")
+            ctx.console.print(
+                f"  [dim]Scoring {i}/{len(profiles)}:[/dim] @{profile.handle}"
+            )
             try:
                 result = await scorer.score(profile, customer_profile)
                 scored.append(result)
                 if result.disqualify_reason:
-                    ctx.console.print(f"    [red]Disqualified: {result.disqualify_reason}[/red]")
+                    ctx.console.print(
+                        f"    [red]Disqualified: {result.disqualify_reason}[/red]"
+                    )
                 else:
                     ctx.console.print(
                         f"    [green]Score: {result.total_score}/{result.max_score}[/green] — {result.dm_angle[:70]}"

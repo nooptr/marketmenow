@@ -65,7 +65,9 @@ async def regenerate_content(request: Request, item_id: UUID) -> HTMLResponse:
 
     await db.update_content_status(item_id, "generating", error_message="")
 
-    task = asyncio.create_task(_run_regeneration(item_id, generate_cmd, publish_cmd, output_dir))
+    task = asyncio.create_task(
+        _run_regeneration(item_id, generate_cmd, publish_cmd, output_dir)
+    )
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
@@ -94,9 +96,13 @@ async def _run_regeneration(
     try:
         hub.publish(
             item_id,
-            ProgressEvent(event_type="phase", message="Regeneration started", phase="generation"),
+            ProgressEvent(
+                event_type="phase", message="Regeneration started", phase="generation"
+            ),
         )
-        result = await run_cli_streaming(generate_cmd, item_id=item_id, output_dir=output_dir)
+        result = await run_cli_streaming(
+            generate_cmd, item_id=item_id, output_dir=output_dir
+        )
 
         if result.exit_code == 0:
             preview: dict = {
@@ -113,7 +119,8 @@ async def _run_regeneration(
             hub.publish(
                 item_id,
                 ProgressEvent(
-                    event_type="done", message="Regeneration complete — ready for review"
+                    event_type="done",
+                    message="Regeneration complete — ready for review",
                 ),
             )
         else:
@@ -121,9 +128,15 @@ async def _run_regeneration(
                 item_id,
                 "failed",
                 error_message=result.stderr[:1000] or f"Exit code {result.exit_code}",
-                preview_data={"stdout": result.stdout[:3000], "stderr": result.stderr[:3000]},
+                preview_data={
+                    "stdout": result.stdout[:3000],
+                    "stderr": result.stderr[:3000],
+                },
             )
-            hub.publish(item_id, ProgressEvent(event_type="error", message="Regeneration failed"))
+            hub.publish(
+                item_id,
+                ProgressEvent(event_type="error", message="Regeneration failed"),
+            )
     except Exception as exc:
         await db.update_content_status(item_id, "failed", error_message=str(exc)[:1000])
         hub.publish(item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))

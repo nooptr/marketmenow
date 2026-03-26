@@ -35,16 +35,16 @@ class TestMetaBuilderConsistency:
     def test_every_meta_entry_has_builders(self) -> None:
         for platform, commands in PLATFORM_META.items():
             for cmd_type in commands:
-                assert get_builders(platform, cmd_type) is not None, (
-                    f"PLATFORM_META has {platform}/{cmd_type} but BUILDERS does not"
-                )
+                assert (
+                    get_builders(platform, cmd_type) is not None
+                ), f"PLATFORM_META has {platform}/{cmd_type} but BUILDERS does not"
 
     def test_every_builder_has_meta(self) -> None:
         for platform, commands in BUILDERS.items():
             for cmd_type in commands:
-                assert get_meta(platform, cmd_type) is not None, (
-                    f"BUILDERS has {platform}/{cmd_type} but PLATFORM_META does not"
-                )
+                assert (
+                    get_meta(platform, cmd_type) is not None
+                ), f"BUILDERS has {platform}/{cmd_type} but PLATFORM_META does not"
 
     def test_get_builders_unknown_returns_none(self) -> None:
         assert get_builders("ghost", "nope") is None
@@ -193,7 +193,9 @@ class TestRedditBuilders:
         assert "milestone" in cmd
 
     def test_launch_generate_with_brief(self) -> None:
-        cmd = _build_reddit_launch_generate({"brief": "We shipped dark mode"}, "/tmp/out")
+        cmd = _build_reddit_launch_generate(
+            {"brief": "We shipped dark mode"}, "/tmp/out"
+        )
         assert "--brief" in cmd
         assert "We shipped dark mode" in cmd
 

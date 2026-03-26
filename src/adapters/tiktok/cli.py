@@ -36,8 +36,12 @@ def _get_settings() -> TikTokSettings:
 
 @app.command("login")
 def tiktok_login(
-    cookies: bool = typer.Option(False, "--cookies", help="Inject sessionid cookie from .env"),
-    force: bool = typer.Option(False, "--force", help="Skip session check and log in fresh"),
+    cookies: bool = typer.Option(
+        False, "--cookies", help="Inject sessionid cookie from .env"
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Skip session check and log in fresh"
+    ),
 ) -> None:
     """Log in to TikTok via browser for cookie-based posting.
 
@@ -97,7 +101,9 @@ def tiktok_auth() -> None:
     """
     settings = _get_settings()
     if not settings.tiktok_client_key or not settings.tiktok_client_secret:
-        console.print("[red]Set TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in .env first.[/red]")
+        console.print(
+            "[red]Set TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in .env first.[/red]"
+        )
         raise typer.Exit(code=1)
 
     state = secrets.token_urlsafe(32)
@@ -193,7 +199,9 @@ def tiktok_auth() -> None:
 def tiktok_upload(
     video: Annotated[Path, typer.Argument(help="Path to the video file (MP4)")],
     title: Annotated[str, typer.Option(help="Video caption/title")] = "",
-    hashtags: Annotated[str | None, typer.Option(help="Comma-separated hashtags")] = None,
+    hashtags: Annotated[
+        str | None, typer.Option(help="Comma-separated hashtags")
+    ] = None,
     privacy: Annotated[
         str,
         typer.Option(

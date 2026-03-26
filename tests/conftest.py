@@ -66,7 +66,9 @@ class MockAdapter:
 
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         self.dm_calls.append(content)
-        handle = content.recipient_handles[0] if content.recipient_handles else "unknown"
+        handle = (
+            content.recipient_handles[0] if content.recipient_handles else "unknown"
+        )
         return SendResult(
             platform=self._name,
             recipient_handle=handle,

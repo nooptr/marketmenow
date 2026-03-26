@@ -107,7 +107,9 @@ class YouTubeAdapter:
     async def send_dm(self, content: NormalisedContent) -> SendResult:
         return SendResult(
             platform="youtube",
-            recipient_handle=content.recipient_handles[0] if content.recipient_handles else "",
+            recipient_handle=(
+                content.recipient_handles[0] if content.recipient_handles else ""
+            ),
             success=False,
             error_message="YouTube does not support direct messages",
         )
@@ -165,7 +167,9 @@ class YouTubeAdapter:
         )
 
         loop = asyncio.get_running_loop()
-        video_id = await loop.run_in_executor(None, partial(self._execute_upload, request))
+        video_id = await loop.run_in_executor(
+            None, partial(self._execute_upload, request)
+        )
         service.close()
         return video_id
 
@@ -184,7 +188,9 @@ class YouTubeAdapter:
                 if retries >= _MAX_RETRIES:
                     raise
                 logger.warning(
-                    "Upload chunk failed (retry %d/%d), retrying...", retries, _MAX_RETRIES
+                    "Upload chunk failed (retry %d/%d), retrying...",
+                    retries,
+                    _MAX_RETRIES,
                 )
                 response = None
 

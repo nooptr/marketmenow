@@ -132,9 +132,9 @@ class TestHiddenAdapterCommands:
             "reel",
             "carousel",
         ):
-            assert name not in result.output.lower().split(), (
-                f"'{name}' should be hidden from --help but was found"
-            )
+            assert (
+                name not in result.output.lower().split()
+            ), f"'{name}' should be hidden from --help but was found"
 
     def test_reel_help_works(self) -> None:
         result = runner.invoke(app, ["reel", "--help"])

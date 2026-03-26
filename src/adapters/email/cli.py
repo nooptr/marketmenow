@@ -53,7 +53,9 @@ def _preview_in_browser(results: list[SendResult]) -> None:
     html = result.rendered_html.replace(
         "<body", f"<body>\n{subject_bar}\n<!-- original body -->", 1
     )
-    with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".html", delete=False, encoding="utf-8"
+    ) as f:
         f.write(html)
         tmp_path = f.name
     webbrowser.open(f"file://{tmp_path}")
@@ -70,7 +72,9 @@ def _ensure_vertex_credentials(settings: EmailSettings) -> None:
 def _parse_range(value: str) -> tuple[int, int]:
     m = _RANGE_RE.match(value.strip())
     if not m:
-        raise typer.BadParameter(f"Range must be START-END (e.g. 100-200), got: {value}")
+        raise typer.BadParameter(
+            f"Range must be START-END (e.g. 100-200), got: {value}"
+        )
     start, end = int(m.group(1)), int(m.group(2))
     if start >= end:
         raise typer.BadParameter(f"Start ({start}) must be less than end ({end})")
@@ -258,7 +262,9 @@ def send(
             vertex_project=settings.vertex_ai_project,
             vertex_location=settings.vertex_ai_location,
         )
-        console.print("[cyan]Paraphrase mode ON — each email will be uniquely rewritten[/cyan]")
+        console.print(
+            "[cyan]Paraphrase mode ON — each email will be uniquely rewritten[/cyan]"
+        )
 
     if dry_run:
         console.print("[yellow]DRY RUN — no emails will be sent[/yellow]")
@@ -272,7 +278,9 @@ def send(
             k, v = item.split("=", 1)
             template_vars[k.strip()] = v.strip()
 
-        console.print(f"Sending to [bold]{to}[/bold]  template [bold]{template.name}[/bold]")
+        console.print(
+            f"Sending to [bold]{to}[/bold]  template [bold]{template.name}[/bold]"
+        )
 
         async def _run_single() -> list[SendResult]:
             result = await send_single(
@@ -293,7 +301,9 @@ def send(
         return
 
     if not csv_file:
-        console.print("[red]Provide --to for a single email or -f/-r for batch sends.[/red]")
+        console.print(
+            "[red]Provide --to for a single email or -f/-r for batch sends.[/red]"
+        )
         raise typer.Exit(code=1)
     if not row_range:
         console.print("[red]-r/--range is required for batch sends.[/red]")

@@ -83,7 +83,8 @@ async def cancel_content(request: Request, item_id: UUID) -> HTMLResponse:
             item_id, "failed", error_message="Process was cancelled by user"
         )
         hub.publish(
-            item_id, ProgressEvent(event_type="error", message="Process was cancelled by user")
+            item_id,
+            ProgressEvent(event_type="error", message="Process was cancelled by user"),
         )
 
     item = await db.get_content_item(item_id)

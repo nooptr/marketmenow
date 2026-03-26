@@ -10,7 +10,9 @@ router = APIRouter(prefix="/queues", tags=["queues"])
 
 
 @router.get("", response_class=HTMLResponse)
-async def queues_page(request: Request, platform: str | None = Query(None)) -> HTMLResponse:
+async def queues_page(
+    request: Request, platform: str | None = Query(None)
+) -> HTMLResponse:
     rate_limits = await db.get_rate_limits()
     queue_items = await db.list_queue_items(platform=platform)
     post_log = await db.get_post_log(limit=30)
@@ -43,7 +45,9 @@ async def update_rate_limit(
     max_per_day: int = Form(...),
     min_interval_seconds: int = Form(...),
 ) -> HTMLResponse:
-    await db.update_rate_limit(platform, max_per_hour, max_per_day, min_interval_seconds)
+    await db.update_rate_limit(
+        platform, max_per_hour, max_per_day, min_interval_seconds
+    )
     rate_limits = await db.get_rate_limits()
     queue_items = await db.list_queue_items()
 

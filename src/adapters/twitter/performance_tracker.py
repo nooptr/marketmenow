@@ -121,7 +121,9 @@ class PerformanceTracker:
         try:
             embeddings = await store.embed_texts(all_texts)
         except Exception:
-            logger.warning("Embedding call failed, saving without embeddings", exc_info=True)
+            logger.warning(
+                "Embedding call failed, saving without embeddings", exc_info=True
+            )
             return posts, replies
 
         n_posts = len(posts)

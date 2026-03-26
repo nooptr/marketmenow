@@ -24,7 +24,9 @@ class GenerateThreadStep:
 
         creds = settings.google_application_credentials
         if creds and creds.exists():
-            os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve()))
+            os.environ.setdefault(
+                "GOOGLE_APPLICATION_CREDENTIALS", str(creds.resolve())
+            )
 
         generator = ThreadGenerator(
             gemini_model=settings.gemini_model,
@@ -45,7 +47,11 @@ class GenerateThreadStep:
         from rich.panel import Panel
 
         ctx.console.print(
-            Panel(f"[bold]{generated.topic}[/bold]", title="Thread Topic", border_style="cyan")
+            Panel(
+                f"[bold]{generated.topic}[/bold]",
+                title="Thread Topic",
+                border_style="cyan",
+            )
         )
         for tweet in generated.tweets:
             label = ""

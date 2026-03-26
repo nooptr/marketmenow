@@ -31,11 +31,15 @@ logger = logging.getLogger(__name__)
 VectorFactory = Callable[[StealthBrowser, DiscoveryVectorConfig], DiscoveryVector]
 
 _VECTOR_FACTORIES: dict[str, VectorFactory] = {
-    "pain_search": lambda browser, cfg: PainSignalSearch(browser, cfg.entries, cfg.max_per_entry),
+    "pain_search": lambda browser, cfg: PainSignalSearch(
+        browser, cfg.entries, cfg.max_per_entry
+    ),
     "conversation_mining": lambda browser, cfg: ConversationMining(
         browser, cfg.entries, cfg.max_per_entry
     ),
-    "hashtag_scan": lambda browser, cfg: HashtagScan(browser, cfg.entries, cfg.max_per_entry),
+    "hashtag_scan": lambda browser, cfg: HashtagScan(
+        browser, cfg.entries, cfg.max_per_entry
+    ),
 }
 
 
@@ -195,7 +199,9 @@ class TwitterOutreachOrchestrator:
         for term in icp.bio_blocklist:
             if term.lower() in bio_lower:
                 return f"blocklist hit: '{term}'"
-        if icp.bio_require_any and not any(kw.lower() in bio_lower for kw in icp.bio_require_any):
+        if icp.bio_require_any and not any(
+            kw.lower() in bio_lower for kw in icp.bio_require_any
+        ):
             return "no required keyword found in bio"
         return ""
 
@@ -209,14 +215,21 @@ class TwitterOutreachOrchestrator:
         results: list[OutreachSendResult] = []
 
         for i, msg in enumerate(messages):
-            logger.info("Sending DM %d/%d to @%s ...", i + 1, len(messages), msg.recipient_handle)
+            logger.info(
+                "Sending DM %d/%d to @%s ...",
+                i + 1,
+                len(messages),
+                msg.recipient_handle,
+            )
             result = await sender.send(msg.recipient_handle, msg.message_text)
             results.append(result)
             if result.success:
                 logger.info("  DM to @%s: sent successfully", msg.recipient_handle)
             else:
                 logger.warning(
-                    "  DM to @%s: FAILED — %s", msg.recipient_handle, result.error_message
+                    "  DM to @%s: FAILED — %s",
+                    msg.recipient_handle,
+                    result.error_message,
                 )
 
             self._history.record(
@@ -227,7 +240,9 @@ class TwitterOutreachOrchestrator:
                 success=result.success,
             )
 
-            if not result.success and self._looks_like_captcha(result.error_message or ""):
+            if not result.success and self._looks_like_captcha(
+                result.error_message or ""
+            ):
                 logger.error("CAPTCHA/unusual activity detected, halting sends")
                 break
 

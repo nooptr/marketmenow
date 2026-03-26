@@ -169,7 +169,9 @@ def _phase_twitter_targets(
     if not typer.confirm("Set up Twitter targets?", default=True):
         return False
 
-    console.print("  Influencer handles (one per line, prefix with @, blank to finish):")
+    console.print(
+        "  Influencer handles (one per line, prefix with @, blank to finish):"
+    )
     influencers = _collect_lines(console, "@handle")
 
     console.print("  Hashtags (one per line, prefix with #, blank to finish):")
@@ -204,7 +206,9 @@ def _phase_reddit_targets(
     subreddits = _collect_lines(console, "r/subreddit")
 
     if keywords:
-        console.print(f"  [dim]Suggested queries from keywords: {', '.join(keywords)}[/dim]")
+        console.print(
+            f"  [dim]Suggested queries from keywords: {', '.join(keywords)}[/dim]"
+        )
     console.print("  Search queries (one per line, blank to finish):")
     queries = _collect_lines(console, "Query")
 
@@ -237,7 +241,9 @@ def _phase_outreach(
         crit_name = typer.prompt("  Criterion name")
         crit_desc = typer.prompt("  Criterion description")
         crit_max = typer.prompt("  Max points", default="10")
-        rubric.append({"name": crit_name, "description": crit_desc, "max_points": int(crit_max)})
+        rubric.append(
+            {"name": crit_name, "description": crit_desc, "max_points": int(crit_max)}
+        )
         if not typer.confirm("  Add another criterion?", default=False):
             break
 
@@ -250,7 +256,9 @@ def _phase_outreach(
             console.print(f"    • {dv['query']}")
         typer.confirm("  Use these discovery vectors?", default=True)
 
-    messaging_tone = typer.prompt("  Messaging tone", default="friendly and professional")
+    messaging_tone = typer.prompt(
+        "  Messaging tone", default="friendly and professional"
+    )
     max_messages = typer.prompt("  Max messages per session", default="10")
     max_msg_len = typer.prompt("  Max message length (chars)", default="280")
 
@@ -261,7 +269,9 @@ def _phase_outreach(
         "min_score": int(min_score_raw),
     }
 
-    content = generate_outreach_campaign(brand, customer, rubric, discovery_vectors, messaging)
+    content = generate_outreach_campaign(
+        brand, customer, rubric, discovery_vectors, messaging
+    )
     path = pm.save_file(slug, "campaigns", "twitter-outreach.yaml", content=content)
     files.append(path)
     console.print(f"  [green]✓[/green] Saved {path}")
@@ -288,7 +298,10 @@ def _phase_prompts(
     generators: dict[str, tuple[str, object]] = {
         "twitter": ("prompts/twitter/persona.yaml", generate_twitter_prompt),
         "reddit": ("prompts/reddit/persona.yaml", generate_reddit_prompt),
-        "instagram": ("prompts/instagram/script_generation.yaml", generate_instagram_prompt),
+        "instagram": (
+            "prompts/instagram/script_generation.yaml",
+            generate_instagram_prompt,
+        ),
     }
 
     created: list[str] = []
@@ -331,15 +344,23 @@ def _phase_reel_templates(
     console.print(f"  [green]✓[/green] Saved meta-prompt to {meta_path}")
 
     if not typer.confirm("Set up a reel template?", default=True):
-        console.print("  [dim]You can use the meta-prompt later to create templates.[/dim]")
+        console.print(
+            "  [dim]You can use the meta-prompt later to create templates.[/dim]"
+        )
         return []
 
     console.print(f"  Open [bold]{meta_path}[/bold], fill in your concept,")
-    console.print("  then paste the result into ChatGPT/Claude to generate the YAML template.")
+    console.print(
+        "  then paste the result into ChatGPT/Claude to generate the YAML template."
+    )
 
     templates_created: list[str] = []
     while True:
-        typer.prompt("  Press Enter when ready to paste a template", default="", show_default=False)
+        typer.prompt(
+            "  Press Enter when ready to paste a template",
+            default="",
+            show_default=False,
+        )
 
         template_id = typer.prompt("  Template ID (e.g. 'product-demo')")
 
@@ -365,7 +386,9 @@ def _phase_reel_templates(
             else:
                 console.print("  [green]✓[/green] Template validated successfully")
         except Exception:
-            console.print("  [dim]Skipped validation (Instagram adapter not available)[/dim]")
+            console.print(
+                "  [dim]Skipped validation (Instagram adapter not available)[/dim]"
+            )
 
         if not typer.confirm("  Add another template?", default=False):
             break
@@ -395,7 +418,9 @@ def _phase_summary(
         f"[bold]Customer:[/bold] {result.target_customer.description}",
         f"[bold]Persona:[/bold] {result.persona.name}",
     ]
-    console.print(Panel("\n".join(summary_lines), title="Project Summary", style="green"))
+    console.print(
+        Panel("\n".join(summary_lines), title="Project Summary", style="green")
+    )
 
     categories: dict[str, list[Path]] = {
         "CORE": [],
@@ -506,7 +531,9 @@ def run_onboarding(
 
     # Phase 5 — Twitter targets
     if "twitter" in customer.platforms:
-        result.twitter_targets_created = _phase_twitter_targets(console, pm, slug, files)
+        result.twitter_targets_created = _phase_twitter_targets(
+            console, pm, slug, files
+        )
 
     # Phase 6 — Reddit targets
     if "reddit" in customer.platforms:
@@ -516,7 +543,9 @@ def run_onboarding(
 
     # Phase 7 — Outreach profile
     if "twitter" in customer.platforms:
-        result.outreach_profile_created = _phase_outreach(console, pm, slug, brand, customer, files)
+        result.outreach_profile_created = _phase_outreach(
+            console, pm, slug, brand, customer, files
+        )
 
     # Phase 8 — Platform prompts
     result.prompts_created = _phase_prompts(
@@ -525,11 +554,15 @@ def run_onboarding(
 
     # Phase 9 — Reel templates
     if "instagram" in customer.platforms:
-        result.reel_templates = _phase_reel_templates(console, pm, slug, brand, customer, files)
+        result.reel_templates = _phase_reel_templates(
+            console, pm, slug, brand, customer, files
+        )
 
     # Generation Config
     gen_config_content = generate_default_generation_config(customer.platforms)
-    gen_config_path = pm.save_file(slug, "generation_config.yaml", content=gen_config_content)
+    gen_config_path = pm.save_file(
+        slug, "generation_config.yaml", content=gen_config_content
+    )
     files.append(gen_config_path)
 
     # Phase 10 — Summary & activation

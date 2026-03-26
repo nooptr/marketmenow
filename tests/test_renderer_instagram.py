@@ -43,7 +43,9 @@ class TestInstagramRenderer:
         assert total_len + len(hashtag_str) + 2 <= 2200
 
     async def test_image_media_capped_at_10(self) -> None:
-        assets = [MediaAsset(uri=f"img{i}.png", mime_type="image/png") for i in range(15)]
+        assets = [
+            MediaAsset(uri=f"img{i}.png", mime_type="image/png") for i in range(15)
+        ]
         content = _normalised(
             ["carousel"],
             modality=ContentModality.IMAGE,
@@ -53,7 +55,9 @@ class TestInstagramRenderer:
         assert len(result.media_assets) == 10
 
     async def test_video_not_capped(self) -> None:
-        assets = [MediaAsset(uri=f"vid{i}.mp4", mime_type="video/mp4") for i in range(15)]
+        assets = [
+            MediaAsset(uri=f"vid{i}.mp4", mime_type="video/mp4") for i in range(15)
+        ]
         content = _normalised(
             ["multi"],
             modality=ContentModality.VIDEO,

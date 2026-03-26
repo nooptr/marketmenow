@@ -55,7 +55,9 @@ def _load_campaign_profiles() -> list[dict[str, object]]:
                         "product_name": data.get("product", {}).get("name", "Untitled"),
                         "product_tagline": data.get("product", {}).get("tagline", ""),
                         "min_score": data.get("ideal_customer", {}).get("min_score", 0),
-                        "max_messages": data.get("messaging", {}).get("max_messages", 10),
+                        "max_messages": data.get("messaging", {}).get(
+                            "max_messages", 10
+                        ),
                         "vectors": len(data.get("discovery", [])),
                     }
                 )
@@ -76,7 +78,9 @@ def _get_outreach_workflows() -> list[dict[str, object]]:
                 {
                     "name": wf.name,
                     "description": wf.description,
-                    "steps": [{"name": s.name, "description": s.description} for s in wf.steps],
+                    "steps": [
+                        {"name": s.name, "description": s.description} for s in wf.steps
+                    ],
                     "params": [
                         {
                             "name": p.name,
@@ -103,7 +107,9 @@ def _history_stats(contacted: dict[str, dict[str, object]]) -> dict[str, object]
 
     avg_score = 0.0
     scores = [
-        v.get("score", 0) for v in contacted.values() if isinstance(v.get("score"), int | float)
+        v.get("score", 0)
+        for v in contacted.values()
+        if isinstance(v.get("score"), int | float)
     ]
     if scores:
         avg_score = sum(scores) / len(scores)
@@ -118,7 +124,9 @@ def _history_stats(contacted: dict[str, dict[str, object]]) -> dict[str, object]
     }
 
 
-def _history_entries(contacted: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+def _history_entries(
+    contacted: dict[str, dict[str, object]],
+) -> list[dict[str, object]]:
     entries = []
     for key, val in contacted.items():
         platform, handle = key.split(":", 1) if ":" in key else ("unknown", key)
@@ -220,7 +228,9 @@ async def _run_outreach(
     try:
         hub.publish(
             item_id,
-            ProgressEvent(event_type="phase", message="Outreach started", phase="generation"),
+            ProgressEvent(
+                event_type="phase", message="Outreach started", phase="generation"
+            ),
         )
         result = await run_cli_streaming(
             cmd,
@@ -241,15 +251,22 @@ async def _run_outreach(
                 preview_data=preview,
                 output_path=primary,
             )
-            hub.publish(item_id, ProgressEvent(event_type="done", message="Outreach completed"))
+            hub.publish(
+                item_id, ProgressEvent(event_type="done", message="Outreach completed")
+            )
         else:
             await db.update_content_status(
                 item_id,
                 "failed",
                 error_message=result.stderr[:1000] or f"Exit code {result.exit_code}",
-                preview_data={"stdout": result.stdout[:3000], "stderr": result.stderr[:3000]},
+                preview_data={
+                    "stdout": result.stdout[:3000],
+                    "stderr": result.stderr[:3000],
+                },
             )
-            hub.publish(item_id, ProgressEvent(event_type="error", message="Outreach failed"))
+            hub.publish(
+                item_id, ProgressEvent(event_type="error", message="Outreach failed")
+            )
     except Exception as exc:
         await db.update_content_status(item_id, "failed", error_message=str(exc)[:1000])
         hub.publish(item_id, ProgressEvent(event_type="error", message=str(exc)[:200]))

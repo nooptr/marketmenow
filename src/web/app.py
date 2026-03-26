@@ -18,7 +18,9 @@ from web.deps import STATIC_DIR
 from web.events import hub
 from web.queue_worker import run_queue_loop
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s"
+)
 
 ws_logger = logging.getLogger("web.ws")
 

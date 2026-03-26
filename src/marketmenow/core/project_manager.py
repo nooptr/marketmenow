@@ -191,7 +191,9 @@ class ProjectManager:
 
     # ── reel template helpers ─────────────────────────────────────────
 
-    def save_reel_template(self, slug: str, template_id: str, yaml_content: str) -> Path:
+    def save_reel_template(
+        self, slug: str, template_id: str, yaml_content: str
+    ) -> Path:
         path = self.project_dir(slug) / "templates" / "reels" / f"{template_id}.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(yaml_content, encoding="utf-8")

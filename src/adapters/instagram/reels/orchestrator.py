@@ -159,7 +159,10 @@ class ReelOrchestrator:
 
         if comment_username:
             variables["comment_username"] = comment_username
-        elif not variables.get("comment_username") or variables["comment_username"] == "student":
+        elif (
+            not variables.get("comment_username")
+            or variables["comment_username"] == "student"
+        ):
             variables["comment_username"] = self._pick_random_username()
         if comment_text:
             variables["comment_text"] = comment_text
@@ -175,7 +178,9 @@ class ReelOrchestrator:
                 variables["comment_avatar"] = str(picked_avatar.resolve())
 
         variables["student_name"] = (
-            student_name or comment_username or variables.get("comment_username", "Student")
+            student_name
+            or comment_username
+            or variables.get("comment_username", "Student")
         )
 
         if self._settings.tts_provider == "kokoro":
@@ -186,7 +191,8 @@ class ReelOrchestrator:
             variables["kid_voice_id"] = self._settings.local_tts_kid_voice
         else:
             variables["brand_voice_id"] = (
-                self._settings.elevenlabs_brand_voice_id or self._settings.elevenlabs_voice_id
+                self._settings.elevenlabs_brand_voice_id
+                or self._settings.elevenlabs_voice_id
             )
             variables["kid_voice_id"] = self._settings.elevenlabs_voice_id
 
@@ -196,7 +202,11 @@ class ReelOrchestrator:
         if template.default_visual:
             pre_merge_beats = [
                 beat.model_copy(
-                    update={"visual": _merge_default_visual(beat.visual, template.default_visual)}
+                    update={
+                        "visual": _merge_default_visual(
+                            beat.visual, template.default_visual
+                        )
+                    }
                 )
                 for beat in pre_merge_beats
             ]
@@ -233,14 +243,18 @@ class ReelOrchestrator:
                 tmpl = _JINJA_ENV.from_string(template.caption_template)
                 final_caption = tmpl.render(**variables)
             except Exception as exc:
-                logger.warning("Failed to render caption_template: %s — using raw template", exc)
+                logger.warning(
+                    "Failed to render caption_template: %s — using raw template", exc
+                )
                 final_caption = template.caption_template
 
         if not final_caption:
             final_caption = "Check out this reel!"
 
         if final_caption and "{{" in final_caption:
-            logger.warning("Unresolved Jinja2 placeholder in caption: %s", final_caption[:200])
+            logger.warning(
+                "Unresolved Jinja2 placeholder in caption: %s", final_caption[:200]
+            )
 
         final_hashtags = (
             hashtags
@@ -298,7 +312,9 @@ class ReelOrchestrator:
             audio_path = ""
 
             if beat.audio.type == AudioType.TTS and beat.audio.text:
-                synth = await self._tts.synthesize(beat.audio.text, voice_id=beat.audio.voice)
+                synth = await self._tts.synthesize(
+                    beat.audio.text, voice_id=beat.audio.voice
+                )
                 audio_path = str(synth.audio_path.resolve())
                 audio_duration = synth.duration_seconds
             elif beat.audio.type == AudioType.SFX and beat.audio.file:
@@ -356,7 +372,11 @@ class ReelOrchestrator:
         usernames_file = Path(__file__).resolve().parent / "assets" / "usernames.txt"
         if not usernames_file.exists():
             return "student"
-        names = [line.strip() for line in usernames_file.read_text().splitlines() if line.strip()]
+        names = [
+            line.strip()
+            for line in usernames_file.read_text().splitlines()
+            if line.strip()
+        ]
         return random.choice(names) if names else "student"
 
     @staticmethod
@@ -432,7 +452,12 @@ class ReelOrchestrator:
             """Replace absolute file paths in visual props with public-relative paths."""
             out: dict[str, object] = {}
             for k, v in visual.items():
-                if k in _image_keys and isinstance(v, str) and v and Path(v).is_absolute():
+                if (
+                    k in _image_keys
+                    and isinstance(v, str)
+                    and v
+                    and Path(v).is_absolute()
+                ):
                     out[k] = _stage_file(v)
                 else:
                     out[k] = v

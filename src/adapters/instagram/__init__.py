@@ -24,7 +24,9 @@ async def ensure_token(settings: InstagramSettings) -> str:
     return await mgr.ensure_long_lived(token)
 
 
-def create_instagram_bundle(settings: InstagramSettings | None = None) -> PlatformBundle:
+def create_instagram_bundle(
+    settings: InstagramSettings | None = None,
+) -> PlatformBundle:
     """Construct a fully-wired Instagram ``PlatformBundle``."""
     if settings is None:
         settings = InstagramSettings()

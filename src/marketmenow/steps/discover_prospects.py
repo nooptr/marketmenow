@@ -69,17 +69,23 @@ class DiscoverProspectsStep:
             project_dir = pm.project_dir(ctx.project.slug)
             history_path = project_dir / ".outreach_history.json"
 
-        history = OutreachHistory(path=history_path) if history_path else OutreachHistory()
+        history = (
+            OutreachHistory(path=history_path) if history_path else OutreachHistory()
+        )
         ctx.set_artifact("outreach_history", history)
 
         contacted = history.contacted_handles(self._platform)
         if contacted:
-            ctx.console.print(f"[dim]Already contacted: {len(contacted)} handles (will skip)[/dim]")
+            ctx.console.print(
+                f"[dim]Already contacted: {len(contacted)} handles (will skip)[/dim]"
+            )
 
         if self._platform == "twitter":
             await self._discover_twitter(ctx, customer_profile, history)
         else:
-            raise WorkflowError(f"Outreach discovery not implemented for {self._platform}")
+            raise WorkflowError(
+                f"Outreach discovery not implemented for {self._platform}"
+            )
 
     async def _discover_twitter(
         self,
@@ -105,7 +111,9 @@ class DiscoverProspectsStep:
         await orchestrator.launch()
         ctx.console.print("[dim]Browser launched, checking login...[/dim]")
         if not await orchestrator.ensure_logged_in():
-            raise WorkflowError("Not logged in to Twitter. Run `mmn twitter login` first.")
+            raise WorkflowError(
+                "Not logged in to Twitter. Run `mmn twitter login` first."
+            )
         ctx.console.print("[green]Logged in to Twitter.[/green]")
 
         ctx.console.print("[bold cyan]Running discovery vectors...[/bold cyan]")

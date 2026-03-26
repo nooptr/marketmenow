@@ -72,7 +72,9 @@ def mock_db(monkeypatch: pytest.MonkeyPatch):
         "insert_content_item",
         AsyncMock(return_value=sample_item["id"]),
     )
-    monkeypatch.setattr(db_module, "update_content_status", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        db_module, "update_content_status", AsyncMock(return_value=None)
+    )
     monkeypatch.setattr(db_module, "update_progress_data", AsyncMock(return_value=None))
     monkeypatch.setattr(
         db_module,

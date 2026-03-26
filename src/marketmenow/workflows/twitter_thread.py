@@ -13,7 +13,9 @@ workflow = Workflow(
     ),
     params=(
         ParamDef(
-            name="topic", short="-t", help="Topic hint for the thread (leave empty for random)"
+            name="topic",
+            short="-t",
+            help="Topic hint for the thread (leave empty for random)",
         ),
     ),
 )

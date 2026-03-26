@@ -179,7 +179,9 @@ def generate_reel_meta_prompt(brand: BrandConfig, customer: TargetCustomer) -> s
     """
     core_dir = Path(__file__).resolve().parent
     src_dir = core_dir.parent.parent
-    template_path = src_dir / "adapters" / "instagram" / "reels" / "templates" / "prompt.md"
+    template_path = (
+        src_dir / "adapters" / "instagram" / "reels" / "templates" / "prompt.md"
+    )
 
     content = template_path.read_text(encoding="utf-8")
 
@@ -266,7 +268,8 @@ def _fill_persona_vars(raw: str, persona: PersonaConfig, phrases_block: str) -> 
         "  " + line if line.strip() else "" for line in phrases_block.splitlines()
     )
     replacements = {
-        "{{ persona_description }}": persona.description or "(describe personality here)",
+        "{{ persona_description }}": persona.description
+        or "(describe personality here)",
         "{{ persona_voice }}": persona.voice or "(describe voice here)",
         "{{ persona_tone }}": persona.tone or "(describe tone here)",
         "{{ phrases_block }}": indented_phrases,

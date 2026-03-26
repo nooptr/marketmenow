@@ -9,7 +9,10 @@ workflow = Workflow(
     steps=(YouTubeUploadStep(),),
     params=(
         ParamDef(
-            name="video", type=ParamType.PATH, required=True, help="Path to the video file (MP4)"
+            name="video",
+            type=ParamType.PATH,
+            required=True,
+            help="Path to the video file (MP4)",
         ),
         ParamDef(name="title", help="Video title"),
         ParamDef(name="description", help="Video description"),

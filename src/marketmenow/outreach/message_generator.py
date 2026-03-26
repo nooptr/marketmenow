@@ -51,7 +51,9 @@ class OutreachMessageGenerator:
 
         profile = prospect.user_profile
         ref_post_text = profile.triggering_posts[0] if profile.triggering_posts else ""
-        ref_post_url = profile.triggering_post_urls[0] if profile.triggering_post_urls else ""
+        ref_post_url = (
+            profile.triggering_post_urls[0] if profile.triggering_post_urls else ""
+        )
 
         user_template = Template(prompt_data["user"])
         user_prompt = user_template.render(
@@ -64,7 +66,9 @@ class OutreachMessageGenerator:
             triggering_post_url=ref_post_url,
         )
 
-        message_text = await self._call_gemini(system_prompt, user_prompt, profile.handle)
+        message_text = await self._call_gemini(
+            system_prompt, user_prompt, profile.handle
+        )
 
         return OutreachMessage(
             recipient_handle=profile.handle,

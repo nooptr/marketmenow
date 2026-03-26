@@ -14,12 +14,18 @@ workflow = Workflow(
     params=(
         ParamDef(name="template", default="can_ai_grade_this", help="Reel template ID"),
         ParamDef(name="tts", help="TTS provider: elevenlabs, openai, local, or kokoro"),
-        ParamDef(name="assignment", type=ParamType.PATH, help="Path to assignment image"),
-        ParamDef(name="rubric", type=ParamType.PATH, help="Path to rubric YAML/JSON file"),
+        ParamDef(
+            name="assignment", type=ParamType.PATH, help="Path to assignment image"
+        ),
+        ParamDef(
+            name="rubric", type=ParamType.PATH, help="Path to rubric YAML/JSON file"
+        ),
         ParamDef(name="caption", help="Video caption"),
         ParamDef(name="hashtags", help="Comma-separated hashtags"),
         ParamDef(name="output_dir", type=ParamType.PATH, help="Output directory"),
-        ParamDef(name="comment_username", help="Username for the TikTok-style comment hook"),
+        ParamDef(
+            name="comment_username", help="Username for the TikTok-style comment hook"
+        ),
         ParamDef(name="comment_text", help="Comment text for the TikTok hook"),
         ParamDef(name="student_name", help="Student name on the grading card"),
     ),

@@ -44,7 +44,11 @@ class TwitterAdapter:
 
     def supported_modalities(self) -> frozenset[ContentModality]:
         return frozenset(
-            {ContentModality.REPLY, ContentModality.THREAD, ContentModality.DIRECT_MESSAGE}
+            {
+                ContentModality.REPLY,
+                ContentModality.THREAD,
+                ContentModality.DIRECT_MESSAGE,
+            }
         )
 
     async def authenticate(self, credentials: dict[str, str]) -> None:

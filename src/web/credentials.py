@@ -55,7 +55,11 @@ PLATFORM_CREDENTIAL_KEYS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "youtube": {
-        "required": ["YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN"],
+        "required": [
+            "YOUTUBE_CLIENT_ID",
+            "YOUTUBE_CLIENT_SECRET",
+            "YOUTUBE_REFRESH_TOKEN",
+        ],
         "optional": ["YOUTUBE_DEFAULT_PRIVACY", "YOUTUBE_DEFAULT_CATEGORY_ID"],
     },
     "email": {

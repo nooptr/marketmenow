@@ -166,7 +166,10 @@ class ReelTemplateLoader:
             ):
                 issues.append(f"Beat '{beat.id}': SFX audio has no file path")
 
-            for label, t in [("entry", beat.entry_transition), ("exit", beat.exit_transition)]:
+            for label, t in [
+                ("entry", beat.entry_transition),
+                ("exit", beat.exit_transition),
+            ]:
                 valid_types = {"none", "fade", "slide", "scale", "wipe", "spring"}
                 if t.type not in valid_types:
                     issues.append(

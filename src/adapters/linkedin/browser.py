@@ -226,7 +226,9 @@ class LinkedInBrowser:
     async def is_logged_in(self) -> bool:
         page = self.page
         try:
-            await page.goto(_LINKEDIN_HOME, wait_until="domcontentloaded", timeout=30_000)
+            await page.goto(
+                _LINKEDIN_HOME, wait_until="domcontentloaded", timeout=30_000
+            )
             await self._random_delay(3.0, 5.0)
             url = page.url
             if "/login" in url or "/authwall" in url or "/checkpoint" in url:
@@ -391,7 +393,9 @@ class LinkedInBrowser:
         logger.info("Video post created on LinkedIn")
         return True
 
-    async def create_document_post(self, text: str, doc_path: Path, title: str = "") -> bool:
+    async def create_document_post(
+        self, text: str, doc_path: Path, title: str = ""
+    ) -> bool:
         """Create a post with a document (PDF/PPT) via the LinkedIn web UI."""
         page = self.page
         await self.navigate(self._feed_url)
@@ -403,7 +407,9 @@ class LinkedInBrowser:
         await self._smart_click(start_post)
         await self._random_delay(1.0, 2.0)
 
-        more_btn = page.locator('button[aria-label="More"],button:has-text("More")').first
+        more_btn = page.locator(
+            'button[aria-label="More"],button:has-text("More")'
+        ).first
         try:
             await more_btn.wait_for(state="visible", timeout=5_000)
             await self._smart_click(more_btn)
@@ -481,7 +487,9 @@ class LinkedInBrowser:
         await self._smart_click(start_post)
         await self._random_delay(1.0, 2.0)
 
-        more_btn = page.locator('button[aria-label="More"],button:has-text("More")').first
+        more_btn = page.locator(
+            'button[aria-label="More"],button:has-text("More")'
+        ).first
         try:
             await more_btn.wait_for(state="visible", timeout=5_000)
             await self._smart_click(more_btn)
@@ -509,7 +517,9 @@ class LinkedInBrowser:
         await self._human_type(question)
         await self._random_delay(0.5, 1.0)
 
-        option_inputs = page.locator('input[placeholder*="Option"],input[aria-label*="Option"]')
+        option_inputs = page.locator(
+            'input[placeholder*="Option"],input[aria-label*="Option"]'
+        )
         for idx, opt_text in enumerate(options):
             if idx >= await option_inputs.count():
                 add_option_btn = page.locator(
@@ -527,7 +537,9 @@ class LinkedInBrowser:
             await self._human_type(opt_text)
             await self._random_delay(0.3, 0.6)
 
-        done_btn = page.locator('button:has-text("Done"),button[aria-label="Done"]').first
+        done_btn = page.locator(
+            'button:has-text("Done"),button[aria-label="Done"]'
+        ).first
         await done_btn.wait_for(state="visible", timeout=5_000)
         await self._smart_click(done_btn)
         await self._random_delay(1.0, 2.0)

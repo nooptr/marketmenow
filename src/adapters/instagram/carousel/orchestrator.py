@@ -62,9 +62,11 @@ class CarouselOrchestrator:
             self._output_dir,
             brand_letter=brand.logo_letter if brand and brand.logo_letter else "G",
             brand_suffix=brand.logo_suffix if brand and brand.logo_suffix else ".",
-            accent_color=_hex_to_rgb(brand.color)
-            if brand and brand.color != "#000000"
-            else (68, 136, 255),
+            accent_color=(
+                _hex_to_rgb(brand.color)
+                if brand and brand.color != "#000000"
+                else (68, 136, 255)
+            ),
         )
 
     async def create_carousel(self) -> ImagePost:
@@ -127,9 +129,9 @@ class CarouselOrchestrator:
             data = data[0]
 
         assert "cover_heading" in data, f"Missing cover_heading in LLM response: {data}"
-        assert "items" in data and len(data["items"]) == 5, (
-            f"Expected 5 items, got: {data.get('items')}"
-        )
+        assert (
+            "items" in data and len(data["items"]) == 5
+        ), f"Expected 5 items, got: {data.get('items')}"
         return data
 
     def _build_prompt(self) -> tuple[str, str]:
@@ -164,9 +166,13 @@ class CarouselOrchestrator:
         user = Template(raw["user"]).render(**variables)
         return system, user
 
-    async def _generate_all_images(self, content: dict[str, object]) -> tuple[bytes, list[bytes]]:
+    async def _generate_all_images(
+        self, content: dict[str, object]
+    ) -> tuple[bytes, list[bytes]]:
         cover_task = self._generate_image(content["cover_image_prompt"])
-        item_tasks = [self._generate_image(item["image_prompt"]) for item in content["items"]]
+        item_tasks = [
+            self._generate_image(item["image_prompt"]) for item in content["items"]
+        ]
 
         results = await asyncio.gather(cover_task, *item_tasks)
         return results[0], list(results[1:])

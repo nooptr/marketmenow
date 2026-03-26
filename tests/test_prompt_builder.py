@@ -154,7 +154,9 @@ def test_prompt_builder_icl_block_rendered(
 
     import shutil
 
-    real_icl = Path(__file__).resolve().parents[1] / "prompts" / "icl_block_default.yaml"
+    real_icl = (
+        Path(__file__).resolve().parents[1] / "prompts" / "icl_block_default.yaml"
+    )
     shutil.copy(real_icl, prompts_dir / "icl_block_default.yaml")
 
     import marketmenow.core.prompt_builder as pb

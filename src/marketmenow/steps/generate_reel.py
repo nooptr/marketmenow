@@ -38,7 +38,9 @@ class GenerateReelStep:
             from marketmenow.core.project_manager import ProjectManager
 
             pm = ProjectManager()
-            project_templates = pm.project_dir(str(project_slug)) / "templates" / "reels"
+            project_templates = (
+                pm.project_dir(str(project_slug)) / "templates" / "reels"
+            )
             if project_templates.is_dir():
                 template_dir = project_templates
 
@@ -76,7 +78,9 @@ class GenerateReelStep:
             project_slug=project_slug_str,
         )
 
-        with ctx.console.status(f"[bold green]Generating reel (template={template_id})..."):
+        with ctx.console.status(
+            f"[bold green]Generating reel (template={template_id})..."
+        ):
             reel = await orch.create_reel(
                 assignment_image=assignment_path,
                 template_id=template_id,

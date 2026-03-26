@@ -34,7 +34,9 @@ class SendMessagesStep:
         if self._platform == "twitter":
             await self._send_twitter(ctx, messages)
         else:
-            raise WorkflowError(f"Outreach sending not implemented for {self._platform}")
+            raise WorkflowError(
+                f"Outreach sending not implemented for {self._platform}"
+            )
 
     async def _send_twitter(
         self,
@@ -47,7 +49,9 @@ class SendMessagesStep:
             "outreach_orchestrator"
         )
 
-        ctx.console.print(f"[bold cyan]Sending {len(messages)} DMs on Twitter...[/bold cyan]")
+        ctx.console.print(
+            f"[bold cyan]Sending {len(messages)} DMs on Twitter...[/bold cyan]"
+        )
         for i, msg in enumerate(messages, 1):
             ctx.console.print(
                 f"  [dim]Queue {i}/{len(messages)}:[/dim] @{msg.recipient_handle} "

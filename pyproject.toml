@@ -41,6 +41,7 @@ dependencies = [
     "boto3>=1.42.70",
     "google-api-python-client>=2.0",
     "google-auth-oauthlib>=1.0",
+    "black>=26.3.1",
 ]
 
 [project.optional-dependencies]

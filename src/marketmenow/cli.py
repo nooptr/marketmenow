@@ -179,7 +179,11 @@ def project_info(
             f"[bold]{b.name}[/bold]{b.logo_suffix}  •  {b.url}\n"
             f"{b.tagline}\n"
             f"Color: {b.color}  •  Logo: {b.logo_letter}{b.logo_suffix}\n\n"
-            + (f"Target: {cfg.target_customer.description}\n" if cfg.target_customer else "")
+            + (
+                f"Target: {cfg.target_customer.description}\n"
+                if cfg.target_customer
+                else ""
+            )
             + f"Default persona: {cfg.default_persona}",
             title=f"Project: {slug}",
             border_style="cyan",
@@ -308,7 +312,9 @@ def main(ctx: typer.Context) -> None:
         console.print(_banner())
         console.print()
         console.print("  Run [bold cyan]mmn --help[/] to see available commands.")
-        console.print("  Run [bold cyan]mmn workflows[/] to list marketing workflows.\n")
+        console.print(
+            "  Run [bold cyan]mmn workflows[/] to list marketing workflows.\n"
+        )
 
 
 # ── mmn run ───────────────────────────────────────────────────────────
@@ -347,7 +353,9 @@ def _print_workflow_help(workflow: object) -> None:
 
     wf: Workflow = workflow  # type: ignore[assignment]
     console.print()
-    console.print(Panel(f"[bold]{wf.name}[/bold]\n\n{wf.description}", border_style="cyan"))
+    console.print(
+        Panel(f"[bold]{wf.name}[/bold]\n\n{wf.description}", border_style="cyan")
+    )
 
     if wf.steps:
         console.print()
@@ -409,7 +417,9 @@ def run_workflow(
     project: str = typer.Option(
         "", "--project", "-p", help="Project slug (default: active project)"
     ),
-    persona: str = typer.Option("", "--persona", help="Persona name (default: project default)"),
+    persona: str = typer.Option(
+        "", "--persona", help="Persona name (default: project default)"
+    ),
 ) -> None:
     """Run a marketing workflow by name.
 
@@ -464,7 +474,9 @@ def run_workflow(
         elif p.default is not None:
             params[p.name] = p.default
         elif p.required:
-            console.print(f"[red]Missing required parameter:[/red] --{p.name.replace('_', '-')}")
+            console.print(
+                f"[red]Missing required parameter:[/red] --{p.name.replace('_', '-')}"
+            )
             console.print(f"[dim]Run `mmn run {name} --info` for details.[/dim]")
             raise typer.Exit(1)
 
@@ -548,7 +560,9 @@ def list_workflows() -> None:
 
     console.print(table)
     console.print()
-    console.print("[dim]Run a workflow:[/dim]  mmn run [bold]<name>[/bold] [--key value ...]")
+    console.print(
+        "[dim]Run a workflow:[/dim]  mmn run [bold]<name>[/bold] [--key value ...]"
+    )
     console.print("[dim]Workflow help:[/dim]   mmn run [bold]<name>[/bold] --info")
     console.print()
 
@@ -566,7 +580,9 @@ app.add_typer(auth_app, name="auth", rich_help_panel="Setup")
 
 @auth_app.command("twitter")
 def auth_twitter(
-    force: bool = typer.Option(False, "--force", help="Skip session check and log in fresh"),
+    force: bool = typer.Option(
+        False, "--force", help="Skip session check and log in fresh"
+    ),
     cookies: bool = typer.Option(
         False, "--cookies", help="Log in by injecting auth_token and ct0 cookies"
     ),
@@ -622,8 +638,12 @@ def auth_twitter(
 @auth_app.command("linkedin")
 def auth_linkedin(
     force: bool = typer.Option(False, "--force", help="Skip session check"),
-    cookies: bool = typer.Option(False, "--cookies", help="Log in by injecting li_at cookie"),
-    oauth: bool = typer.Option(False, "--oauth", help="Run OAuth 2.0 flow for REST API token"),
+    cookies: bool = typer.Option(
+        False, "--cookies", help="Log in by injecting li_at cookie"
+    ),
+    oauth: bool = typer.Option(
+        False, "--oauth", help="Run OAuth 2.0 flow for REST API token"
+    ),
     port: int = typer.Option(8337, "--port", help="Local port for OAuth callback"),
 ) -> None:
     """Authenticate with LinkedIn.
@@ -865,7 +885,9 @@ def version() -> None:
 
 @app.command(rich_help_panel="Utilities")
 def heal(
-    fix: bool = typer.Option(True, "--fix/--no-fix", help="Prompt to auto-fix via Cursor agent"),
+    fix: bool = typer.Option(
+        True, "--fix/--no-fix", help="Prompt to auto-fix via Cursor agent"
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full output"),
 ) -> None:
     """Run lint, format, and tests — then auto-fix failures with the Cursor agent."""
@@ -952,7 +974,9 @@ def heal(
     test_output = test_result.stdout + test_result.stderr
 
     if test_result.returncode == 0:
-        console.print(Panel("[bold green]All tests passed.[/bold green]", border_style="green"))
+        console.print(
+            Panel("[bold green]All tests passed.[/bold green]", border_style="green")
+        )
     else:
         if verbose:
             console.print(test_output)
@@ -993,7 +1017,9 @@ def heal(
             detail = f["detail"].strip()
             if len(detail) > 200:
                 detail = detail[:200] + "..."
-            table.add_row(str(i), f["test"], detail or "(see full output with --verbose)")
+            table.add_row(
+                str(i), f["test"], detail or "(see full output with --verbose)"
+            )
 
         console.print(table)
         console.print()
@@ -1028,7 +1054,9 @@ def heal(
 
     if not shutil.which("agent"):
         console.print("[yellow]Cursor agent CLI not found on PATH.[/yellow]")
-        console.print("[dim]Install it: curl https://cursor.com/install -fsS | bash[/dim]")
+        console.print(
+            "[dim]Install it: curl https://cursor.com/install -fsS | bash[/dim]"
+        )
         raise typer.Exit(1)
 
     if not typer.confirm("Fix remaining issues with Cursor agent?"):

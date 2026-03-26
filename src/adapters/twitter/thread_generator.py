@@ -204,5 +204,7 @@ class ThreadGenerator:
                     len(tweet.text),
                 )
 
-        logger.info("Generated thread: %s (%d tweets)", thread.topic, len(thread.tweets))
+        logger.info(
+            "Generated thread: %s (%d tweets)", thread.topic, len(thread.tweets)
+        )
         return thread
