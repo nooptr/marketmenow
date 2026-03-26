@@ -12,6 +12,7 @@ from marketmenow.integrations.genai import (
     configure_google_application_credentials,
     create_genai_client,
 )
+from marketmenow.models.project import BrandConfig, PersonaConfig
 
 from .prompts import load_prompt
 from .settings import LinkedInSettings
@@ -52,12 +53,22 @@ class LinkedInContentGenerator:
         )
         self._model = gemini_model
 
-    async def generate_batch(self, count: int = 5) -> list[GeneratedPost]:
+    async def generate_batch(
+        self,
+        count: int = 5,
+        brand: BrandConfig | None = None,
+        persona: PersonaConfig | None = None,
+    ) -> list[GeneratedPost]:
         prompt_data = load_prompt("batch_generation")
 
-        system_prompt = prompt_data["system"]
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(count=count)
+        template_vars: dict[str, object] = {"count": count}
+        if brand is not None:
+            template_vars["brand"] = brand
+        if persona is not None:
+            template_vars["persona"] = persona
+
+        system_prompt = Template(prompt_data["system"]).render(**template_vars)
+        user_prompt = Template(prompt_data["user"]).render(**template_vars)
 
         raw_json: str | None = None
         last_exc: BaseException | None = None

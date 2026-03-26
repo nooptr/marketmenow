@@ -507,6 +507,132 @@ class FacebookBrowser:
         return True
 
     # ------------------------------------------------------------------
+    # Group feed scraping
+    # ------------------------------------------------------------------
+
+    async def scrape_group_feed(
+        self,
+        group_url: str,
+        max_posts: int = 5,
+    ) -> list[dict[str, str]]:
+        """Scrape recent posts from a Facebook group feed.
+
+        Returns a list of dicts with keys: ``post_url``, ``post_text``,
+        ``post_author``, ``reactions``, ``comments``.
+        """
+        page = self.page
+        await self.navigate(group_url)
+        await self._random_delay(2.0, 4.0)
+
+        scroll_rounds = max(2, max_posts // 2)
+        await self.scroll_down(times=scroll_rounds)
+        await self._random_delay(1.0, 2.0)
+
+        post_elements = page.locator(
+            'div[role="feed"] div[role="article"],'
+            'div[role="main"] div[role="article"]'
+        )
+        count = await post_elements.count()
+        logger.info("Found %d article elements in group %s", count, group_url)
+
+        results: list[dict[str, str]] = []
+        for i in range(min(count, max_posts * 2)):
+            if len(results) >= max_posts:
+                break
+            try:
+                el = post_elements.nth(i)
+                parsed = await self._parse_group_article(el, group_url)
+                if parsed:
+                    results.append(parsed)
+            except Exception:
+                logger.debug("Failed to parse article %d in %s", i, group_url, exc_info=True)
+                continue
+
+        logger.info("Scraped %d posts from %s", len(results), group_url)
+        return results
+
+    async def _parse_group_article(
+        self,
+        el: object,
+        group_url: str,
+    ) -> dict[str, str] | None:
+        """Extract structured data from a single group feed article element."""
+        from playwright.async_api import Locator
+
+        article: Locator = el  # type: ignore[assignment]
+
+        text_parts: list[str] = []
+        text_container = article.locator(
+            'div[data-ad-preview="message"],'
+            'div[data-ad-comet-preview="message"],'
+            'div[dir="auto"]'
+        )
+        text_count = await text_container.count()
+        for j in range(min(text_count, 5)):
+            part = (await text_container.nth(j).inner_text()).strip()
+            if part and len(part) > 10:
+                text_parts.append(part)
+        post_text = "\n".join(dict.fromkeys(text_parts))
+
+        if not post_text or len(post_text) < 20:
+            return None
+
+        post_url = ""
+        time_links = article.locator('a[href*="/posts/"], a[href*="/permalink/"], a[href*="story_fbid"]')
+        link_count = await time_links.count()
+        for j in range(link_count):
+            href = await time_links.nth(j).get_attribute("href")
+            if href:
+                if href.startswith("/"):
+                    href = f"https://www.facebook.com{href}"
+                post_url = href.split("?")[0] if "?" in href else href
+                break
+
+        if not post_url:
+            return None
+
+        author = ""
+        heading = article.locator("h2, h3, h4").first
+        try:
+            author_el = heading.locator("a, span strong a, span a").first
+            author = (await author_el.inner_text()).strip()
+        except Exception:
+            pass
+
+        reactions = "0"
+        reactions_el = article.locator(
+            'span[aria-label*="reaction"], span[aria-label*="like"]'
+        ).first
+        try:
+            label = await reactions_el.get_attribute("aria-label")
+            if label:
+                nums = "".join(c for c in label if c.isdigit())
+                if nums:
+                    reactions = nums
+        except Exception:
+            pass
+
+        comments_count = "0"
+        comment_link = article.locator(
+            'span:has-text("comment"), span:has-text("Comment")'
+        ).first
+        try:
+            c_text = (await comment_link.inner_text()).strip()
+            nums = "".join(c for c in c_text if c.isdigit())
+            if nums:
+                comments_count = nums
+        except Exception:
+            pass
+
+        return {
+            "post_url": post_url,
+            "post_text": post_text[:3000],
+            "post_author": author,
+            "reactions": reactions,
+            "comments": comments_count,
+        }
+
+    # ------------------------------------------------------------------
     # Screenshot for debugging
     # ------------------------------------------------------------------
 

@@ -707,6 +707,8 @@ def batch_post(
         raise typer.Exit(1)
 
     async def _run() -> None:
+        from marketmenow.core.project_manager import ProjectManager
+
         mode = "API" if settings.use_api else "browser"
         console.print()
         console.print(
@@ -714,8 +716,17 @@ def batch_post(
         )
         console.print()
 
+        pm = ProjectManager()
+        slug = pm.get_active_project()
+        brand_cfg = None
+        persona_cfg = None
+        if slug:
+            proj = pm.load_project(slug)
+            brand_cfg = proj.brand
+            persona_cfg = pm.load_persona(slug, proj.default_persona)
+
         generator = LinkedInContentGenerator(settings)
-        posts = await generator.generate_batch(count)
+        posts = await generator.generate_batch(count, brand=brand_cfg, persona=persona_cfg)
 
         console.print(_build_plan_table(posts))
         console.print()

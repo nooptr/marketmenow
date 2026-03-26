@@ -1,0 +1,54 @@
+groups:
+  # Large general teacher communities
+  - url: "https://www.facebook.com/groups/teacherspayteachers"
+    name: "Teachers Pay Teachers Sellers"
+  - url: "https://www.facebook.com/groups/newteacherchat"
+    name: "New Teacher Chat"
+  - url: "https://www.facebook.com/groups/teachersfirst"
+    name: "Teachers First"
+
+  # Grading / assessment focused
+  - url: "https://www.facebook.com/groups/standardsbasedgrading"
+    name: "Standards-Based Grading"
+  - url: "https://www.facebook.com/groups/assessmentliteracy"
+    name: "Assessment Literacy"
+
+  # Subject-specific (grading-heavy)
+  - url: "https://www.facebook.com/groups/englishteachersnetwork"
+    name: "English Teachers Network"
+  - url: "https://www.facebook.com/groups/mathteachersnetwork"
+    name: "Math Teachers Network"
+  - url: "https://www.facebook.com/groups/scienceteachersnetwork"
+    name: "Science Teachers Network"
+  - url: "https://www.facebook.com/groups/historyteachersnetwork"
+    name: "History Teachers Network"
+
+  # EdTech / AI in education
+  - url: "https://www.facebook.com/groups/edtechteachers"
+    name: "EdTech Teachers"
+  - url: "https://www.facebook.com/groups/aiforeducators"
+    name: "AI for Educators"
+  - url: "https://www.facebook.com/groups/teachertech"
+    name: "Teacher Tech"
+
+  # Grade-level communities
+  - url: "https://www.facebook.com/groups/elementaryteachersgroup"
+    name: "Elementary Teachers"
+  - url: "https://www.facebook.com/groups/middleschoolteachers"
+    name: "Middle School Teachers"
+  - url: "https://www.facebook.com/groups/highschoolteachersgroup"
+    name: "High School Teachers"
+
+search_queries:
+  - "grading"
+  - "grading papers"
+  - "rubric"
+  - "AI grading"
+  - "grading workload"
+  - "grading time"
+  - "grading essays"
+  - "grading burnout"
+  - "feedback on papers"
+  - "standardized grading"
+  - "grading consistency"
+  - "late work grading"

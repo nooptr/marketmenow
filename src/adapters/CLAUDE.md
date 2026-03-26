@@ -13,7 +13,7 @@ Platform-specific implementations. Each adapter package is independent and must 
 | `youtube/`   | VIDEO                                          | `create_youtube_bundle()`        |
 | `tiktok/`    | VIDEO                                          | `create_tiktok_bundle()`         |
 | `email/`     | DIRECT_MESSAGE                                 | `create_email_bundle()`          |
-| `facebook/`  | (planned)                                      | `create_facebook_bundle()`       |
+| `facebook/`  | TEXT_POST, IMAGE, VIDEO, DIRECT_MESSAGE         | `create_facebook_bundle()`       |
 
 ## Standard Adapter Structure
 
@@ -73,6 +73,10 @@ Discovery (handles + hashtags → posts) → LLM reply generation → human appr
 **Engagement (two-phase):** `orchestrator.py` discovers subreddit posts, generates comments to CSV, then posts from the CSV.
 
 **Launch posts:** `post_generator.py` + `RedditPostGenerator` generates Reddit-native posts (update / milestone / launch) via Gemini. `client.submit_text_post()` submits them. Campaign config lives in `campaigns/*.yaml`. The `--brief` param accepts raw content (blog draft, release notes) for the AI to adapt.
+
+### Facebook Group Engagement (`facebook/`)
+
+Browser-based group engagement: `orchestrator.py` loads target groups from YAML, `discovery.py` scrapes group feeds via Playwright, `comment_generator.py` generates teacher-persona comments via Gemini with probabilistic product mentions (`mention_rate`), then posts via `browser.comment_on_group_post()`. Two-phase workflow: discover+generate first (reviewable), then post separately.
 
 ### LinkedIn (`linkedin/`)
 

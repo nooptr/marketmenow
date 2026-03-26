@@ -544,5 +544,96 @@ def group_comment(
     asyncio.run(_run())
 
 
+@app.command()
+def engage(
+    max_comments: int = typer.Option(
+        0,
+        "--max-comments",
+        "-n",
+        help="Override max comments per day (0 = use settings default)",
+    ),
+    headless: bool = typer.Option(
+        True,
+        "--headless/--no-headless",
+        help="Run browser in headless mode",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Generate comments but do not post them",
+    ),
+) -> None:
+    """Discover posts in teacher Facebook groups and engage with AI comments.
+
+    This command scrapes target groups, generates teacher-persona comments
+    via Gemini, and optionally posts them with human-like delays.
+    """
+    from .orchestrator import EngagementOrchestrator
+
+    settings = _settings()
+    if headless:
+        settings = settings.model_copy(update={"headless": True})
+    if max_comments > 0:
+        settings = settings.model_copy(update={"max_comments_per_day": max_comments})
+
+    async def _run() -> None:
+        browser = _make_browser(settings)
+        async with browser:
+            if not await browser.is_logged_in():
+                c_user = settings.facebook_c_user
+                xs = settings.facebook_xs
+                if c_user and xs:
+                    await browser.login_with_cookies(c_user, xs)
+                else:
+                    console.print(
+                        "[red]Not logged in. Run `mmn facebook login` first,[/red]\n"
+                        "[red]or set FACEBOOK_C_USER and FACEBOOK_XS in .env.[/red]"
+                    )
+                    raise typer.Exit(1)
+
+            orchestrator = EngagementOrchestrator(settings, browser)
+
+            console.print("[bold cyan]Discovering posts in Facebook groups...[/bold cyan]")
+            comments = await orchestrator.generate_only()
+
+            if not comments:
+                console.print("[yellow]No comments generated. Check your targets file and group access.[/yellow]")
+                raise typer.Exit(0)
+
+            console.print(f"[green]Generated {len(comments)} comments[/green]")
+            console.print()
+
+            for i, c in enumerate(comments, start=1):
+                console.print(
+                    Panel(
+                        f"[bold]{c.group_name}[/bold]\n"
+                        f"[dim]Post by {c.post_author}:[/dim] {c.post_text[:120]}...\n\n"
+                        f"[green]Comment:[/green] {c.comment_text}",
+                        title=f"Comment {i}/{len(comments)}",
+                        border_style="cyan",
+                    )
+                )
+
+            if dry_run:
+                console.print("\n[yellow]Dry run — comments were NOT posted.[/yellow]")
+                return
+
+            console.print("\n[bold cyan]Posting comments...[/bold cyan]")
+            stats = await orchestrator.comment_from_list(comments)
+
+            console.print()
+            console.print(
+                Panel(
+                    f"[bold green]Engagement complete[/bold green]\n\n"
+                    f"Succeeded: {stats.total_succeeded}\n"
+                    f"Failed: {stats.total_failed}",
+                    title="Facebook Engagement",
+                    border_style="green",
+                )
+            )
+
+    asyncio.run(_run())
+
+
 if __name__ == "__main__":
     app()

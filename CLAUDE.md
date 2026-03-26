@@ -65,7 +65,7 @@ Higher-level composable marketing workflows. A `Workflow` is a named sequence of
 - `Workflow` — frozen dataclass with `name`, `description`, `steps`, `params` (ParamDef schema)
 - `WorkflowRegistry` (`core/workflow_registry.py`) — holds registered workflows, `build_workflow_registry()` auto-discovers all built-in workflows
 
-Built-in workflows: `instagram-reel`, `instagram-carousel`, `twitter-thread`, `twitter-engage`, `twitter-outreach`, `reddit-engage`, `reddit-launch`, `linkedin-post`, `email-outreach`, `youtube-short`, `tiktok-reel`
+Built-in workflows: `instagram-reel`, `instagram-carousel`, `twitter-thread`, `twitter-engage`, `twitter-outreach`, `reddit-engage`, `reddit-launch`, `linkedin-post`, `email-outreach`, `youtube-short`, `tiktok-reel`, `facebook-engage`
 
 ### Projects (models/project.py, core/project_manager.py, core/onboarding.py)
 
@@ -128,7 +128,7 @@ All defined as `typing.Protocol` with `@runtime_checkable`:
 | youtube    | VIDEO                                         | Shorts upload via Data API v3                     |
 | tiktok     | VIDEO                                         | Content Posting API (Direct Post) + browser posting (cookie login) |
 | email      | DIRECT_MESSAGE                                | CSV + Jinja2 templates, Gemini paraphrasing       |
-| facebook   | (planned)                                     | Browser-based posting                             |
+| facebook   | TEXT_POST, IMAGE, VIDEO, DIRECT_MESSAGE        | Browser posting, group engagement (discover + AI comment + post) |
 
 ## Architecture Rules
 
