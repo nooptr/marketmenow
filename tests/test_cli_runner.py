@@ -21,6 +21,8 @@ from web.cli_runner import (
     _build_twitter_engage_publish,
     _build_twitter_thread_generate,
     _build_twitter_thread_publish,
+    _build_youtube_short_generate,
+    _build_youtube_short_publish,
     _parse_progress,
     get_builders,
     get_meta,
@@ -196,6 +198,34 @@ class TestRedditBuilders:
         cmd = _build_reddit_launch_generate({"brief": "We shipped dark mode"}, "/tmp/out")
         assert "--brief" in cmd
         assert "We shipped dark mode" in cmd
+
+
+# ---------------------------------------------------------------------------
+# YouTube Short builders
+# ---------------------------------------------------------------------------
+
+
+class TestYouTubeShortBuilders:
+    def test_publish_default_description_is_product_cta_not_framework(self) -> None:
+        cmd = _build_youtube_short_publish({}, "/tmp/out")
+        desc_idx = cmd.index("--description") + 1
+        description = cmd[desc_idx]
+        assert "MarketMeNow" not in description
+        assert "gradeasy.ai" in description
+
+    def test_publish_respects_custom_description(self) -> None:
+        cmd = _build_youtube_short_publish(
+            {"description": "Custom only.\n\nhttps://example.com"},
+            "/tmp/out",
+        )
+        desc_idx = cmd.index("--description") + 1
+        assert cmd[desc_idx] == "Custom only.\n\nhttps://example.com"
+
+    def test_generate_includes_title_and_description_flags(self) -> None:
+        cmd = _build_youtube_short_generate({}, "/tmp/out")
+        assert "youtube" in cmd
+        assert "--title" in cmd
+        assert "--description" in cmd
 
 
 # ---------------------------------------------------------------------------

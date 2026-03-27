@@ -967,18 +967,23 @@ def _build_reddit_launch_publish(params: dict, _output_dir: str) -> list[str]:
     return cmd
 
 
+# Short, readable titles (hashtags belong in the description, not stuffed in the title).
 _YT_TITLE_VARIANTS = [
-    "Can our AI grade this? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
-    "Can AI actually grade your homework? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
-    "We let AI grade this assignment #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
-    "AI vs. Teacher: Who grades better? #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
-    "This AI just graded a real assignment #chatgpt #artificialintelligence #education #shorts #shortvideo #viral",
-    "Watch AI grade this in seconds #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
-    "POV: AI is now your teacher #chatgpt #artificialintelligence #education #shorts #shortvideo #tiktok",
+    "Can AI grade a real assignment this fast?",
+    "We let AI grade this homework — here's what happened",
+    "AI vs rubric: who wins on a real paper?",
+    "POV: your grading pile is endless",
+    "This teacher's stack of papers went very wrong (story)",
+    "Grading horror: something off about one student's paper",
+    "When the marking pile stops making sense",
+    "A weird stain on a student's assignment — then everything shifted",
 ]
 
 _YT_DEFAULT_DESCRIPTION = (
-    "AI-generated content from MarketMeNow.\n\n#shorts #shortvideo #ai #contentcreation #marketing"
+    "Stop drowning in papers. Gradeasy grades student work against the rubric "
+    "YOU define — fast, consistent, and you keep final say.\n\n"
+    "Try it free: https://gradeasy.ai\n\n"
+    "#shorts #teachers #grading #edtech #teacherlife #AI #Gradeasy #education"
 )
 
 

@@ -33,9 +33,33 @@ items:
   - platform: reddit
     command_type: engage
 
+  # One Short per reel template (paired by index with the two reels above).
   - platform: youtube
     command_type: short
-    count: 2
+    count: 1
+    params:
+      title: "Can AI grade this assignment in seconds?"
+      description: |
+        Watch AI run a real rubric on a real paper — then try the same on your stack.
+
+        Gradeasy: grading against YOUR rubric in seconds. You stay in control.
+
+        https://gradeasy.ai
+
+        #shorts #grading #teachers #edtech #teacherlife #AI #ChatGPT #Gradeasy
+  - platform: youtube
+    command_type: short
+    count: 1
+    params:
+      title: "Grading horror: her paper pile went wrong"
+      description: |
+        A spooky grading story — because every teacher knows the pile can feel cursed.
+
+        When you're done doom-scrolling: Gradeasy grades to your rubric in seconds.
+
+        https://gradeasy.ai
+
+        #shorts #horror #storytime #teachers #grading #edtech #Gradeasy
 
   - platform: tiktok
     command_type: upload
