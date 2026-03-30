@@ -19,7 +19,6 @@ AITA_SCENARIOS: list[str] = [
     "calling out a student for clearly copying homework word-for-word",
     "refusing to give extra credit at the end of the semester",
     "giving a B+ to the valedictorian candidate and ruining their 4.0",
-
     # --- Classroom Management ---
     "confiscating a student's phone during a test and their parent called the principal",
     "kicking a student out of class for being disruptive during a group presentation",
@@ -31,7 +30,6 @@ AITA_SCENARIOS: list[str] = [
     "refusing to let a student present late because they weren't prepared on the due date",
     "sending a student to the office for arguing with me in front of the class",
     "not letting students listen to music while working on assignments",
-
     # --- Parent Interactions ---
     "telling a parent their child is not gifted, just average",
     "refusing to change a grade after a parent emailed me five times",
@@ -43,7 +41,6 @@ AITA_SCENARIOS: list[str] = [
     "sending home a note about hygiene for a student and the parent was furious",
     "declining to write a college recommendation letter for a student I barely know",
     "telling a parent their child needs professional help and it's beyond what I can do",
-
     # --- Colleague Drama ---
     "reporting a fellow teacher for never actually teaching and just showing movies",
     "refusing to cover a colleague's class on my planning period again",
@@ -55,7 +52,6 @@ AITA_SCENARIOS: list[str] = [
     "eating lunch alone instead of in the teacher's lounge because the gossip is toxic",
     "refusing to write a positive peer review for a teacher I think is ineffective",
     "pushing back on a team decision to pass a student who didn't meet any standards",
-
     # --- Technology & Modern Teaching ---
     "banning laptops in class after catching students on social media",
     "requiring handwritten notes instead of typed ones",
@@ -67,7 +63,6 @@ AITA_SCENARIOS: list[str] = [
     "recording my lectures and a student's parent complained about privacy",
     "switching to digital-only submissions and a student without reliable internet struggled",
     "refusing to accept a Google Doc shared at 11:59pm as 'on time'",
-
     # --- Workload & Boundaries ---
     "leaving school at contract time instead of staying late like everyone else",
     "not answering parent emails on weekends",
@@ -79,7 +74,6 @@ AITA_SCENARIOS: list[str] = [
     "taking a personal day the Friday before a long weekend",
     "refusing to tutor a student for free after school when I have my own kids to pick up",
     "setting an auto-reply on email after 5pm",
-
     # --- Student Situations ---
     "calling home when a student fell asleep in class for the third time",
     "recommending a student for a lower-level class next year",
