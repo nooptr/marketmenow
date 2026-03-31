@@ -85,9 +85,64 @@ AITA_SCENARIOS: list[str] = [
     "giving a student an incomplete instead of a failing grade to buy them time",
     "not writing 'great job!' on every paper and a student's parent said I'm discouraging",
     "telling a senior they might not graduate on time",
+    # --- Grading & Assessment (more) ---
+    "giving a student a lower grade than their self-assessment because they overrated themselves",
+    "refusing to accept a handwritten essay when I specifically asked for typed",
+    "failing a group project because one member did all the work and I graded individually",
+    "not giving a student an A because their essay was clearly written by a parent",
+    "taking off points for spelling errors on a history test",
+    "giving a student detention for cheating even though they swore they didn't",
+    "refusing to drop the lowest test score even though every other teacher does",
+    "marking a creative writing piece as off-topic because it didn't follow the prompt",
+    "giving an honest grade on a project the student spent three weeks on",
+    "not accepting a doctor's note for a missed test because it was clearly fake",
+    # --- Classroom Moments ---
+    "laughing at a student's wrong answer before I caught myself",
+    "asking a student to remove their hood and they said it's a cultural thing",
+    "calling on a student I knew wasn't paying attention to make a point",
+    "telling the class I was disappointed in them after a bad test",
+    "playing favorites with the students who actually try",
+    "letting a student eat in class because they missed lunch for tutoring",
+    "making a seating chart on the first day and students complained I was controlling",
+    "reading a student's note out loud that they were passing in class",
+    "not letting a student switch lab partners even though their partner does nothing",
+    "giving the whole class a lecture about respect after one student was rude",
+    # --- Parent Drama (more) ---
+    "telling a parent their kid talks too much and it's affecting their grade",
+    "suggesting a parent get their child tested for a learning disability",
+    "refusing to bump a grade because a parent threatened to go to the school board",
+    "posting student work on the class bulletin board and a parent said I embarrassed their kid",
+    "telling a parent I don't give homework passes as birthday gifts",
+    "calling a parent at work because their kid punched another student",
+    "not allowing a parent to sit in on my class to 'observe my teaching style'",
+    "sending a progress report home and the parent said I was targeting their child",
+    "refusing to move a test date because a family planned a vacation during the school year",
+    "telling a parent their child needs to read more because they're two grade levels behind",
+    # --- Policy & Admin Conflicts ---
+    "refusing to implement a no-zeros grading policy because I think it enables laziness",
+    "going against the department's decision to use a textbook I think is terrible",
+    "not following the school's positive-only feedback policy because some work genuinely needs critique",
+    "pushing back when admin told me to pass a failing student for attendance numbers",
+    "refusing to use the school's new AI detection tool because it flags innocent students",
+    "telling admin that mandatory fun days waste instructional time",
+    "not attending a mandatory staff meeting because I had parent conferences scheduled",
+    "writing an honest school review on a teacher forum and admin found it",
+    "refusing to change my teaching style to match a new principal's vision",
+    "telling the curriculum coordinator their pacing guide is unrealistic",
+    # --- Modern Dilemmas ---
+    "catching a student selling homework answers on Venmo",
+    "finding a student's TikTok making fun of my class",
+    "telling a student their AI-generated art project doesn't count as original work",
+    "not accepting a voice memo as a substitute for a written essay",
+    "banning fidget toys after they became a distraction for the whole class",
+    "reporting a student's social media post that threatened another student",
+    "refusing to let a student use their phone to 'check their mental health app' during a test",
+    "telling a student influencer they still have to do the assignment like everyone else",
+    "not allowing a student to record my lesson to post on their study channel",
+    "catching a student using smart glasses to cheat on an exam",
 ]
 
-assert len(AITA_SCENARIOS) >= 70, f"Expected 70+ scenarios, got {len(AITA_SCENARIOS)}"
+assert len(AITA_SCENARIOS) >= 120, f"Expected 120+ scenarios, got {len(AITA_SCENARIOS)}"
 
 
 def pick_random_aita() -> str:

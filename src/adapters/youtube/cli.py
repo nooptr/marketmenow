@@ -49,7 +49,7 @@ def youtube_auth() -> None:
 
     flow = InstalledAppFlow.from_client_config(
         client_config,
-        scopes=["https://www.googleapis.com/auth/youtube.upload"],
+        scopes=["https://www.googleapis.com/auth/youtube.force-ssl"],
     )
 
     console.print("[bold blue]Opening browser for YouTube OAuth2 consent...[/bold blue]")

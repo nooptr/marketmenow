@@ -87,6 +87,8 @@ user: |
   Product information:
   {product_info}
 
+  {content_guidelines}
+
   Brand name: {brand_name}
 
   Write a Reddit horror-comedy story about a teacher's grading nightmare,

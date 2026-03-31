@@ -37,6 +37,13 @@ This package is **platform-agnostic**. It must never import from `src/adapters/`
 | `core/prompt_builder.py`  | `PromptBuilder` — composable prompt assembly from persona + function + ICL blocks |
 | `core/embedding_store.py` | `EmbeddingStore` — Gemini text-embedding-004 wrapper with batch embed and cosine distance |
 | `core/diversity_selector.py` | `select_diverse_examples()` — farthest-point sampling for diverse ICL example selection |
+| `core/reel_id.py`           | Word-based reel ID encoding/decoding for discrete tracking in video descriptions |
+| `core/feedback/models.py`   | `VideoMetrics`, `CommentData`, `ReelIndexEntry`, `ContentGuideline`, `FeedbackReport` |
+| `core/feedback/ports.py`    | `VideoAnalyticsFetcher` protocol                             |
+| `core/feedback/sentiment.py`| `SentimentScorer` — Gemini 0-10 comment sentiment analysis   |
+| `core/feedback/guideline_generator.py` | `GuidelineGenerator` — avoid/replicate rules from reel performance |
+| `core/feedback/orchestrator.py` | `FeedbackOrchestrator` — full fetch→score→analyze→persist cycle |
+| `core/feedback/classifier.py` | `TemplateClassifier` — embedding-based retroactive template classification |
 | `integrations/langchain.py`| LangChain tool/chain integration                            |
 
 ## Pipeline Flow

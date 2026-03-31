@@ -10,7 +10,7 @@ Platform-specific implementations. Each adapter package is independent and must 
 | `twitter/`   | THREAD, REPLY, DIRECT_MESSAGE                  | `create_twitter_bundle()`        |
 | `linkedin/`  | TEXT_POST, IMAGE, VIDEO, DOCUMENT, ARTICLE, POLL | `create_linkedin_bundle()`     |
 | `reddit/`    | REPLY, TEXT_POST                               | `create_reddit_bundle()`         |
-| `youtube/`   | VIDEO                                          | `create_youtube_bundle()`        |
+| `youtube/`   | VIDEO                                          | `create_youtube_bundle()` + `YouTubeAnalyticsFetcher` |
 | `tiktok/`    | VIDEO                                          | `create_tiktok_bundle()`         |
 | `email/`     | DIRECT_MESSAGE                                 | `create_email_bundle()`          |
 | `facebook/`  | TEXT_POST, IMAGE, VIDEO, DIRECT_MESSAGE         | `create_facebook_bundle()`       |

@@ -57,10 +57,12 @@ class ReelOrchestrator:
         brand: BrandConfig | None = None,
         persona: PersonaConfig | None = None,
         project_slug: str | None = None,
+        content_guidelines: str = "",
     ) -> None:
         self._settings = settings
         self._brand = brand
         self._persona = persona
+        self._content_guidelines = content_guidelines
         self._output_dir = settings.output_dir / "reels"
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -137,10 +139,15 @@ class ReelOrchestrator:
         if template.worksheet is not None:
             extra_services["worksheet_config"] = template.worksheet
 
+        extra_variables: dict[str, object] = {}
+        if self._content_guidelines:
+            extra_variables["content_guidelines"] = self._content_guidelines
+
         variables, resolved_beats = await self._script_gen.generate(
             template=template,
             assignment_image=assignment_image,
             rubric_items=rubric_items,
+            extra_variables=extra_variables or None,
             extra_services=extra_services,
         )
 

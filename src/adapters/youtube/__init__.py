@@ -3,6 +3,7 @@ from __future__ import annotations
 from marketmenow.registry import PlatformBundle
 
 from .adapter import YouTubeAdapter
+from .analytics import YouTubeAnalyticsFetcher
 from .renderer import YouTubeRenderer
 from .settings import YouTubeSettings
 from .uploader import YouTubeUploader
@@ -30,6 +31,7 @@ def create_youtube_bundle(
 
 __all__ = [
     "YouTubeAdapter",
+    "YouTubeAnalyticsFetcher",
     "YouTubeRenderer",
     "YouTubeSettings",
     "YouTubeUploader",

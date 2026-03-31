@@ -16,7 +16,7 @@ from marketmenow.normaliser import NormalisedContent
 
 _YOUTUBE_API_SERVICE = "youtube"
 _YOUTUBE_API_VERSION = "v3"
-_SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+_SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 _TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 _MAX_TITLE = 100
@@ -79,7 +79,20 @@ class YouTubeAdapter:
             )
 
         title = self._build_title(content)
-        description = self._build_description(content)
+
+        # Embed discrete reel ID if metadata provides the bytes
+        reel_id_suffix = ""
+        reel_id_bytes = content.source.metadata.get("_reel_id_bytes", "")
+        tmpl_type_bytes = content.source.metadata.get("_template_type_bytes", "")
+        if reel_id_bytes and tmpl_type_bytes:
+            from marketmenow.core.reel_id import encode_reel_id
+
+            reel_id_suffix = encode_reel_id(
+                bytes.fromhex(reel_id_bytes),
+                bytes.fromhex(tmpl_type_bytes),
+            )
+
+        description = self._build_description(content, reel_id_suffix=reel_id_suffix)
 
         try:
             video_id = await self._upload_video(
@@ -210,9 +223,15 @@ class YouTubeAdapter:
         return base[:_MAX_TITLE]
 
     @staticmethod
-    def _build_description(content: NormalisedContent) -> str:
+    def _build_description(
+        content: NormalisedContent,
+        *,
+        reel_id_suffix: str = "",
+    ) -> str:
         parts: list[str] = list(content.text_segments)
         if content.hashtags:
             tag_line = " ".join(f"#{tag.lstrip('#')}" for tag in content.hashtags)
             parts.append(tag_line)
+        if reel_id_suffix:
+            parts.append(reel_id_suffix)
         return "\n\n".join(parts)[:5000]

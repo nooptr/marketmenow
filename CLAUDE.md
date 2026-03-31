@@ -35,6 +35,8 @@ uv run mmn project use <slug>       # Set active project
 uv run mmn project info             # Show project details
 uv run mmn auth <platform>           # Authenticate with a platform
 uv run mmn heal                      # Run tests and auto-fix failures via Cursor agent
+uv run mmn feedback                  # Analyze prior video performance and generate guidelines
+uv run mmn index                     # Retroactively index and classify all prior videos
 uv run mmn-web                       # Start web dashboard (http://localhost:8000)
 docker compose up -d                 # Start PostgreSQL (required for web dashboard)
 ```
@@ -92,6 +94,21 @@ Modular, platform-agnostic cold outreach system. Discovers people on a platform,
 - `outreach/history.py` — `OutreachHistory` (JSON-based tracking of contacted handles)
 
 Platform-specific implementations live in adapter packages (e.g. `adapters/twitter/outreach/`). The core engine never imports adapters.
+
+### Feedback Loop (core/feedback/)
+
+Closed-loop content improvement system. Tags uploaded reels with discrete word-encoded IDs, fetches analytics + comments from prior runs, performs sentiment analysis, and generates permanent content guidelines fed back into future generation.
+
+- `core/reel_id.py` — Word-based encode/decode of reel IDs + template type IDs in video descriptions
+- `core/feedback/models.py` — `VideoMetrics`, `CommentData`, `ReelIndexEntry`, `ContentGuideline`, `FeedbackReport`
+- `core/feedback/ports.py` — `VideoAnalyticsFetcher` protocol (platform-agnostic)
+- `core/feedback/sentiment.py` — `SentimentScorer` (Gemini 0-10 rubric, batched)
+- `core/feedback/guideline_generator.py` — `GuidelineGenerator` (avoid/replicate rules from performance data)
+- `core/feedback/orchestrator.py` — `FeedbackOrchestrator` (coordinates fetch → score → analyze → persist cycle)
+- `core/feedback/classifier.py` — `TemplateClassifier` (embedding-based template classification for retroactive indexing)
+- `adapters/youtube/analytics.py` — `YouTubeAnalyticsFetcher` (Data API v3 video stats + comments)
+
+Storage: `projects/{slug}/feedback/youtube/` — `reel_index.json`, `guidelines.yaml`, `comments/{video_id}.json`
 
 ### Prompt System (core/prompt_builder.py, prompts/, projects/)
 

@@ -68,12 +68,21 @@ class GenerateReelStep:
         persona = ctx.persona
         project_slug_str = str(project_slug) if project_slug else None
 
+        # Load content guidelines from feedback system if available
+        guidelines_text = ""
+        yt_guidelines = ctx.artifacts.get("youtube_guidelines")
+        if yt_guidelines:
+            rules = [g.rule for g in yt_guidelines if hasattr(g, "rule")]
+            if rules:
+                guidelines_text = "\n".join(f"- {r}" for r in rules)
+
         orch = ReelOrchestrator(
             settings,
             templates_dir=template_dir,
             brand=brand,
             persona=persona,
             project_slug=project_slug_str,
+            content_guidelines=guidelines_text,
         )
 
         with ctx.console.status(f"[bold green]Generating reel (template={template_id})..."):

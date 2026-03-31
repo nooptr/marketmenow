@@ -136,6 +136,7 @@ pipeline:
           max_points: "{{ grading_result.max_points }}"
           feedback: "{{ grading_result.feedback }}"
           rubric_eval_text: "{{ grading_result.rubric_evaluations }}"
+          content_guidelines: "{{ content_guidelines | default('') }}"
       output_fields:
         - reaction_text
         - roast_text

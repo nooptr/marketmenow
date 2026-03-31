@@ -64,6 +64,7 @@ pipeline:
           horror_source: "{{ horror_source }}"
           product_info: "{{ product_info }}"
           brand_name: "{{ brand_name }}"
+          content_guidelines: "{{ content_guidelines | default('') }}"
       output_fields:
         - title
         - subreddit

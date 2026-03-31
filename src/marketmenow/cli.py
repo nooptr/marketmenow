@@ -1070,6 +1070,202 @@ def _build_heal_prompt(problems: list[str], project_root: Path) -> str:
     )
 
 
+# ── mmn feedback ─────────────────────────────────────────────────────
+
+
+@app.command(rich_help_panel="Feedback")
+def feedback(
+    project: str = typer.Option("", "--project", "-p", help="Project slug (default: active)"),
+    days: int = typer.Option(7, "--days", "-d", help="Number of days to look back"),
+) -> None:
+    """Analyze prior video performance and generate content guidelines from audience feedback."""
+    asyncio.run(_feedback_async(project, days))
+
+
+async def _feedback_async(project: str, days: int) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from adapters.youtube.analytics import YouTubeAnalyticsFetcher
+    from adapters.youtube.settings import YouTubeSettings
+    from marketmenow.core.feedback.guideline_generator import GuidelineGenerator
+    from marketmenow.core.feedback.orchestrator import FeedbackOrchestrator
+    from marketmenow.core.feedback.sentiment import SentimentScorer
+    from marketmenow.core.project_manager import ProjectManager
+
+    settings = YouTubeSettings()
+    if not settings.youtube_refresh_token:
+        console.print("[red]YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first.[/red]")
+        raise typer.Exit(code=1)
+
+    pm = ProjectManager()
+    slug = project or pm.active_slug()
+    if not slug:
+        console.print("[red]No project specified and no active project set.[/red]")
+        raise typer.Exit(code=1)
+
+    fetcher = YouTubeAnalyticsFetcher(
+        client_id=settings.youtube_client_id,
+        client_secret=settings.youtube_client_secret,
+        refresh_token=settings.youtube_refresh_token,
+    )
+    orch = FeedbackOrchestrator(
+        fetcher=fetcher,
+        sentiment_scorer=SentimentScorer(),
+        guideline_generator=GuidelineGenerator(),
+        project_slug=slug,
+        project_root=Path.cwd(),
+    )
+
+    since = datetime.now(UTC) - timedelta(days=days)
+    with console.status("[bold blue]Running feedback cycle..."):
+        report = await orch.run_feedback_cycle(since=since)
+
+    table = Table(title=f"Feedback Report ({slug})")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+    table.add_row("Reels analyzed", str(report.reels_analyzed))
+    table.add_row("New guidelines", str(report.new_guidelines_count))
+    table.add_row("Avg sentiment", f"{report.avg_sentiment:.1f}/10")
+    table.add_row("Flagged reels", str(len(report.flagged_reels)))
+    console.print(table)
+
+    if report.flagged_reels:
+        console.print(f"\n[yellow]Flagged video IDs:[/yellow] {', '.join(report.flagged_reels)}")
+
+
+# ── mmn index ────────────────────────────────────────────────────────
+
+
+@app.command(rich_help_panel="Feedback")
+def index(
+    project: str = typer.Option("", "--project", "-p", help="Project slug (default: active)"),
+    limit: int = typer.Option(200, "--limit", "-l", help="Max videos to index"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without saving"),
+) -> None:
+    """Retroactively index all prior videos, classify by template, and generate guidelines."""
+    asyncio.run(_index_async(project, limit, dry_run))
+
+
+async def _index_async(project: str, limit: int, dry_run: bool) -> None:
+    import yaml
+
+    from adapters.youtube.analytics import YouTubeAnalyticsFetcher
+    from adapters.youtube.settings import YouTubeSettings
+    from marketmenow.core.embedding_store import EmbeddingStore
+    from marketmenow.core.feedback.classifier import TemplateCandidate, TemplateClassifier
+    from marketmenow.core.feedback.guideline_generator import GuidelineGenerator
+    from marketmenow.core.feedback.orchestrator import FeedbackOrchestrator
+    from marketmenow.core.feedback.sentiment import SentimentScorer
+    from marketmenow.core.project_manager import ProjectManager
+    from marketmenow.core.reel_id import decode_reel_id
+
+    settings = YouTubeSettings()
+    if not settings.youtube_refresh_token:
+        console.print("[red]YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first.[/red]")
+        raise typer.Exit(code=1)
+
+    pm = ProjectManager()
+    slug = project or pm.active_slug()
+    if not slug:
+        console.print("[red]No project specified and no active project set.[/red]")
+        raise typer.Exit(code=1)
+
+    # Load templates for classification
+    templates_dir = pm.project_dir(slug) / "templates" / "reels"
+    template_candidates: list[TemplateCandidate] = []
+    if templates_dir.is_dir():
+        for tmpl_path in sorted(templates_dir.glob("*.yaml")):
+            data = yaml.safe_load(tmpl_path.read_text(encoding="utf-8"))
+            template_candidates.append(
+                TemplateCandidate(
+                    template_id=data.get("id", tmpl_path.stem),
+                    name=data.get("name", tmpl_path.stem),
+                    text=data.get("caption_template", ""),
+                    hashtags=data.get("hashtags", []),
+                )
+            )
+
+    # Set up classifier
+    classifier: TemplateClassifier | None = None
+    if template_candidates:
+        try:
+            store = EmbeddingStore()
+            classifier = TemplateClassifier(store)
+            with console.status("[bold blue]Embedding templates..."):
+                await classifier.precompute_template_embeddings(template_candidates)
+        except Exception as exc:
+            console.print(f"[yellow]Template classifier unavailable: {exc}[/yellow]")
+            classifier = None
+
+    fetcher = YouTubeAnalyticsFetcher(
+        client_id=settings.youtube_client_id,
+        client_secret=settings.youtube_client_secret,
+        refresh_token=settings.youtube_refresh_token,
+    )
+
+    # Fetch all videos
+    with console.status(f"[bold blue]Fetching up to {limit} videos..."):
+        videos = await fetcher.fetch_channel_videos(max_results=limit)
+
+    if not videos:
+        console.print("[yellow]No videos found on channel.[/yellow]")
+        return
+
+    console.print(f"Found {len(videos)} videos.")
+
+    # Classify and display
+    table = Table(title=f"Reel Index ({slug})")
+    table.add_column("#", style="dim")
+    table.add_column("Title")
+    table.add_column("Template", style="cyan")
+    table.add_column("Confidence", style="blue")
+    table.add_column("Has ID", style="green")
+
+    classified_count = 0
+    for i, video in enumerate(videos, 1):
+        title = video.get("title", "")[:50]
+        desc = video.get("description", "")
+
+        # Try decode first
+        identifier = decode_reel_id(desc)
+        if identifier:
+            table.add_row(str(i), title, f"(ID: {identifier.template_type_id[:8]})", "-", "Y")
+            classified_count += 1
+        elif classifier:
+            result = await classifier.classify(video.get("title", ""), desc)
+            tmpl_display = result.template_id if result.is_confident else f"({result.template_id}?)"
+            conf_display = f"{result.confidence:.0%}"
+            table.add_row(str(i), title, tmpl_display, conf_display, "N")
+            if result.is_confident:
+                classified_count += 1
+        else:
+            table.add_row(str(i), title, "?", "-", "N")
+
+    console.print(table)
+    console.print(f"\nClassified: {classified_count}/{len(videos)}")
+
+    if dry_run:
+        console.print("[yellow]Dry run — no data saved.[/yellow]")
+        return
+
+    # Run full feedback cycle to persist index and generate guidelines
+    orch = FeedbackOrchestrator(
+        fetcher=fetcher,
+        sentiment_scorer=SentimentScorer(),
+        guideline_generator=GuidelineGenerator(),
+        project_slug=slug,
+        project_root=Path.cwd(),
+    )
+
+    with console.status("[bold blue]Indexing and analyzing..."):
+        report = await orch.run_feedback_cycle(max_videos=limit)
+
+    console.print(
+        f"[green]Done![/green] Analyzed {report.reels_analyzed} reels, "
+        f"generated {report.new_guidelines_count} guidelines."
+    )
+
+
 # ── Hidden adapter CLI groups (used by web frontend subprocess calls) ──
 
 app.add_typer(instagram_app, name="instagram", hidden=True)

@@ -7,7 +7,13 @@ from marketmenow.core.workflow import WorkflowContext, WorkflowError
 
 
 class YouTubeUploadStep:
-    """Upload a local video as a YouTube Short."""
+    """Upload a local video as a YouTube Short.
+
+    Reads the video from either the ``video`` param (explicit path) or
+    the ``content`` artifact (from a prior GenerateReelStep).  YouTube
+    metadata can come from explicit params or from artifacts set by
+    PrepareYouTubeStep (``_yt_title``, ``_yt_description``, ``_yt_hashtags``).
+    """
 
     @property
     def name(self) -> str:
@@ -28,13 +34,29 @@ class YouTubeUploadStep:
         if not settings.youtube_refresh_token:
             raise WorkflowError("YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first.")
 
-        video_path = Path(str(ctx.require_param("video")))
-        if not video_path.exists():
+        # Resolve video path: explicit param > content artifact
+        video_param = ctx.get_param("video", "")
+        video_path: Path | None = None
+        if video_param:
+            video_path = Path(str(video_param))
+        else:
+            content = ctx.artifacts.get("content")
+            if content is not None and hasattr(content, "video"):
+                video_path = Path(content.video.uri)
+
+        if video_path is None or not video_path.exists():
             raise WorkflowError(f"Video file not found: {video_path}")
 
-        title = str(ctx.get_param("title", "") or "")
-        description = str(ctx.get_param("description", "") or "")
-        hashtags_raw = str(ctx.get_param("hashtags", "") or "")
+        # Resolve metadata: explicit params > artifacts from PrepareYouTubeStep
+        title = str(ctx.get_param("title", "") or "") or str(ctx.artifacts.get("_yt_title", "") or "")
+        description = (
+            str(ctx.get_param("description", "") or "")
+            or str(ctx.artifacts.get("_yt_description", "") or "")
+        )
+        hashtags_raw = (
+            str(ctx.get_param("hashtags", "") or "")
+            or str(ctx.artifacts.get("_yt_hashtags", "") or "")
+        )
         tags = [t.strip() for t in hashtags_raw.split(",") if t.strip()]
         privacy = str(ctx.get_param("privacy", "") or "")
 
@@ -43,6 +65,23 @@ class YouTubeUploadStep:
         meta: dict[str, str] = {}
         if title:
             meta["_yt_title"] = title
+
+        # Inject reel ID from prior InjectReelIdStep or generate fresh
+        reel_id_hex = ctx.artifacts.get("_reel_id_hex")
+        tmpl_type_hex = ctx.artifacts.get("_template_type_hex")
+        if reel_id_hex and tmpl_type_hex:
+            meta["_reel_id_bytes"] = str(reel_id_hex)
+            meta["_template_type_bytes"] = str(tmpl_type_hex)
+        else:
+            from marketmenow.core.reel_id import generate_reel_id, template_type_id_from_slug
+
+            template_slug = str(ctx.get_param("template", "") or "")
+            meta["_reel_id_bytes"] = generate_reel_id().hex()
+            meta["_template_type_bytes"] = (
+                template_type_id_from_slug(template_slug).hex()
+                if template_slug
+                else generate_reel_id().hex()
+            )
 
         video_post = VideoPost(
             id=uuid4(),
