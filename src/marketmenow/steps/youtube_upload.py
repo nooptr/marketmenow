@@ -48,14 +48,14 @@ class YouTubeUploadStep:
             raise WorkflowError(f"Video file not found: {video_path}")
 
         # Resolve metadata: explicit params > artifacts from PrepareYouTubeStep
-        title = str(ctx.get_param("title", "") or "") or str(ctx.artifacts.get("_yt_title", "") or "")
-        description = (
-            str(ctx.get_param("description", "") or "")
-            or str(ctx.artifacts.get("_yt_description", "") or "")
+        title = str(ctx.get_param("title", "") or "") or str(
+            ctx.artifacts.get("_yt_title", "") or ""
         )
-        hashtags_raw = (
-            str(ctx.get_param("hashtags", "") or "")
-            or str(ctx.artifacts.get("_yt_hashtags", "") or "")
+        description = str(ctx.get_param("description", "") or "") or str(
+            ctx.artifacts.get("_yt_description", "") or ""
+        )
+        hashtags_raw = str(ctx.get_param("hashtags", "") or "") or str(
+            ctx.artifacts.get("_yt_hashtags", "") or ""
         )
         tags = [t.strip() for t in hashtags_raw.split(",") if t.strip()]
         privacy = str(ctx.get_param("privacy", "") or "")

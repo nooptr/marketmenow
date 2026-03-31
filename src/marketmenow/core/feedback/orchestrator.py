@@ -157,9 +157,7 @@ class FeedbackOrchestrator:
             all_guidelines = existing_guidelines + new_guidelines
             self._save_guidelines(all_guidelines)
 
-        overall_sentiment = (
-            sum(all_sentiments) / len(all_sentiments) if all_sentiments else 5.0
-        )
+        overall_sentiment = sum(all_sentiments) / len(all_sentiments) if all_sentiments else 5.0
 
         return FeedbackReport(
             reels_analyzed=len(new_entries),

@@ -108,9 +108,7 @@ class YouTubeAnalyticsFetcher:
                     # Filter by published_after if provided
                     if published_after and published_at_str:
                         try:
-                            pub_dt = datetime.fromisoformat(
-                                published_at_str.replace("Z", "+00:00")
-                            )
+                            pub_dt = datetime.fromisoformat(published_at_str.replace("Z", "+00:00"))
                             if pub_dt < published_after:
                                 continue
                         except ValueError:

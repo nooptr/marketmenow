@@ -21,7 +21,9 @@ class InjectReelIdStep:
             # No content artifact yet — inject params for YouTubeUploadStep to use
             reel_id = generate_reel_id()
             template_slug = str(ctx.get_param("template", "") or "")
-            tmpl_type = template_type_id_from_slug(template_slug) if template_slug else generate_reel_id()
+            tmpl_type = (
+                template_type_id_from_slug(template_slug) if template_slug else generate_reel_id()
+            )
 
             ctx.set_artifact("_reel_id_hex", reel_id.hex())
             ctx.set_artifact("_template_type_hex", tmpl_type.hex())
@@ -30,7 +32,9 @@ class InjectReelIdStep:
         # Content exists (e.g., from GenerateReelStep) — inject into metadata
         reel_id = generate_reel_id()
         template_slug = str(ctx.get_param("template", "") or "")
-        tmpl_type = template_type_id_from_slug(template_slug) if template_slug else generate_reel_id()
+        tmpl_type = (
+            template_type_id_from_slug(template_slug) if template_slug else generate_reel_id()
+        )
 
         new_meta = dict(content.metadata)
         new_meta["_reel_id_bytes"] = reel_id.hex()

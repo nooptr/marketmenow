@@ -114,9 +114,7 @@ async def test_cycle_merges_with_existing_index(tmp_path: Path) -> None:
     existing = [{"reel_id": "old", "video_id": "old_vid", "title": "Old"}]
     (feedback_dir / "reel_index.json").write_text(json.dumps(existing))
 
-    videos = [
-        {"video_id": "new_vid", "title": "New", "description": "", "published_at": ""}
-    ]
+    videos = [{"video_id": "new_vid", "title": "New", "description": "", "published_at": ""}]
     stats = [VideoMetrics(video_id="new_vid", view_count=500, like_count=40)]
 
     orch = FeedbackOrchestrator(

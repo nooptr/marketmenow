@@ -37,8 +37,20 @@ async def test_score_comments_basic(mock_create_client: MagicMock) -> None:
 
     scorer = SentimentScorer()
     comments = [
-        {"comment_id": "c1", "author": "User1", "text": "Great!", "like_count": "5", "published_at": ""},
-        {"comment_id": "c2", "author": "User2", "text": "Bad", "like_count": "0", "published_at": ""},
+        {
+            "comment_id": "c1",
+            "author": "User1",
+            "text": "Great!",
+            "like_count": "5",
+            "published_at": "",
+        },
+        {
+            "comment_id": "c2",
+            "author": "User2",
+            "text": "Bad",
+            "like_count": "0",
+            "published_at": "",
+        },
     ]
     results = await scorer.score_comments(comments, "Test Video")
 
@@ -93,6 +105,8 @@ async def test_score_fixes_invalid_label(mock_create_client: MagicMock) -> None:
     mock_create_client.return_value = mock_client
 
     scorer = SentimentScorer()
-    comments = [{"comment_id": "c1", "author": "", "text": "", "like_count": "0", "published_at": ""}]
+    comments = [
+        {"comment_id": "c1", "author": "", "text": "", "like_count": "0", "published_at": ""}
+    ]
     results = await scorer.score_comments(comments, "Test")
     assert results[0].sentiment_label == "negative"  # score 1.0 < 3.5

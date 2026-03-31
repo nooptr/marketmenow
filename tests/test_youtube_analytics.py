@@ -50,11 +50,11 @@ def _mock_service(
 
 
 @patch("adapters.youtube.analytics.build")
-async def test_fetch_channel_videos(mock_build: MagicMock, fetcher: YouTubeAnalyticsFetcher) -> None:
+async def test_fetch_channel_videos(
+    mock_build: MagicMock, fetcher: YouTubeAnalyticsFetcher
+) -> None:
     service = _mock_service(
-        channel_items=[
-            {"contentDetails": {"relatedPlaylists": {"uploads": "UU_test"}}}
-        ],
+        channel_items=[{"contentDetails": {"relatedPlaylists": {"uploads": "UU_test"}}}],
         playlist_items=[
             {
                 "snippet": {
@@ -89,9 +89,7 @@ async def test_fetch_channel_videos_filters_by_date(
     mock_build: MagicMock, fetcher: YouTubeAnalyticsFetcher
 ) -> None:
     service = _mock_service(
-        channel_items=[
-            {"contentDetails": {"relatedPlaylists": {"uploads": "UU_test"}}}
-        ],
+        channel_items=[{"contentDetails": {"relatedPlaylists": {"uploads": "UU_test"}}}],
         playlist_items=[
             {
                 "snippet": {
@@ -113,9 +111,7 @@ async def test_fetch_channel_videos_filters_by_date(
     )
     mock_build.return_value = service
 
-    videos = await fetcher.fetch_channel_videos(
-        published_after=datetime(2026, 3, 1, tzinfo=UTC)
-    )
+    videos = await fetcher.fetch_channel_videos(published_after=datetime(2026, 3, 1, tzinfo=UTC))
     assert len(videos) == 1
     assert videos[0]["video_id"] == "new"
 
