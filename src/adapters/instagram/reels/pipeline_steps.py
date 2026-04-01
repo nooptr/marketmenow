@@ -249,7 +249,9 @@ async def _llm_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
     from marketmenow.core.prompt_builder import PromptBuilder
 
     builder = PromptBuilder()
-    function_path = builder._resolve_file(f"functions/{prompt_name}.yaml", "instagram", project_slug)
+    function_path = builder._resolve_file(
+        f"functions/{prompt_name}.yaml", "instagram", project_slug
+    )
 
     if function_path:
         built = builder.build(
