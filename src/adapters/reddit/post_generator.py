@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from google import genai
 from google.genai.types import GenerateContentConfig
 from jinja2 import Template
 
 from .prompts import load_prompt
+
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,9 @@ class RedditPostGenerator:
         gemini_model: str = "gemini-2.5-flash",
         vertex_project: str = "",
         vertex_location: str = "us-central1",
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
     ) -> None:
         self._client = genai.Client(
             vertexai=True,
@@ -34,6 +41,9 @@ class RedditPostGenerator:
             location=vertex_location,
         )
         self._model = gemini_model
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
 
     async def generate_post(
         self,
@@ -44,18 +54,39 @@ class RedditPostGenerator:
         post_type: str = "update",
         context: str = "",
     ) -> GeneratedRedditPost:
-        prompt_data = load_prompt("post_generation")
+        if self._persona and self._brand:
+            from marketmenow.core.prompt_builder import PromptBuilder
 
-        system_prompt = prompt_data["system"]
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            subreddit=subreddit,
-            product_name=product_name,
-            product_url=product_url,
-            product_description=product_description,
-            post_type=post_type,
-            context=context,
-        )
+            built = PromptBuilder().build(
+                platform="reddit",
+                function="post",
+                persona=self._persona,
+                brand=self._brand,
+                template_vars={
+                    "subreddit": subreddit,
+                    "product_name": product_name or self._brand.name,
+                    "product_url": product_url or self._brand.url,
+                    "product_description": product_description or self._brand.tagline,
+                    "post_type": post_type,
+                    "context": context,
+                },
+                project_slug=self._project_slug,
+            )
+            system_prompt = built.system
+            user_prompt = built.user
+        else:
+            prompt_data = load_prompt("post_generation")
+
+            system_prompt = prompt_data["system"]
+            user_template = Template(prompt_data["user"])
+            user_prompt = user_template.render(
+                subreddit=subreddit,
+                product_name=product_name,
+                product_url=product_url,
+                product_description=product_description,
+                post_type=post_type,
+                context=context,
+            )
 
         config = GenerateContentConfig(
             system_instruction=system_prompt,

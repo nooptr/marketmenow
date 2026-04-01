@@ -45,6 +45,9 @@ class LinkedInContentGenerator:
         self,
         settings: LinkedInSettings,
         gemini_model: str = "gemini-2.5-flash",
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
     ) -> None:
         _ensure_vertex_credentials(settings)
         self._client = create_genai_client(
@@ -52,6 +55,9 @@ class LinkedInContentGenerator:
             vertex_location=settings.vertex_ai_location,
         )
         self._model = gemini_model
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
 
     async def generate_batch(
         self,
@@ -59,16 +65,33 @@ class LinkedInContentGenerator:
         brand: BrandConfig | None = None,
         persona: PersonaConfig | None = None,
     ) -> list[GeneratedPost]:
-        prompt_data = load_prompt("batch_generation")
+        effective_persona = persona or self._persona
+        effective_brand = brand or self._brand
 
-        template_vars: dict[str, object] = {"count": count}
-        if brand is not None:
-            template_vars["brand"] = brand
-        if persona is not None:
-            template_vars["persona"] = persona
+        if effective_persona and effective_brand:
+            from marketmenow.core.prompt_builder import PromptBuilder
 
-        system_prompt = Template(prompt_data["system"]).render(**template_vars)
-        user_prompt = Template(prompt_data["user"]).render(**template_vars)
+            built = PromptBuilder().build(
+                platform="linkedin",
+                function="batch",
+                persona=effective_persona,
+                brand=effective_brand,
+                template_vars={"count": count},
+                project_slug=self._project_slug,
+            )
+            system_prompt = built.system
+            user_prompt = built.user
+        else:
+            prompt_data = load_prompt("batch_generation")
+
+            template_vars: dict[str, object] = {"count": count}
+            if effective_brand is not None:
+                template_vars["brand"] = effective_brand
+            if effective_persona is not None:
+                template_vars["persona"] = effective_persona
+
+            system_prompt = Template(prompt_data["system"]).render(**template_vars)
+            user_prompt = Template(prompt_data["user"]).render(**template_vars)
 
         raw_json: str | None = None
         last_exc: BaseException | None = None

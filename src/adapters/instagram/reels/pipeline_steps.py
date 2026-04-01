@@ -214,15 +214,15 @@ async def _llm_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
         raise ValueError("LLM step requires a 'prompt' input (prompt file name)")
 
     project_slug = str(ctx.services.get("project_slug", "")) or None
-    prompt = load_prompt(prompt_name, project_slug=project_slug)
 
+    # Resolve context variables for template rendering
+    template_vars: dict[str, object] = {}
     if isinstance(context_vars, dict):
-        resolved_context: dict[str, str] = {}
         for k, v in context_vars.items():
             if isinstance(v, str):
-                resolved_context[k] = v
+                template_vars[k] = v
             elif isinstance(v, list):
-                resolved_context[k] = (
+                template_vars[k] = (
                     "\n".join(
                         f"  - {ev.get('rubric_item_name', ev.get('name', ''))}: "
                         f"{ev.get('points_awarded', ev.get('max_points', ''))}/{ev.get('max_points', '')} "
@@ -234,10 +234,40 @@ async def _llm_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
                     else str(v)
                 )
             else:
-                resolved_context[k] = str(v)
-        user_text = prompt["user"].format(**resolved_context)
+                template_vars[k] = str(v)
+
+    # Add brand/persona from pipeline context if available
+    brand_dict = ctx.variables.get("brand")
+    persona_dict = ctx.variables.get("persona")
+    if brand_dict and isinstance(brand_dict, dict):
+        template_vars["brand"] = brand_dict
+    if persona_dict and isinstance(persona_dict, dict):
+        template_vars["persona"] = persona_dict
+
+    # Use PromptBuilder when a decomposed functions/ YAML exists, otherwise
+    # fall back to legacy load_prompt + .format() for older pipeline prompts.
+    from marketmenow.core.prompt_builder import PromptBuilder
+
+    builder = PromptBuilder()
+    function_path = builder._resolve_file(f"functions/{prompt_name}.yaml", "instagram", project_slug)
+
+    if function_path:
+        built = builder.build(
+            platform="instagram",
+            function=prompt_name,
+            template_vars=template_vars,
+            project_slug=project_slug,
+        )
+        system_text = built.system or None
+        user_text = built.user
     else:
-        user_text = prompt["user"]
+        prompt = load_prompt(prompt_name, project_slug=project_slug)
+        if template_vars:
+            format_vars = {k: str(v) for k, v in template_vars.items()}
+            user_text = prompt["user"].format(**format_vars)
+        else:
+            user_text = prompt["user"]
+        system_text = prompt["system"] or None
 
     response = await client.aio.models.generate_content(  # type: ignore[union-attr]
         model=model,
@@ -248,7 +278,7 @@ async def _llm_step(ctx: PipelineContext, inputs: dict[str, object]) -> object:
             ),
         ],
         config=genai_types.GenerateContentConfig(
-            system_instruction=prompt["system"] or None,
+            system_instruction=system_text,
             response_mime_type="application/json",
             temperature=temperature,
         ),

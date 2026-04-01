@@ -2,26 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
-from functools import lru_cache
-from pathlib import Path
 
 from marketmenow.core.workflow import WorkflowContext
 
 logger = logging.getLogger(__name__)
-
-_PROMPTS_DIR = Path(__file__).resolve().parents[3] / "prompts" / "youtube"
-
-
-@lru_cache(maxsize=4)
-def _load_prompt(name: str) -> dict[str, str]:
-    path = _PROMPTS_DIR / f"{name}.yaml"
-    if not path.exists():
-        raise FileNotFoundError(f"Prompt '{name}' not found at {path}")
-    import yaml
-
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    return {"system": data.get("system", ""), "user": data.get("user", "")}
 
 
 class PrepareYouTubeStep:
@@ -56,22 +40,26 @@ class PrepareYouTubeStep:
             if text_segments:
                 script = "\n".join(text_segments)
 
-        brand_name = "Gradeasy"
-        brand_url = "https://gradeasy.ai"
-        if ctx.project and ctx.project.brand:
-            brand_name = ctx.project.brand.name or brand_name
-            brand_url = ctx.project.brand.url or brand_url
-
+        brand = ctx.project.brand if ctx.project else None
+        brand_name = brand.name if brand else "YourBrand"
+        brand_url = brand.url if brand else "yourbrand.com"
         template_type = str(ctx.get_param("template", "unknown"))
 
-        prompt_data = _load_prompt("generate_metadata")
-        system_prompt = prompt_data["system"]
-        user_prompt = prompt_data["user"].format(
-            script=script,
-            brand_name=brand_name,
-            brand_url=brand_url,
-            template_type=template_type,
+        from marketmenow.core.prompt_builder import PromptBuilder
+
+        built = PromptBuilder().build(
+            platform="youtube",
+            function="generate_metadata",
+            brand=brand,
+            template_vars={
+                "script": script,
+                "template_type": template_type,
+                "brand": {"name": brand_name, "url": brand_url},
+            },
+            project_slug=ctx.project.slug if ctx.project else None,
         )
+        system_prompt = built.system
+        user_prompt = built.user
 
         # Use Vertex AI credentials from Instagram settings (same as reel generation)
         ig_settings = InstagramSettings()

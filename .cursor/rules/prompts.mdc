@@ -5,13 +5,24 @@ alwaysApply: false
 ---
 # Prompt Management Rules
 
+## PromptBuilder Required for Content Generation
+
+**All content generation prompts MUST use `PromptBuilder`** (`core/prompt_builder.py`).
+Do NOT create new `load_prompt()` helper functions. Use `PromptBuilder.build()` with
+decomposed persona + function YAML files.
+
+Deterministic tool prompts (autograde, rubric generation, sentiment scoring, guideline
+generation, worksheet gen/fill) may use direct YAML loading since they don't need
+persona/brand injection.
+
 ## No Inline Prompts
 
 All LLM prompt text — system prompts, user prompts, image-generation prompts,
 and ICL templates — MUST live in YAML files under `prompts/`.
 
-Python code loads prompts via `yaml.safe_load` + Jinja2 `Template.render()`;
-it must never contain hardcoded prompt strings.
+Python code loads prompts via `PromptBuilder.build()` (preferred) or
+`yaml.safe_load` + Jinja2 (tool prompts only); it must never contain
+hardcoded prompt strings.
 
 ## Standard YAML Schema
 
@@ -57,9 +68,25 @@ that get filled in by `core/project_templates.py` and written to the new project
 - The `labeling_instruction` conditional fragment in `worksheet.py` which is a
   short inline string passed as a template variable, not a standalone prompt
 
-## Adding a New Prompt
+## Prompt Types
 
-1. Create a YAML file in `prompts/{platform}/` (or `prompts/` for cross-platform).
-2. Add an entry to the inventory table in `prompts/prompt.md`.
-3. Load it in Python using the adapter's `load_prompt()` helper or
-   `PromptBuilder.build()`.
+| Type | Use PromptBuilder? | persona param | brand param |
+|------|--------------------|---------------|-------------|
+| Content generation (comments, replies, threads, posts, scripts, carousels) | Yes | Required | Required |
+| Outreach (prospect scoring, message generation) | Yes | None | None |
+| Platform metadata (YouTube metadata, email paraphrase) | Yes | Optional | Optional |
+| Deterministic tools (autograde, rubric gen, sentiment, guidelines, worksheets) | No | N/A | N/A |
+
+## Adding a New Content Generation Prompt
+
+1. Create `prompts/{platform}/functions/{function_name}.yaml` with `system:` + `user:` keys (Jinja2).
+2. If persona-driven: ensure `prompts/{platform}/persona.yaml` exists.
+3. In code: `PromptBuilder().build(platform=..., function=..., persona=..., brand=..., template_vars=...)`.
+4. Add an entry to the inventory table in `prompts/prompt.md`.
+
+## Anti-Patterns
+
+- Creating new `load_prompt()` functions for content generation -- use `PromptBuilder`
+- Using Python `.format()` in YAML templates -- use Jinja2 `{{ }}`
+- Hardcoding brand names in prompt files -- use `{{ brand.name }}`, `{{ brand.url }}`
+- Embedding persona instructions in function YAML -- keep persona in `persona.yaml`

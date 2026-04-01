@@ -5,14 +5,12 @@ import logging
 
 from google import genai
 from google.genai.types import GenerateContentConfig
-from jinja2 import Template
 
 from marketmenow.outreach.models import (
     CustomerProfile,
     OutreachMessage,
     ScoredProspect,
 )
-from marketmenow.outreach.scorer import _load_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -41,30 +39,28 @@ class OutreachMessageGenerator:
         prospect: ScoredProspect,
         customer_profile: CustomerProfile,
     ) -> OutreachMessage:
-        prompt_data = _load_prompt("generate_message")
-
-        system_template = Template(prompt_data["system"])
-        system_prompt = system_template.render(
-            product=customer_profile.product,
-            messaging=customer_profile.messaging,
-        )
+        from marketmenow.core.prompt_builder import PromptBuilder
 
         profile = prospect.user_profile
         ref_post_text = profile.triggering_posts[0] if profile.triggering_posts else ""
         ref_post_url = profile.triggering_post_urls[0] if profile.triggering_post_urls else ""
 
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            product=customer_profile.product,
-            handle=profile.handle,
-            bio=profile.bio,
-            dm_angle=prospect.dm_angle,
-            reference_post=customer_profile.messaging.reference_post,
-            triggering_post_text=ref_post_text,
-            triggering_post_url=ref_post_url,
+        built = PromptBuilder().build(
+            platform="outreach",
+            function="generate_message",
+            template_vars={
+                "product": customer_profile.product,
+                "messaging": customer_profile.messaging,
+                "handle": profile.handle,
+                "bio": profile.bio,
+                "dm_angle": prospect.dm_angle,
+                "reference_post": customer_profile.messaging.reference_post,
+                "triggering_post_text": ref_post_text,
+                "triggering_post_url": ref_post_url,
+            },
         )
 
-        message_text = await self._call_gemini(system_prompt, user_prompt, profile.handle)
+        message_text = await self._call_gemini(built.system, built.user, profile.handle)
 
         return OutreachMessage(
             recipient_handle=profile.handle,

@@ -78,31 +78,51 @@ class PromptBuilder:
         self,
         platform: str,
         function: str,
-        persona: PersonaConfig,
-        brand: BrandConfig,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
         *,
         icl_examples: list[dict[str, object]] | None = None,
-        template_vars: dict[str, object],
+        template_vars: dict[str, object] | None = None,
         project_slug: str | None = None,
     ) -> BuiltPrompt:
         """Assemble a prompt from persona + function + optional ICL block.
 
-        If decomposed files (``persona.yaml``, ``functions/{function}.yaml``)
-        are not found, falls back to the legacy monolithic prompt at
-        ``{platform}/{function}_generation.yaml``.
+        Three modes:
+        1. **Decomposed** (persona + function YAML both found) — persona system
+           is concatenated with function system; function user becomes the user
+           message.
+        2. **Function-only** (function YAML found, no persona) — function system
+           and user are used directly without persona concatenation.  Useful for
+           outreach, metadata, and other prompts that don't need a persona.
+        3. **Legacy** (no decomposed files) — falls back to the monolithic
+           ``{platform}/{function}_generation.yaml``.
         """
-        shared_vars: dict[str, object] = {
-            "brand": self._make_brand_dict(brand),
-            "persona": self._make_persona_dict(persona, platform),
-            **template_vars,
-        }
+        shared_vars: dict[str, object] = {}
+        if brand is not None:
+            shared_vars["brand"] = self._make_brand_dict(brand)
+        if persona is not None:
+            shared_vars["persona"] = self._make_persona_dict(persona, platform)
+        shared_vars.update(template_vars or {})
 
-        persona_path = self._resolve_file("persona.yaml", platform, project_slug)
+        persona_path = (
+            self._resolve_file("persona.yaml", platform, project_slug)
+            if persona is not None
+            else None
+        )
         function_path = self._resolve_file(f"functions/{function}.yaml", platform, project_slug)
 
         if persona_path and function_path:
             return self._build_decomposed(
                 persona_path,
+                function_path,
+                platform,
+                project_slug,
+                icl_examples,
+                shared_vars,
+            )
+
+        if function_path:
+            return self._build_function_only(
                 function_path,
                 platform,
                 project_slug,
@@ -151,6 +171,32 @@ class PromptBuilder:
         system = persona_system.rstrip() + "\n\n" + function_system.lstrip()
 
         return BuiltPrompt(system=system.strip(), user=function_user.strip())
+
+    def _build_function_only(
+        self,
+        function_path: Path,
+        platform: str,
+        project_slug: str | None,
+        icl_examples: list[dict[str, object]] | None,
+        variables: dict[str, object],
+    ) -> BuiltPrompt:
+        """Render a function YAML without any persona block."""
+        function_data = self._load_yaml(function_path)
+
+        function_system = self._render_template(
+            function_data.get("system", ""),
+            variables,
+        )
+
+        icl_text = self._render_icl_block(platform, icl_examples, project_slug, variables)
+
+        user_vars = {**variables, "icl_block": icl_text}
+        function_user = self._render_template(
+            function_data.get("user", ""),
+            user_vars,
+        )
+
+        return BuiltPrompt(system=function_system.strip(), user=function_user.strip())
 
     def _build_legacy(
         self,

@@ -3,31 +3,23 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+from typing import TYPE_CHECKING
 
 from google.genai.types import GenerateContentConfig
 from jinja2 import Template
-from pydantic import BaseModel
 
 from marketmenow.integrations.genai import create_genai_client
 
 from .discovery import DiscoveredPost
 from .prompts import load_prompt
 
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
+
 logger = logging.getLogger(__name__)
 
 _MAX_RETRIES = 3
 _INITIAL_BACKOFF_S = 5.0
-
-
-class ProductContext(BaseModel, frozen=True):
-    name: str = "YourProduct"
-    url: str = "yourproduct.com"
-    tagline: str = "Describe your product here"
-    features: list[str] = [
-        "Feature 1",
-        "Feature 2",
-        "Feature 3",
-    ]
 
 
 class CommentGenerator:
@@ -39,7 +31,9 @@ class CommentGenerator:
         mention_rate: int = 10,
         vertex_project: str = "",
         vertex_location: str = "us-central1",
-        product: ProductContext | None = None,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
+        project_slug: str | None = None,
     ) -> None:
         self._client = create_genai_client(
             vertex_project=vertex_project,
@@ -47,7 +41,9 @@ class CommentGenerator:
         )
         self._model = gemini_model
         self._mention_rate = mention_rate
-        self._context = product or ProductContext()
+        self._persona = persona
+        self._brand = brand
+        self._project_slug = project_slug
 
     async def generate_comment(
         self,
@@ -55,20 +51,49 @@ class CommentGenerator:
         comment_number: int = 1,
     ) -> str:
         should_mention = random.randint(1, 100) <= self._mention_rate
-
-        prompt_data = load_prompt("comment_generation")
-
-        system_template = Template(prompt_data["system"])
-        system_prompt = system_template.render(mention_rate=self._mention_rate)
-
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            subreddit=post.subreddit,
-            post_title=post.post_title,
-            post_text=post.post_text[:1500],
-            comment_number=comment_number,
-            should_mention=should_mention,
+        directive = (
+            f"mention {self._brand.name} naturally — ALWAYS disclose your affiliation, "
+            "never be salesy, lead with genuine help first"
+            if should_mention and self._brand
+            else "DO NOT mention any product. Just be genuinely helpful."
         )
+
+        if self._persona and self._brand:
+            from marketmenow.core.prompt_builder import PromptBuilder
+
+            built = PromptBuilder().build(
+                platform="reddit",
+                function="comment",
+                persona=self._persona,
+                brand=self._brand,
+                template_vars={
+                    "subreddit": post.subreddit,
+                    "post_title": post.post_title,
+                    "post_text": post.post_text[:1500],
+                    "comment_number": comment_number,
+                    "should_mention": should_mention,
+                    "mention_rate": self._mention_rate,
+                    "directive": directive,
+                    "author_handle": getattr(post, "author", "anonymous"),
+                },
+                project_slug=self._project_slug,
+            )
+            system_prompt = built.system
+            user_prompt = built.user
+        else:
+            prompt_data = load_prompt("comment_generation")
+
+            system_template = Template(prompt_data["system"])
+            system_prompt = system_template.render(mention_rate=self._mention_rate)
+
+            user_template = Template(prompt_data["user"])
+            user_prompt = user_template.render(
+                subreddit=post.subreddit,
+                post_title=post.post_title,
+                post_text=post.post_text[:1500],
+                comment_number=comment_number,
+                should_mention=should_mention,
+            )
 
         comment_text: str | None = None
         last_exc: BaseException | None = None

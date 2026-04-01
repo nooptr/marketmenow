@@ -63,6 +63,76 @@ uv run mmn-web                       # Web dashboard (localhost:8000)
 | `pyproject.toml`                        | All deps, scripts, ruff, pytest config     |
 | `.env.example`                          | Required environment variables             |
 
+## Prompt System (Design Standard)
+
+**All content generation prompts MUST use `PromptBuilder`** (`src/marketmenow/core/prompt_builder.py`).
+Deterministic tool prompts (autograde, rubric generation, sentiment scoring, guideline generation, worksheet generation/fill) may use direct YAML loading.
+
+### How PromptBuilder Works
+
+PromptBuilder assembles prompts from three composable building blocks:
+
+1. **Persona** (`persona.yaml`) -- who the account is: voice, tone, brand identity
+2. **Function** (`functions/{name}.yaml`) -- what the LLM is doing: task instructions, output format
+3. **ICL** (`icl_block.yaml`) -- in-context learning examples of high-performing outputs
+
+System prompt = persona system + "\n\n" + function system.
+User prompt = function user template (with `{{ icl_block }}` injected when ICL examples provided).
+
+### Prompt Categories
+
+| Category | PromptBuilder? | Persona | Brand | Examples |
+|----------|---------------|---------|-------|----------|
+| **Content generation** | Yes, required | Required | Required | Comment/reply/thread/post generation, script generation, carousel |
+| **Outreach** | Yes, required | None | None | Prospect scoring, message generation (uses CustomerProfile via template_vars) |
+| **Platform metadata** | Yes, required | Optional | Required | YouTube metadata, email paraphrase |
+| **Deterministic tools** | No, hardcoded | N/A | N/A | Autograde, rubric gen, sentiment scoring, guideline gen, worksheet gen/fill |
+
+### Adding a New Content Generation Prompt
+
+1. Create `prompts/{platform}/functions/{function_name}.yaml` with `system:` and `user:` keys (Jinja2)
+2. If persona-driven: ensure `prompts/{platform}/persona.yaml` exists (or project override in `projects/{slug}/prompts/{platform}/persona.yaml`)
+3. In code:
+   ```python
+   from marketmenow.core.prompt_builder import PromptBuilder
+   builder = PromptBuilder()
+   built = builder.build(
+       platform="yourplatform",
+       function="your_function",
+       persona=persona_config,
+       brand=brand_config,
+       icl_examples=examples,  # optional
+       template_vars={"post_text": "...", "key": "value"},
+       project_slug=project_slug,
+   )
+   # built.system -> system instruction for LLM
+   # built.user -> user message for LLM
+   ```
+
+### Resolution Order
+
+PromptBuilder checks these paths (first match wins):
+1. `projects/{slug}/prompts/{platform}/{file}` -- project + platform specific
+2. `projects/{slug}/prompts/{file}` -- project generic
+3. `prompts/{platform}/{file}` -- global fallback
+
+### Template Variables
+
+All templates receive these variables via Jinja2:
+- `{{ brand.name }}`, `{{ brand.url }}`, `{{ brand.tagline }}`, `{{ brand.features }}` -- from BrandConfig
+- `{{ persona.name }}`, `{{ persona.voice }}`, `{{ persona.tone }}`, `{{ persona.description }}` -- from PersonaConfig (with platform overrides applied)
+- `{{ icl_block }}` -- rendered ICL examples (in user template only)
+- Any caller-supplied `template_vars` (e.g. `{{ post_text }}`, `{{ subreddit }}`)
+
+### Anti-Patterns (DO NOT)
+
+- Create new `load_prompt()` helper functions for content generation -- use `PromptBuilder`
+- Use Python `.format()` in YAML templates -- use Jinja2 `{{ }}`
+- Hardcode brand names/URLs in prompt files -- use `{{ brand.name }}`, `{{ brand.url }}`
+- Construct content prompts via string concatenation or f-strings
+- Pass raw prompt strings to `generate_content` without going through PromptBuilder
+- Embed persona instructions inside function YAML -- keep persona in `persona.yaml`
+
 ## Style
 
 Python >= 3.12. `from __future__ import annotations` in every file. Full type annotations, no `Any`. Async-first adapters. Tests use pytest + pytest-asyncio (`asyncio_mode = "auto"`), never call external APIs.

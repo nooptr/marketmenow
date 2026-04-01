@@ -112,12 +112,14 @@ Storage: `projects/{slug}/feedback/youtube/` — `reel_index.json`, `guidelines.
 
 ### Prompt System (core/prompt_builder.py, prompts/, projects/)
 
-Composable prompt architecture that separates **persona** (who the account is) from **function** (what it's doing) and **ICL** (in-context learning examples).
+Composable prompt architecture that separates **persona** (who the account is) from **function** (what it's doing) and **ICL** (in-context learning examples). See AGENTS.md "Prompt System (Design Standard)" for the full design guide.
 
-- `PromptBuilder` assembles prompts from three building blocks: persona template (project-scoped), function template (global), and optional ICL examples
+- **All content generation prompts must use `PromptBuilder`**. Deterministic tool prompts (autograde, sentiment scoring, etc.) may use direct YAML loading.
+- `PromptBuilder.build()` supports three modes: decomposed (persona + function), function-only (no persona), and legacy fallback
+- Persona and brand are optional — outreach and metadata prompts use function-only mode
 - Resolution order: `projects/{slug}/prompts/{platform}/{file}` -> `projects/{slug}/prompts/{file}` -> `prompts/{platform}/{file}`
 - Epsilon-greedy ICL: per reply, draw `random.random() < epsilon` to decide explore (no examples) vs exploit (diverse high-performing examples via farthest-point embedding sampling)
-- Falls back to legacy monolithic prompt files for backward compatibility
+- Falls back to legacy monolithic prompt files for backward compatibility during transition
 
 ### Protocols (ports/)
 
@@ -155,6 +157,7 @@ All defined as `typing.Protocol` with `@runtime_checkable`:
 4. **Adapters are independent.** Adapter packages must not import from each other.
 5. **`PlatformBundle` registration.** Each adapter exposes a `create_*_bundle(settings)` factory. Registration happens in `core/registry_builder.py` — missing env vars cause graceful skip.
 6. **Project-scoped content.** Prompts, targets, templates, and campaigns resolve from the active project directory first, falling back to global paths.
+7. **PromptBuilder for content generation.** All content generation LLM prompts must use `PromptBuilder`. Deterministic tool prompts (autograde, sentiment scoring, etc.) may use direct YAML loading. No new `load_prompt()` functions. See AGENTS.md for the full design standard.
 
 ## Python Style
 

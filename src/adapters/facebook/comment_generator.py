@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+from typing import TYPE_CHECKING
 
 from google.genai.types import GenerateContentConfig
 from jinja2 import Template
@@ -11,6 +12,9 @@ from marketmenow.integrations.genai import create_genai_client
 
 from .discovery import DiscoveredGroupPost
 from .prompts import load_prompt
+
+if TYPE_CHECKING:
+    from marketmenow.models.project import BrandConfig, PersonaConfig
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +32,8 @@ class CommentGenerator:
         vertex_project: str = "",
         vertex_location: str = "us-central1",
         project_slug: str | None = None,
+        persona: PersonaConfig | None = None,
+        brand: BrandConfig | None = None,
     ) -> None:
         self._client = create_genai_client(
             vertex_project=vertex_project,
@@ -36,6 +42,8 @@ class CommentGenerator:
         self._model = gemini_model
         self._mention_rate = mention_rate
         self._project_slug = project_slug
+        self._persona = persona
+        self._brand = brand
 
     async def generate_comment(
         self,
@@ -43,20 +51,49 @@ class CommentGenerator:
         comment_number: int = 1,
     ) -> str:
         should_mention = random.randint(1, 100) <= self._mention_rate
-
-        prompt_data = load_prompt("comment_generation", project_slug=self._project_slug)
-
-        system_template = Template(prompt_data["system"])
-        system_prompt = system_template.render(mention_rate=self._mention_rate)
-
-        user_template = Template(prompt_data["user"])
-        user_prompt = user_template.render(
-            group_name=post.group_name,
-            post_author=post.post_author,
-            post_text=post.post_text[:2000],
-            comment_number=comment_number,
-            should_mention=should_mention,
+        directive = (
+            f"mention {self._brand.name} naturally — disclose your affiliation, "
+            "never be salesy, lead with genuine help first"
+            if should_mention and self._brand
+            else "DO NOT mention any product or tool. Just be a genuinely helpful "
+            "group member sharing real advice."
         )
+
+        if self._persona and self._brand:
+            from marketmenow.core.prompt_builder import PromptBuilder
+
+            built = PromptBuilder().build(
+                platform="facebook",
+                function="comment",
+                persona=self._persona,
+                brand=self._brand,
+                template_vars={
+                    "group_name": post.group_name,
+                    "post_author": post.post_author,
+                    "post_text": post.post_text[:2000],
+                    "comment_number": comment_number,
+                    "should_mention": should_mention,
+                    "mention_rate": self._mention_rate,
+                    "directive": directive,
+                },
+                project_slug=self._project_slug,
+            )
+            system_prompt = built.system
+            user_prompt = built.user
+        else:
+            prompt_data = load_prompt("comment_generation", project_slug=self._project_slug)
+
+            system_template = Template(prompt_data["system"])
+            system_prompt = system_template.render(mention_rate=self._mention_rate)
+
+            user_template = Template(prompt_data["user"])
+            user_prompt = user_template.render(
+                group_name=post.group_name,
+                post_author=post.post_author,
+                post_text=post.post_text[:2000],
+                comment_number=comment_number,
+                should_mention=should_mention,
+            )
 
         comment_text: str | None = None
         last_exc: BaseException | None = None

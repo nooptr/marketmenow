@@ -48,15 +48,15 @@ system: |
   sentences since it's the key moment.
 
 user: |
-  The video concept is: "{template_name}"
+  The video concept is: "{{ template_name }}"
 
   You have evaluated content and here are the results:
-  - Points: {points_awarded}/{max_points}
-  - Feedback: {feedback}
+  - Points: {{ points_awarded }}/{{ max_points }}
+  - Feedback: {{ feedback }}
   - Rubric evaluations:
-  {rubric_eval_text}
+  {{ rubric_eval_text }}
 
-  The actual score is {points_awarded}/{max_points}.
+  The actual score is {{ points_awarded }}/{{ max_points }}.
 
   IMPORTANT RULES:
   - Make the roasts CREATIVE, FUNNY, and SPECIFIC to this content.
@@ -68,11 +68,11 @@ user: |
   Generate the following text fields for the video script.
 
   Respond with valid JSON:
-  {{
+  {% raw %}{{% endraw %}
     "reaction_text": "<roaster's savage punchy first reaction, 1-2 sentences, be CREATIVE>",
     "roast_text": "<roaster goes IN on specifics. End by saying they need {{ brand.name }} to help. 2-3 sentences, be HILARIOUS>",
     "brand_response": "<{{ brand.name }}'s confident short reply, 1 sentence>",
     "rubric_narration": "<{{ brand.name }} narrating analysis in its chill voice, 1-2 sentences>",
     "grading_narration": "<{{ brand.name }} narrating the evaluation process, keeping it real, 1-2 sentences>",
     "result_comment": "<roaster's SHORT roast punchline matching the score, MUST end with 'drop your assignments in the comments and I'll grade them too', 1-2 short punchy sentences max>"
-  }}
+  {% raw %}}{% endraw %}

@@ -197,40 +197,52 @@ class ReelScriptGenerator:
         grading_result: GradingResult,
     ) -> dict[str, str]:
         from google.genai import types as genai_types
-        from jinja2 import Template
-
-        prompt = load_prompt("script_generation", project_slug=self._project_slug)
-
-        jinja_vars: dict[str, object] = {}
-        if self._brand:
-            jinja_vars["brand"] = self._brand.model_dump()
-        if self._persona:
-            jinja_vars["persona"] = self._persona.model_dump()
-
-        system_text = prompt["system"]
-        if jinja_vars:
-            try:
-                system_text = Template(system_text).render(**jinja_vars)
-            except Exception as exc:
-                logger.warning("Failed to render script_generation system prompt: %s", exc)
 
         rubric_eval_text = "\n".join(
             f"  - {ev.rubric_item_name}: {ev.points_awarded}/{ev.max_points} -- {ev.feedback}"
             for ev in grading_result.rubric_evaluations
         )
 
-        user_text = prompt["user"].format(
-            template_name=template.name,
-            points_awarded=grading_result.points_awarded,
-            max_points=grading_result.max_points,
-            feedback=grading_result.feedback,
-            rubric_eval_text=rubric_eval_text,
-        )
-        if jinja_vars:
-            try:
-                user_text = Template(user_text).render(**jinja_vars)
-            except Exception as exc:
-                logger.warning("Failed to render script_generation user prompt: %s", exc)
+        template_vars = {
+            "template_name": template.name,
+            "points_awarded": grading_result.points_awarded,
+            "max_points": grading_result.max_points,
+            "feedback": grading_result.feedback,
+            "rubric_eval_text": rubric_eval_text,
+        }
+
+        if self._brand and self._persona:
+            from marketmenow.core.prompt_builder import PromptBuilder
+
+            built = PromptBuilder().build(
+                platform="instagram",
+                function="script",
+                persona=self._persona,
+                brand=self._brand,
+                template_vars=template_vars,
+                project_slug=self._project_slug,
+            )
+            system_text = built.system
+            user_text = built.user
+        else:
+            from jinja2 import Template
+
+            prompt = load_prompt("script_generation", project_slug=self._project_slug)
+
+            jinja_vars: dict[str, object] = {}
+            if self._brand:
+                jinja_vars["brand"] = self._brand.model_dump()
+            if self._persona:
+                jinja_vars["persona"] = self._persona.model_dump()
+
+            system_text = prompt["system"]
+            if jinja_vars:
+                try:
+                    system_text = Template(system_text).render(**jinja_vars)
+                except Exception as exc:
+                    logger.warning("Failed to render script_generation system prompt: %s", exc)
+
+            user_text = Template(prompt["user"]).render(**{**jinja_vars, **template_vars})
 
         response = await self._client.aio.models.generate_content(
             model=self._model,
