@@ -16,6 +16,8 @@ default_visual:
   background_video: "{{ background_video }}"
 
 caption_template: |
+  {{ title }}
+
   {{ caption }}
 
   Try {{ brand_name }} free at gradeasy.ai

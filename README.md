@@ -289,7 +289,11 @@ Checked items are shipped. Unchecked items are planned or in progress.
 
 ### Up Next
 
+- [ ] **Unified PromptBuilder interface** - migrate all adapters to the composable PromptBuilder (persona + function + ICL blocks), replacing legacy direct YAML prompt loading across Instagram Reels, Reddit, Facebook, LinkedIn, email, and outreach
 - [ ] **Extend ICL to all platforms** - bring epsilon-greedy in-context learning (currently Twitter-only) to Instagram, Reddit, LinkedIn, and other adapters
+- [ ] **A/B testing** - generate content variants, publish them across splits, and measure which performs better to continuously optimise messaging and format
+- [ ] **Cross-platform content repurposing** - adapt a single piece of content across platforms automatically (e.g. LinkedIn post → Twitter thread → Instagram carousel) with better packaging and format-aware transformations
+- [ ] **Analytics dashboard** - unified cross-platform analytics view to track performance, compare content types, and surface actionable insights across all platforms
 - [ ] **Analytics feedback loop** - auto-collect post performance metrics and feed them back to rank ICL examples, so the system improves with every publish
 - [ ] **An evolving system** - the system evolves with code repositories automatically
 

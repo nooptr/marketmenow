@@ -1085,17 +1085,22 @@ def feedback(
 async def _feedback_async(project: str, days: int) -> None:
     from datetime import UTC, datetime, timedelta
 
+    from adapters.instagram.settings import InstagramSettings
     from adapters.youtube.analytics import YouTubeAnalyticsFetcher
     from adapters.youtube.settings import YouTubeSettings
     from marketmenow.core.feedback.guideline_generator import GuidelineGenerator
     from marketmenow.core.feedback.orchestrator import FeedbackOrchestrator
     from marketmenow.core.feedback.sentiment import SentimentScorer
     from marketmenow.core.project_manager import ProjectManager
+    from marketmenow.integrations.genai import configure_google_application_credentials
 
     settings = YouTubeSettings()
     if not settings.youtube_refresh_token:
         console.print("[red]YOUTUBE_REFRESH_TOKEN not set. Run `mmn auth youtube` first.[/red]")
         raise typer.Exit(code=1)
+
+    ig_settings = InstagramSettings()
+    configure_google_application_credentials(ig_settings.google_application_credentials)
 
     pm = ProjectManager()
     slug = project or pm.active_slug()
@@ -1110,8 +1115,14 @@ async def _feedback_async(project: str, days: int) -> None:
     )
     orch = FeedbackOrchestrator(
         fetcher=fetcher,
-        sentiment_scorer=SentimentScorer(),
-        guideline_generator=GuidelineGenerator(),
+        sentiment_scorer=SentimentScorer(
+            vertex_project=ig_settings.vertex_ai_project,
+            vertex_location=ig_settings.vertex_ai_location,
+        ),
+        guideline_generator=GuidelineGenerator(
+            vertex_project=ig_settings.vertex_ai_project,
+            vertex_location=ig_settings.vertex_ai_location,
+        ),
         project_slug=slug,
         project_root=Path.cwd(),
     )

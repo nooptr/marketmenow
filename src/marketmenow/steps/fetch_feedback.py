@@ -68,8 +68,10 @@ class FetchYouTubeFeedbackStep:
         from marketmenow.core.feedback.guideline_generator import GuidelineGenerator
         from marketmenow.core.feedback.orchestrator import FeedbackOrchestrator
         from marketmenow.core.feedback.sentiment import SentimentScorer
+        from marketmenow.integrations.genai import configure_google_application_credentials
 
         ig_settings = InstagramSettings()
+        configure_google_application_credentials(ig_settings.google_application_credentials)
 
         fetcher = YouTubeAnalyticsFetcher(
             client_id=settings.youtube_client_id,

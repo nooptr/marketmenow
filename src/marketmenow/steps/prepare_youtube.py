@@ -39,7 +39,10 @@ class PrepareYouTubeStep:
         from google.genai.types import GenerateContentConfig
 
         from adapters.instagram.settings import InstagramSettings
-        from marketmenow.integrations.genai import create_genai_client
+        from marketmenow.integrations.genai import (
+            configure_google_application_credentials,
+            create_genai_client,
+        )
 
         content = ctx.artifacts.get("content")
         if content is None:
@@ -72,6 +75,7 @@ class PrepareYouTubeStep:
 
         # Use Vertex AI credentials from Instagram settings (same as reel generation)
         ig_settings = InstagramSettings()
+        configure_google_application_credentials(ig_settings.google_application_credentials)
         client = create_genai_client(
             vertex_project=ig_settings.vertex_ai_project,
             vertex_location=ig_settings.vertex_ai_location,
